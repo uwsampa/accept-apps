@@ -8,8 +8,8 @@ OPTARGS += -accept-npu-bufsize=768
 RUNARGS := in_1k.txt
 TESTARGS := in_1k_2.txt
 
+include ../plat/zynq.mk
 ACCEPT_DIR := ../../accept
-include $(ACCEPT_DIR)/../accept-apps/plat/zynq.mk
 include $(ACCEPT_DIR)/accept.mk
 
 #blackscholes.m4.cpp: blackscholes.c c.m4.pthreads

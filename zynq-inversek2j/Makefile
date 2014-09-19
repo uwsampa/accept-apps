@@ -5,6 +5,6 @@ OPTARGS += -accept-npu-bufsize=64
 RUNARGS := trainseed.txt
 TESTARGS := testseed.txt
 
+include ../plat/zynq.mk
 ACCEPT_DIR := ../../accept
-include $(ACCEPT_DIR)/../accept-apps/plat/zynq.mk
 include $(ACCEPT_DIR)/accept.mk
