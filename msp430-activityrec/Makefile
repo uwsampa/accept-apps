@@ -15,7 +15,7 @@ CLEANMETOO += intr.o
 RUNSHIM = $(ACCEPTDIR)/plat/msp430/run.sh
 
 APP_MK  := ../app.mk
-include $(APP_MK)
+include $(ACCEPT_DIR)/accept.mk
 
 # Hack to get the interrupt handler for perfctr correctly built
 intr.o: intr.c

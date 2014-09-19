@@ -25,8 +25,8 @@ TESTARGS := --quiet --qp 20 --partitions b8x8,i4x4 --ref 5 --direct auto --b-pyr
 
 CLEANMETOO := config.h config.mak x264.pc
 
-APP_MK := ../app.mk
-include $(APP_MK)
+ACCEPT_DIR := ../../accept
+include $(ACCEPT_DIR)/accept.mk
 
 setup:
 	./configure --enable-pthread --disable-asm

@@ -10,8 +10,8 @@ TESTARGS := 1 in_10M.txt output.txt  # native
 
 CLEANMETOO := output.txt blackscholes.m4.cpp
 
-APP_MK := ../app.mk
-include $(APP_MK)
+ACCEPT_DIR := ../../accept
+include $(ACCEPT_DIR)/accept.mk
 
 blackscholes.m4.cpp: blackscholes.c c.m4.pthreads
 	m4 c.m4.pthreads $< > $@

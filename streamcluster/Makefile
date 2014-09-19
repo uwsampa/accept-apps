@@ -6,5 +6,5 @@ LDFLAGS := -lpthread
 CFLAGS := -DENABLE_THREADS
 CLEANMETOO := output.txt
 
-APP_MK := ../app.mk
-include $(APP_MK)
+ACCEPT_DIR := ../../accept
+include $(ACCEPT_DIR)/accept.mk

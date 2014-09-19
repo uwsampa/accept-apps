@@ -12,5 +12,5 @@ RUNARGS := 1 15000 2000 400000.nets 128  # simlarge
 
 CLEANMETOO := output.txt
 
-APP_MK := ../app.mk
-include $(APP_MK)
+ACCEPT_DIR := ../../accept
+include $(ACCEPT_DIR)/accept.mk

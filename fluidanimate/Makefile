@@ -10,8 +10,8 @@ LDFLAGS := -lpthread
 CXXFLAGS += -pthread -D_GNU_SOURCE -D__XOPEN_SOURCE=600 -Wno-invalid-offsetof
 CLEANMETOO := fluidcmp out.fluid
 
-APP_MK := ../app.mk
-include $(APP_MK)
+ACCEPT_DIR := ../../accept
+include $(ACCEPT_DIR)/accept.mk
 
 # Output evaluation tool. Not approximated.
 fluidcmp: fluidcmp.cpp

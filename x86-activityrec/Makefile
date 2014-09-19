@@ -4,4 +4,4 @@ SOURCES := ar.c
 
 RUNARGS := ar5000.bin ar.out
 APP_MK  := ../app.mk
-include $(APP_MK)
+include $(ACCEPT_DIR)/accept.mk

@@ -5,5 +5,5 @@ OPTARGS += -accept-npu-bufsize=64
 RUNARGS := trainseed.txt
 TESTARGS := testseed.txt
 
-APP_MK := ../app.mk
-include $(APP_MK)
+ACCEPT_DIR := ../../accept
+include $(ACCEPT_DIR)/accept.mk

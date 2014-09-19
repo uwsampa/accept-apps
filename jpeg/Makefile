@@ -2,5 +2,5 @@ TARGET := jpeg
 LDFLAGS := -lm
 RUNARGS := baboon.rgb
 
-APP_MK := ../app.mk
-include $(APP_MK)
+ACCEPT_DIR := ../../accept
+include $(ACCEPT_DIR)/accept.mk

@@ -7,5 +7,5 @@ OPTARGS += -accept-npu-bufsize=1152
 RUNARGS := baboon.dat
 TESTARGS := lena.dat
 
-APP_MK := ../app.mk
-include $(APP_MK)
+ACCEPT_DIR := ../../accept
+include $(ACCEPT_DIR)/accept.mk

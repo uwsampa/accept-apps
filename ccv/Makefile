@@ -13,5 +13,5 @@ LDFLAGS := -lm -ljpeg -lpng
 
 RUNARGS := samples/cmyk-jpeg-format.jpg samples/face
 
-APP_MK := ../app.mk
-include $(APP_MK)
+ACCEPT_DIR := ../../accept
+include $(ACCEPT_DIR)/accept.mk
