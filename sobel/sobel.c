@@ -27,7 +27,7 @@ void sobel_filtering( )
       pixel_value = 0.0;
       for (j = -1; j <= 1; j++) {
 	    for (i = -1; i <= 1; i++) {
-	      pixel_value += weight[j + 1][i + 1] * image1[y + j][x + i];
+	      pixel_value += weight[j + 1][i + 1] * ENDORSE(image1[y + j][x + i]);
 	    }
       }
       if (pixel_value < min) min = pixel_value;
