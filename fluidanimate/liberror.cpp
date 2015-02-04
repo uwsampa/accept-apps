@@ -10,7 +10,6 @@ using namespace std;
 
 #include "normal.hpp"
 
-
 typedef unsigned long long uint64;
 typedef long long int64;
 #define rdtscll(val) do { \
@@ -34,15 +33,18 @@ struct dram_cell {
     uint64 lastUpdated;
     uint64 maxTime;
     uint64 flipList[DRAM_BITS_PER_CELL];
+    dram_cell() : lastUpdated(0), maxTime(0) {
+      memset(flipList, 0, sizeof(uint64) * DRAM_BITS_PER_CELL);
+    }
 };
 
-map<int, struct dram_cell> DRAM;
+typedef map<uint64, struct dram_cell> dram_type;
 
 #define SEED 123456789
 
 // Given an address and a time, go through the entire row and
 // update the time of last refresh and the max decay time
-void updateRow(const uint64 pAddress, const uint64 pTime)
+void updateRow(uint64 pAddress, uint64 pTime, dram_type& DRAM)
 {
     // Update all cells in the same row with the current time and max refresh decay time
     for(uint64 address = (pAddress & DRAM_ROW_MASK); address < ((pAddress & DRAM_ROW_MASK) + DRAM_COLS_PER_ROW); ++address)
@@ -65,7 +67,7 @@ void updateRow(const uint64 pAddress, const uint64 pTime)
 // Resets the decay for the cell written
 // and updates the time of last refresh
 // and max decay time for every other cell in the row
-  uint64 injectErrorStore(int64 param, uint64 addr, uint64 val, char* type, uint64 instrumentation_time) {
+  uint64 injectErrorStore(int64 param, uint64 addr, uint64 val, char* type, uint64 instrumentation_time, dram_type& DRAM) {
     // Get time to write
     uint64 currentTime;
     rdtscll(currentTime);
@@ -76,7 +78,7 @@ void updateRow(const uint64 pAddress, const uint64 pTime)
     DRAM[addr].maxTime = 0;
     
     // Update all other cells in the same row with the current time and max refresh decay time
-    updateRow(addr, currentTime);
+    updateRow(addr, currentTime, DRAM);
     return 0;
   }
 
@@ -84,7 +86,7 @@ void updateRow(const uint64 pAddress, const uint64 pTime)
 // and max decay time for every cell in the row
 // Returns a modified version of the passed value with potentially some
 // bits flipped according to the max decay time and the ground state of the cell
-  uint64 injectErrorLoad(int64 param, uint64 ret, uint64 addr, char* type, uint64 instrumentation_time) {
+  uint64 injectErrorLoad(int64 param, uint64 ret, uint64 addr, char* type, uint64 instrumentation_time, dram_type& DRAM) {
     // Get time to write
     uint64 currentTime;
     rdtscll(currentTime);
@@ -92,7 +94,7 @@ void updateRow(const uint64 pAddress, const uint64 pTime)
     
     // Update all cells in the same row with the current time and max refresh delay
     // This includes calculating the decay for the loaded cell
-    updateRow(addr, currentTime);
+    updateRow(addr, currentTime, DRAM);
     
     // If the cell doesn't have the flip times set, set them now
     if(DRAM[addr].flipList[0] == 0)
@@ -133,11 +135,13 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
   uint64 before_time;
   rdtscll(before_time);
 
+  static dram_type DRAM;
+
   uint64 return_value = ret;
   if (opcode == std::string("store"))
-    return_value = injectErrorStore(param, op1, op2, type, instrumentation_time);
+    return_value = injectErrorStore(param, op1, op2, type, instrumentation_time, DRAM);
   if (opcode == std::string("load"))
-    return_value = injectErrorLoad(param, ret, op1, type, instrumentation_time);
+    return_value = injectErrorLoad(param, ret, op1, type, instrumentation_time, DRAM);
 
   uint64 after_time;
   rdtscll(after_time);
