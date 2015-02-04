@@ -2,8 +2,14 @@
 #include <string>
 #include <map>
 #include <utility>
-#include <random>
 #include <ctime>
+//#include <cstdlib>
+#include <complex>
+
+using namespace std;
+
+#include "normal.hpp"
+
 
 typedef unsigned long long uint64;
 typedef long long int64;
@@ -32,11 +38,7 @@ struct dram_cell {
 
 map<int, struct dram_cell> DRAM;
 
-// DRAM cell decay values are distributed with trivial amounts of
-// spatial locality and in a Guassian fashion
-random_device rd;
-mt19937 gen(rd());
-normal_distribution(DRAM_DECAY_MEAN, DRAM_DECAY_SD) HIST; // use: HIST(gen);
+#define SEED 123456789
 
 // Given an address and a time, go through the entire row and
 // update the time of last refresh and the max decay time
@@ -63,9 +65,11 @@ void updateRow(const uint64 pAddress, const uint64 pTime)
 // Resets the decay for the cell written
 // and updates the time of last refresh
 // and max decay time for every other cell in the row
-  uint64 injectErrorStore(int64 param, uint64 addr, uint64 val, char* type) {
+  uint64 injectErrorStore(int64 param, uint64 addr, uint64 val, char* type, uint64 instrumentation_time) {
     // Get time to write
-    uint64 currentTime = rdtscll() - instrumentation_time;
+    uint64 currentTime;
+    rdtscll(currentTime);
+    currentTime = currentTime - instrumentation_time;
     
     // Update the specific address
     DRAM[addr].lastUpdated = currentTime;
@@ -80,9 +84,11 @@ void updateRow(const uint64 pAddress, const uint64 pTime)
 // and max decay time for every cell in the row
 // Returns a modified version of the passed value with potentially some
 // bits flipped according to the max decay time and the ground state of the cell
-  uint64 injectErrorLoad(int64 param, uint64 ret, uint64 addr, char* type) {
+  uint64 injectErrorLoad(int64 param, uint64 ret, uint64 addr, char* type, uint64 instrumentation_time) {
     // Get time to write
-    uint64 currentTime = rdtscll() - instrumentation_time;
+    uint64 currentTime;
+    rdtscll(currentTime);
+    currentTime = currentTime - instrumentation_time;
     
     // Update all cells in the same row with the current time and max refresh delay
     // This includes calculating the decay for the loaded cell
@@ -93,7 +99,8 @@ void updateRow(const uint64 pAddress, const uint64 pTime)
     {
         for(int bitCnt = 0; bitCnt < DRAM_BITS_PER_CELL; ++bitCnt)
         {
-            DRAM[addr].flipList[bitCnt] = HIST(gen);
+	  long long int seed = SEED;
+	  DRAM[addr].flipList[bitCnt] = i8_normal_ab(DRAM_DECAY_MEAN, DRAM_DECAY_SD, seed);
         }
     }
     
@@ -128,9 +135,9 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
 
   uint64 return_value = ret;
   if (opcode == std::string("store"))
-    return_value = injectErrorStore(param, op1, op2, type);
+    return_value = injectErrorStore(param, op1, op2, type, instrumentation_time);
   if (opcode == std::string("load"))
-    return_value = injectErrorLoad(param, ret, op1, type);
+    return_value = injectErrorLoad(param, ret, op1, type, instrumentation_time);
 
   uint64 after_time;
   rdtscll(after_time);

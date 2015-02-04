@@ -4,10 +4,10 @@ TARGET := fluidanimate
 RUNARGS := 8 5 in_300K.fluid out.fluid  # simlarge
 TESTARGS := 8 10 in_500K.fluid out.fluid  # native
 
-SOURCES := pthreads.cpp cellpool.cpp parsec_barrier.cpp
-HEADERS := cellpool.hpp fluid.hpp parsec_barrier.hpp
+SOURCES := pthreads.cpp cellpool.cpp parsec_barrier.cpp normal.cpp liberror.cpp
+HEADERS := cellpool.hpp fluid.hpp parsec_barrier.hpp normal.hpp
 LDFLAGS := -lpthread
-CXXFLAGS += -pthread -D_GNU_SOURCE -D__XOPEN_SOURCE=600 -Wno-invalid-offsetof
+CXXFLAGS += -pthread -D_GNU_SOURCE -D__XOPEN_SOURCE=600 -Wno-invalid-offsetof 
 CLEANMETOO := fluidcmp out.fluid
 
 ACCEPT_DIR := ../../accept
