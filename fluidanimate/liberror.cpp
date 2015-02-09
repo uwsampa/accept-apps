@@ -21,8 +21,11 @@ namespace {
   }
 
   uint64 injectErrorBinOp(int64 param, uint64 ret) {
+    uint64 max_rand;
+    int64* tmp = (int64*)(&max_rand);
+    *tmp = -1;
     double rand_number = static_cast<double>(getRandomBitStream()) /
-      static_cast<double>((uint64)(-1));
+      static_cast<double>(max_rand);
     if ((param == 1 && rand_number < pMild)
         || (param == 2 && rand_number < pMedium)
         || (param == 3 && rand_number < pAggressive))
