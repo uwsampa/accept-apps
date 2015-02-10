@@ -1,0 +1,5 @@
+It seems accept finds a single optimal config because of Python's amusing
+handling of floating point inf and nan. Make sure to run accept -vf run -v
+so you can see the whole story in the reported output values.
+
+This should probably be fixed in eval.py.

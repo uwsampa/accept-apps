@@ -1,0 +1,12 @@
+The error metric is clearly wrong.
+
+Channels of rgb pixels supposedly have a max of 65535, but clearly this whole
+range is not frequently generated. Thus, the error metric tends to report
+a tiny fraction of the true error, and accept goes crazy perforating everything.
+
+It's fully possible something else is wrong, as the error metric itself
+is code I added to the driver.
+
+While it is funny to see accept optimize everything, it's probably not that
+useful. The right thing to do would be to look at some of the outputs and
+figure out a reasonable error metric.
