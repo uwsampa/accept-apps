@@ -1,0 +1,5 @@
+It turns out that the transform does NOT output pixels in the range 0 - 255.
+A small number of the output 'pixels' are slightly large (277, ect.).
+
+The error metric does not take this into account and treats them as pixels,
+which is not too horrible but might result in slightly harsher error reports.

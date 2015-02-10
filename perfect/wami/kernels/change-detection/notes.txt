@@ -1,0 +1,12 @@
+Ideally, the parameters passed to wami_gmm like foreground, mu, and sigma would
+be approx, but attempting to make them so causes clang to abort during build.
+
+There might be a better way to declare things that actually works; either
+way accept should probably be fixed to just work.
+
+In the meantime I have left the parameters precise, and added lots of
+ENDORSE and ACCEPT_PERMIT to allow loop perforation to go ahead anyway.
+
+There several loops with exits. I was unable to remove them by changing the
+code (I did totally break the code though!) and ACCEPT_PERMIT doesn't work
+for loop exits, so yeah, that doesn't work yet either.

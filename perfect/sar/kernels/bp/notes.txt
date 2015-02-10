@@ -1,0 +1,3 @@
+A word of warning, this kernel takes a REALLY REALLY LONG TIME to run.
+
+I would highly suggest sticking with the small input size.
