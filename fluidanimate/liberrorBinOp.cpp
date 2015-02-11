@@ -21,7 +21,7 @@ namespace {
 
 }
 
-uint64 DummyinjectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
+uint64 dummy(char* opcode, int64 param, uint64 ret, uint64 op1,
     uint64 op2, char* type) {
   uint64 max_rand;
   int64* tmp = (int64*)(&max_rand);
