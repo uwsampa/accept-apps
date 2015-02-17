@@ -1,39 +1,12 @@
-#include <iostream>
-#include <string>
-#include <ctime>
+#include "enerj.hpp"
 
-#include "approxMemory.hpp"
+#include <cstring>
 
-namespace {
-  //param == 1
-  const double pMild = 0.000001;
-  //param == 2
-  const double pMedium = 0.0001;
-  //param == 3
-  const double pAggressive = 0.01;
-
-  inline uint64 getRandomBitStream() {
-    static uint64 x = time(0);
-    x ^= (x >> 21);
-    x ^= (x << 35);
-    x ^= (x >> 4);
-    return x;
-  }
-
-  uint64 injectErrorBinOp(int64 param, uint64 ret) {
-    uint64 max_rand;
-    int64* tmp = (int64*)(&max_rand);
-    *tmp = -1;
-    double rand_number = static_cast<double>(getRandomBitStream()) /
-      static_cast<double>(max_rand);
-    if ((param == 1 && rand_number < pMild)
-        || (param == 2 && rand_number < pMedium)
-        || (param == 3 && rand_number < pAggressive))
-      return getRandomBitStream();
-
-    return ret;
-  }
-}
+#define rdtscll(val) do { \
+    unsigned int __a,__d; \
+    asm volatile("rdtsc" : "=a" (__a), "=d" (__d)); \
+    (val) = ((unsigned long)__a) | (((unsigned long)__d)<<32); \
+  } while(0)
 
 uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
     uint64 op2, char* type) {
@@ -41,17 +14,13 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
   uint64 before_time;
   rdtscll(before_time);
 
-  static dram_type DRAM;
-
   uint64 return_value = ret;
-  if (opcode == std::string("store"))
-    return_value = injectErrorStore(param, op1, op2, type, instrumentation_time,
-        DRAM);
-  else if (opcode == std::string("load"))
-    return_value = injectErrorLoad(param, ret, op1, type, instrumentation_time,
-        DRAM);
+  if (strcmp(opcode, "store") == 0)
+    EnerJ::enerjStore(op1, instrumentation_time, type);
+  else if (strcmp(opcode, "load") == 0)
+    return_value = EnerJ::enerjLoad(op1, ret, instrumentation_time, type);
   else
-    return_value = injectErrorBinOp(param, ret);
+    return_value = EnerJ::BinOp(param, ret);
 
   uint64 after_time;
   rdtscll(after_time);
@@ -59,3 +28,4 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
 
   return return_value;
 }
+

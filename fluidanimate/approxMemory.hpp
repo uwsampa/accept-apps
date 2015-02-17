@@ -1,4 +1,6 @@
 #include <map>
+#include <cstdlib>
+#include <cstring>
 
 #define DRAM_BITS_PER_CELL  64
 #define DRAM_COLS_PER_ROW   256
