@@ -323,14 +323,14 @@ APPROX inline MTRand::uint32 MTRand::hash( APPROX time_t t, APPROX clock_t c )
 
 	static uint32 differ = 0;  // guarantee time-based seeds will change
 
-	uint32 h1 = 0;
+	APPROX uint32 h1 = 0;
 	APPROX unsigned char *p = (unsigned char *) &t;
 	for( size_t i = 0; i < sizeof(t); ++i )
 	{
 		h1 *= UCHAR_MAX + 2U;
 		h1 += p[i];
 	}
-	uint32 h2 = 0;
+	APPROX uint32 h2 = 0;
 	p = (unsigned char *) &c;
 	for( size_t j = 0; j < sizeof(c); ++j )
 	{
