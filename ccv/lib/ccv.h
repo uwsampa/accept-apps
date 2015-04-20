@@ -835,7 +835,7 @@ typedef struct {
 } ccv_bbf_feature_t;
 
 typedef struct {
-	APPROX int count;
+	int count;
 	APPROX float threshold;
 	ccv_bbf_feature_t* feature;
 	APPROX float* alpha;

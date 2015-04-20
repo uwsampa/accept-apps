@@ -1,6 +1,6 @@
 TARGET := bp
 CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_SMALL
-LDFLAGS := -lm -lrt
+LDFLAGS := -lm
 
 RUNARGS := inout
 
