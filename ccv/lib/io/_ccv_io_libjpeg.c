@@ -93,7 +93,7 @@ static int _ccv_jpeg_load_dht(struct jpeg_decompress_struct *info, unsigned char
 	int index;
 
 	JHUFF_TBL **hufftbl;
-	APPROX unsigned char bits[17];
+	unsigned char bits[17];
 	APPROX unsigned char huffval[256];
 
 	while (length > 16)

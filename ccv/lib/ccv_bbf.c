@@ -167,7 +167,7 @@ ccv_array_t* ccv_bbf_detect_objects(ccv_dense_matrix_t* a, ccv_bbf_classifier_ca
 			APPROX int i_rows = pyr[i * 4 + next * 8]->rows - ENDORSE(cascade->size.height >> 2);
 			APPROX int steps[] = { pyr[i * 4]->step, pyr[i * 4 + next * 4]->step, pyr[i * 4 + next * 8]->step };
 			APPROX int i_cols = pyr[i * 4 + next * 8]->cols - ENDORSE(cascade->size.width >> 2);
-			APPROX int paddings[] = { pyr[i * 4]->step * 4 - i_cols * 4,
+			int paddings[] = { pyr[i * 4]->step * 4 - i_cols * 4,
 							   pyr[i * 4 + next * 4]->step * 2 - i_cols * 2,
 							   pyr[i * 4 + next * 8]->step - i_cols };
 			for (q = 0; q < (params.accurate ? 4 : 1); q++)
