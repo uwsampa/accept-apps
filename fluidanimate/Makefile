@@ -4,7 +4,7 @@ TARGET := fluidanimate
 RUNARGS := 8 5 in_300K.fluid out.fluid  # simlarge
 TESTARGS := 8 10 in_500K.fluid out.fluid  # native
 
-SOURCES := pthreads.cpp cellpool.cpp parsec_barrier.cpp liberror.cpp liberrorBinOp.cpp enerj.cpp
+SOURCES := pthreads.cpp cellpool.cpp parsec_barrier.cpp liberror.cpp enerj.cpp
 HEADERS := cellpool.hpp fluid.hpp parsec_barrier.hpp enerj.hpp
 LDFLAGS := -lpthread
 CXXFLAGS += -pthread -D_GNU_SOURCE -D__XOPEN_SOURCE=600 -Wno-invalid-offsetof 

@@ -5,9 +5,10 @@ typedef long long int64;
 
 class EnerJ {
 public:
-  static void enerjStore(uint64 address, uint64 cycles, const char* type);
-  static uint64 enerjLoad(uint64 address, uint64 ret, uint64 cycles,
+  static void enerjStore(uint64 address, uint64 align, uint64 cycles,
       const char* type);
+  static uint64 enerjLoad(uint64 address, uint64 ret, uint64 align,
+      uint64 cycles, const char* type, int64 param);
   static  uint64 BinOp(int64 param, uint64 ret);
 
 private:
