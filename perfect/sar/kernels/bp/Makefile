@@ -4,5 +4,5 @@ LDFLAGS := -lm
 
 RUNARGS := inout
 
-ACCEPT_DIR := ~/private/accept
+ACCEPT_DIR := ../../../../../accept
 include $(ACCEPT_DIR)/accept.mk
