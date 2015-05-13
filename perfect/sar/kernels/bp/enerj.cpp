@@ -105,7 +105,7 @@ uint64 EnerJ::BinOp(int64 param, uint64 ret) {
       || (param == 3 && rand_number < pAggressive)
       || (param == 4 && rand_number < pTest)) {
     ++nerr;
-    std::cerr << "nerr: " << nerr << std::endl;
+    // std::cerr << "nerr: " << nerr << std::endl;
     uint64 r = getRandom();
     memcpy(&ret, &r, sizeof(char));
   }
