@@ -7,27 +7,94 @@
 
 std::map<uint64, uint64> EnerJ::mem;
 
-const double EnerJ::pError = 0.000000001;  // 10^-9 probability memory bit flip
 const uint64 EnerJ::max_rand = -1;
+
+// param is a three digit number
+// thousands digit enables/disables memory injection (0 = off, 1 = on)
+// hundreds digit enables/disables alu/fpu injection (0 = off, 1 = on)
+// tens digit is number of bytes to inject error to (1 to 8 = 1 to 8 bytes) for memory/alu
+// ones digit specifies level (1 to 3) (1 = mild, 2 = med, 3 = aggr)
 
 namespace {
   const double processor_freq = 2000000000.0;
 
-  // sram probabilities
-
-  // dram probabilities
+  // sram/dram probabilities (can't differentiate, so combine)
+  const double p1 = 0.000000001; // 10^-9
+  const double p2 = 0.00001; // 10^-5
+  const double p3 = 0.001; // 10^-3 (this actually is same for dram/sram)
 
   // alu probabilities
+  const double ap1 = 0.000001;
+  const double ap2 = 0.0001;
+  const double ap3 = 0.01;
+  
+  // fpu mantissa
+  const int fpm1 = 16;
+  const int fpm2 = 8;
+  const int fpm3 = 4;
+  const int dpm1 = 32;
+  const int dpm2 = 16;
+  const int dpm3 = 8;
 
-  const double p1 = 0.1;
-  const double p2 = 0.01;
-  const double p3 = 0.001;
-  const double p4 = 0.0001;
-  const double p5 = 0.00001;
-  const double p6 = 0.000001;
-  const double p7 = 0.0000001;
-  const double p8 = 0.00000001;
-  const double p9 = 0.000000001;
+
+  inline double getPMem(int level) {
+    switch(level) {
+    case 1:
+      return p1;
+    case 2:
+      return p2;
+    case 3:
+      return p3;
+    default:
+      return p1;
+    }
+  }
+
+  inline double getPALU(int level) {
+    switch(level) {
+    case 1:
+      return ap1;
+    case 2:
+      return ap2;
+    case 3:
+      return ap3;
+    default:
+      return ap1;
+    }
+  }
+
+  inline int getMantissaF(int level) {
+    switch(level) {
+    case 1:
+      return fpm1;
+    case 2:
+      return fpm2;
+    case 3:
+      return fpm3;
+    default:
+      return fpm1;
+    }
+  }
+
+  inline int getMantissaD(int level) {
+    switch(level) {
+    case 1:
+      return dpm1;
+    case 2:
+      return dpm2;
+    case 3:
+      return dpm3;
+    default:
+      return dpm1;
+    }
+  }
+
+  inline void maskMantissa(int mantissabits, int precbits, uint64 &ret) {
+    if (precbits > mantissabits || precbits < 0) return;
+    uint64 mask = ~(0ULL);
+    int shift = mantissabits - precbits;
+    ret |= (mask << shift);
+  }
 
   inline uint64 getRandom() {
     static uint64 x = 12345;
@@ -62,66 +129,76 @@ namespace {
 }
 
 void EnerJ::enerjStore(uint64 address, uint64 align, uint64 cycles,
-    const char* type) {
-  if (!isAligned(address, align)) {
-    std::cerr << "Error: unaligned address in store instruction." << std::endl;
-    exit(0);
-  }
-
-  int num_bytes = getNumBytes(type);
-  for (int i = 0; i < num_bytes; ++i) {
-    mem[address] = cycles;
-    address += 4U;
+                       const char* type, int64 param) {
+  if ((param/1000)%10 == 1) {
+    if (!isAligned(address, align)) {
+      std::cerr << "Error: unaligned address in store instruction." << std::endl;
+      exit(0);
+    }
+    
+    int num_bytes = getNumBytes(type);
+    for (int i = 0; i < num_bytes; ++i) {
+      mem[address] = cycles;
+      address += 4U;
+    }
   }
 }
 
 uint64 EnerJ::enerjLoad(uint64 address, uint64 ret, uint64 align, uint64 cycles,
-    const char* type, int64 param) {
-  if (!isAligned(address, align)) {
-    std::cerr << "Error: unaligned address in load instruction." << std::endl;
-    exit(0);
-  }
-
-  int num_bytes = getNumBytes(type);
-  int nAffectedBytes = (param / 10) + 1;
-
-  for (int i = 0; i < num_bytes; ++i) {
-    if (i < nAffectedBytes) { // Only flip bits in lowest byte
-      const double time_elapsed = static_cast<double>(cycles - mem[address]) /
-          processor_freq;
-      const double pFlip = pError * time_elapsed;
-
-      for (int j = 0; j < 8; ++j) {
-        const double rand_number = static_cast<double>(getRandom()) /
-            static_cast<double>(max_rand);
-        if (rand_number < pFlip)
-          flip_bit(ret, i * 8 + j);
-      }
+                        const char* type, int64 param) {
+  if ((param/1000)%10 == 1) {
+    if (!isAligned(address, align)) {
+      std::cerr << "Error: unaligned address in load instruction." << std::endl;
+      exit(0);
     }
+    
+    int num_bytes = getNumBytes(type);
+    int nAffectedBytes = (param / 10) % 10;
+    int level = param % 10;
 
-    mem[address] = cycles;
-    address += 4U;
+    for (int i = 0; i < num_bytes; ++i) {
+      if (i < nAffectedBytes) { // Only flip bits in lowest byte
+        const double time_elapsed = static_cast<double>(cycles - mem[address]) /
+          processor_freq;
+        const double pFlip = getPMem(level) * time_elapsed;
+        
+        for (int j = 0; j < 8; ++j) {
+          const double rand_number = static_cast<double>(getRandom()) /
+            static_cast<double>(max_rand);
+          if (rand_number < pFlip)
+            flip_bit(ret, i * 8 + j);
+        }
+      }
+      
+      mem[address] = cycles;
+      address += 4U;
+    }
   }
-
   return ret;
 }
 
-uint64 EnerJ::BinOp(int64 param, uint64 ret) {
-  double rand_number = static_cast<double>(getRandom()) /
-    static_cast<double>(max_rand);
-  if (   (((param % 10) == 2) && (rand_number < p2))
-      || (((param % 10) == 3) && (rand_number < p3))
-      || (((param % 10) == 4) && (rand_number < p4))
-      || (((param % 10) == 5) && (rand_number < p5))
-      || (((param % 10) == 6) && (rand_number < p6))
-      || (((param % 10) == 7) && (rand_number < p7))
-      || (((param % 10) == 8) && (rand_number < p8))
-      || (((param % 10) == 9) && (rand_number < p9)) ) {
-    uint64 r = getRandom();
-    int nbytes = (param / 10) + 1;
-    memcpy(&ret, &r, nbytes*sizeof(char));
-  }
+uint64 EnerJ::BinOp(int64 param, uint64 ret, const char* type) {
+  if ((param/100)%10 == 1) {
 
+    double rand_number = static_cast<double>(getRandom()) /
+      static_cast<double>(max_rand);
+    int level = param % 10;
+    int num_bytes = getNumBytes(type);
+    if (strcmp(type,"Float") == 0) {
+      int mbits = getMantissaF(level);
+      maskMantissa(23,mbits,ret);
+    } else if (strcmp(type, "Double") == 0) {
+      int mbits = getMantissaD(level);
+      maskMantissa(52,mbits,ret);
+    } else {
+      int nAffectedBytes = (param / 10) % 10;
+      double pALU = getPALU(level);
+      if (rand_number < pALU) {
+        uint64 r = getRandom();
+        memcpy(&ret, &r, nAffectedBytes*sizeof(char));
+      }
+    }
+  }
   return ret;
 }
 

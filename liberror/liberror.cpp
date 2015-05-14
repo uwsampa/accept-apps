@@ -52,11 +52,11 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
 
   case 1: // enerj
     if (strcmp(opcode, "store") == 0)
-      EnerJ::enerjStore(op1, ret, elapsed_time, type);
+      EnerJ::enerjStore(op1, ret, elapsed_time, type, param);
     else if (strcmp(opcode, "load") == 0)
       return_value = EnerJ::enerjLoad(op1, ret, op2, elapsed_time, type, model_param);
     else
-      return_value = EnerJ::BinOp(model_param, ret);
+      return_value = EnerJ::BinOp(model_param, ret, type);
     break;
 
   case 2: // zero low order bits FP = hierarchical fpu, reduced precision fpu
