@@ -1,6 +1,4 @@
-blackscholes/in_*.txt
 canneal/*.nets
-fluidanimate/in_*.fluid
 msp430-activityrec/readings.h
 *.pyc
 *.pyo

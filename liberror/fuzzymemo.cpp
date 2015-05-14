@@ -5,12 +5,10 @@
 #include<iostream>
 #include<cstdlib>
 
-std::map<uint64, uint64> EnerJ::mem;
-const double EnerJ::pError = 0.000000001; 
-const uint64 EnerJ::max_rand = -1;
+std::map<uint64, uint64> FuzzyMemo::table;
 
 namespace {
-  const double processor_freq = 2792719000.0;
+  const double processor_freq = 2000000000.0;
 
   const double p1 = 0.1;
   const double p2 = 0.01;
@@ -60,7 +58,7 @@ uint64 FuzzyMemo::fuzzyMemoFPOp(int64 param, const char* type, uint64 op1, uint6
   op2 = op2 >> param;
   uint64 idx = op1 ^ op2;
 
-  uin64 return_value = ret;
+  uint64 return_value = ret;
   // fuzzy memoization: op1 xor op2 -> table lookup
   return return_value;
 }

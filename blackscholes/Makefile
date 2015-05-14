@@ -2,7 +2,10 @@ TARGET := blackscholes
 LDFLAGS := -lm -pthread
 CFLAGS := -pthread -DENABLE_THREADS
 
+LIBERROR_SRCS := liberror.cpp enerj.cpp flikker.cpp reducedprecfp.cpp
+
 SOURCES := blackscholes.m4.cpp
+SOURCES += $(LIBERROR_SRCS)
 
 RUNARGS := 1 in_64K.txt output.txt  # simlarge
 TESTARGS := 1 in_10M.txt output.txt  # native
@@ -13,7 +16,7 @@ CLEANMETOO := output.txt blackscholes.m4.cpp
 ACCEPT_DIR := ../../accept
 include $(ACCEPT_DIR)/accept.mk
 
-RUNSHIM := pin -t ~/research/approx-limit/profiling/pin/pintools/full/obj-intel64/phase-profile.so -ldstsize 1 -bp 1 -cache1 1 -c1 32 -a1 4 -b1 32 -cache2 0 -opcodes 0 -phases 0 -reg 1 -- 
+#RUNSHIM := pin -t ~/research/approx-limit/profiling/pin/pintools/full/obj-intel64/phase-profile.so -ldstsize 1 -bp 1 -cache1 1 -c1 32 -a1 4 -b1 32 -cache2 0 -opcodes 0 -phases 0 -reg 1 -- 
 
 #-phases 1 -i ~/research/accept-apps/blackscholes/phases.cfg -reg 1 -- 
 

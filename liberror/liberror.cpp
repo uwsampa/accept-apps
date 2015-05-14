@@ -61,7 +61,7 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
 
   case 2: // zero low order bits FP = hierarchical fpu, reduced precision fpu
     // invoke for non load/store instructions with Float/Double type
-    if (strcomp(opcode, "store") && strcmp(opcode, "load") && (!strcmp(type, "Float") || !strcmp(type, "Double")))
+    if (strcmp(opcode, "store") && strcmp(opcode, "load") && (!strcmp(type, "Float") || !strcmp(type, "Double")))
       return_value = ReducedPrecFP::FPOp(model_param, ret, type);
     break;
     

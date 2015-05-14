@@ -5,7 +5,8 @@
 #include<iostream>
 #include<cstdlib>
 
-std::map<uint64, uint64> EnerJ::mem;
+std::map<uint64, uint64> Flikker::mem;
+const uint64 Flikker::max_rand = -1;
 
 namespace {
   const double processor_freq = 2000000000.0;
