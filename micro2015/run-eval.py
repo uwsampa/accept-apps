@@ -4,7 +4,14 @@ import os
 
 # Note: the working directory must contain an eval.py file
 
+def usage():
+    print('usage: python run-eval.py <precise-output> <results-directory> <output-file>')
+    exit()
+
 if __name__ == "__main__":
+
+    if (len(sys.argv) != 4):
+        usage()
 
     orig = sys.argv[1]
     resdir = sys.argv[2]
