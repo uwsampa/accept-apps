@@ -8,18 +8,23 @@ CONFIG_DIR=$WORKING_DIR/configs
 OUTDIR=$WORKING_DIR/results
 
 # base directory for accept-apps and accept repos
-ACCEPT_BASE=~/research
+# ACCEPT_BASE=~/research
 ACCEPTAPPS_DIR=$ACCEPT_BASE/accept-apps
 ACCEPT_DIR=$ACCEPT_BASE/accept
 
 # acccept-apps to run experiments on
-APPS=(blackscholes)
+APPS=(sobel)
 #(sobel blackscholes jpeg)
 # specify output file names
 sobel=(out.pgm)
 blackscholes=(output.txt)
 jpeg=(baboon-220px.rgb.jpg)
 
+if [ ! -d $ACCEPT_BASE ]; then
+   echo "Please set the ACCEPT_BASE to point to the root of the repo:"
+   echo "    e.g. export ACCEPT_BASE=~/accept"
+   exit 0
+fi
 
 # create config directory
 if [ ! -d $CONFIG_DIR ]; then
