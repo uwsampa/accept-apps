@@ -5,8 +5,11 @@
 #include<iostream>
 #include<cstdlib>
 
-std::map<uint64, uint64> EnerJ::mem;
+#include<ios>
+#include<iomanip>
+#include<string>
 
+std::map<uint64, uint64> EnerJ::mem;
 const uint64 EnerJ::max_rand = -1;
 
 // param is a three digit number
@@ -16,6 +19,7 @@ const uint64 EnerJ::max_rand = -1;
 // ones digit specifies level (1 to 3) (1 = mild, 2 = med, 3 = aggr)
 
 namespace {
+
   const double processor_freq = 2000000000.0;
 
   // sram/dram probabilities (can't differentiate, so combine)
@@ -35,7 +39,6 @@ namespace {
   const int dpm1 = 32;
   const int dpm2 = 16;
   const int dpm3 = 8;
-
 
   inline double getPMem(int level) {
     switch(level) {
@@ -93,9 +96,17 @@ namespace {
     if (precbits > mantissabits || precbits < 0) return;
     uint64 mask = ~(0ULL);
     int shift = mantissabits - precbits;
-    ret |= (mask << shift);
+    ret &= (mask << shift);
   }
 
+  inline uint64 rend(uint64 x) {
+    x = (x & 0x00000000FFFFFFFF) << 32 | (x & 0xFFFFFFFF00000000) >> 32;
+    x = (x & 0x0000FFFF0000FFFF) << 16 | (x & 0xFFFF0000FFFF0000) >> 16;
+    x = (x & 0x00FF00FF00FF00FF) << 8  | (x & 0xFF00FF00FF00FF00) >> 8;
+    return x;
+  }
+  
+  // TODO: this is deterministic, need to use different random number gen
   inline uint64 getRandom() {
     static uint64 x = 12345;
     x ^= (x >> 21);
@@ -135,7 +146,10 @@ void EnerJ::enerjStore(uint64 address, uint64 align, uint64 cycles,
       std::cerr << "Error: unaligned address in store instruction." << std::endl;
       exit(0);
     }
-    
+    std::cout << "addr: " << std::hex << address 
+              << " align: " << align 
+              << " cycles: " << std::dec << cycles 
+              << " type: " << std::string(type) << std::endl;
     int num_bytes = getNumBytes(type);
     for (int i = 0; i < num_bytes; ++i) {
       mem[address] = cycles;
@@ -152,12 +166,20 @@ uint64 EnerJ::enerjLoad(uint64 address, uint64 ret, uint64 align, uint64 cycles,
       exit(0);
     }
     
-    int num_bytes = getNumBytes(type);
-    int nAffectedBytes = (param / 10) % 10;
-    int level = param % 10;
+    std::cout << "addr: " << std::hex << address 
+              << " align: " << align 
+              << " ret: " << ret 
+              << " cycles: " << std::dec << cycles 
+              << " type: " << std::string(type) 
+              << " param: " << param << std::endl;
 
+    int level = param % 10;
+    int num_bytes = getNumBytes(type);
+    int bytes_req = (param / 10) % 10;
+    int nAffectedBytes = bytes_req < num_bytes ? bytes_req : num_bytes;
+    
     for (int i = 0; i < num_bytes; ++i) {
-      if (i < nAffectedBytes) { // Only flip bits in lowest byte
+      if (i < nAffectedBytes) { // Only flip bits in lowest bytes
         const double time_elapsed = static_cast<double>(cycles - mem[address]) /
           processor_freq;
         const double pFlip = getPMem(level) * time_elapsed;
@@ -178,27 +200,51 @@ uint64 EnerJ::enerjLoad(uint64 address, uint64 ret, uint64 align, uint64 cycles,
 }
 
 uint64 EnerJ::BinOp(int64 param, uint64 ret, const char* type) {
-  if ((param/100)%10 == 1) {
-
+  if ((param/100)%10 == 1) { // only execute this code if param indicates error injection requested
     double rand_number = static_cast<double>(getRandom()) /
       static_cast<double>(max_rand);
+
+    uint64 zero = 0ULL;
     int level = param % 10;
-    int num_bytes = getNumBytes(type);
-    if (strcmp(type,"Float") == 0) {
-      int mbits = getMantissaF(level);
+    if (strcmp(type,"Float")==0) {
+      int mbits = getMantissaF(level); // number of bits we want to keep in Mantissa for SP FP
       maskMantissa(23,mbits,ret);
-    } else if (strcmp(type, "Double") == 0) {
-      int mbits = getMantissaD(level);
+      /*
+      std::cout << "Float mbits: " << mbits 
+                << " oldret: " << std::hex << oldret
+                << " " << *reinterpret_cast<float*>(&oldret)
+                << " ret: " << std::hex << ret
+                << " " << *reinterpret_cast<float*>(&ret)
+                << std::endl;
+      */
+    } else if (strcmp(type,"Double")==0) {
+      int mbits = getMantissaD(level); // number of bits we want to keep in Mantissa for DP FP
       maskMantissa(52,mbits,ret);
+      /*
+      std::cout << "Double mbits: " << mbits 
+                << " oldret: " << std::hex << oldret
+                << " " << *reinterpret_cast<double*>(&oldret)
+                << " ret: " << std::hex << ret
+                << " " << *reinterpret_cast<double*>(&ret)
+                << std::endl;
+      */
     } else {
-      int nAffectedBytes = (param / 10) % 10;
+      int num_bytes = getNumBytes(type);
+      int nbytes = (param / 10) % 10;
+      // enfore we don't overwrite more bytes than size of data
+      nbytes = (nbytes < num_bytes) ? nbytes : num_bytes;
       double pALU = getPALU(level);
       if (rand_number < pALU) {
         uint64 r = getRandom();
-        memcpy(&ret, &r, nAffectedBytes*sizeof(char));
+        memcpy(&ret, &r, nbytes*sizeof(char));
+        /*
+        std::cout << "Type: " << std::string(type) << " " << num_bytes << " "
+                  << " ret: " << (int64)ret
+                  << " oldret: " << (int64)oldret 
+                  << " param: " << param << std::endl;
+        */
       }
     }
   }
   return ret;
 }
-

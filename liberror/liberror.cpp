@@ -44,6 +44,7 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
   // decode parameter bits so we can pick model and pass model parameter
   int64 model = ((param & MODEL_MASK) >> 16) & PARAM_MASK; // to be safe, re-mask the low 16-bits after shifting
   int64 model_param = (param & PARAM_MASK);
+  //std::cout << "[model,param] = [" << model << "," << model_param << "]" << std::endl;
 
   switch(model) {
 
@@ -51,6 +52,7 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
     break;
 
   case 1: // enerj
+    //std::cout << "EnerJ" << std::endl;
     if (strcmp(opcode, "store") == 0)
       EnerJ::enerjStore(op1, ret, elapsed_time, type, param);
     else if (strcmp(opcode, "load") == 0)
@@ -60,12 +62,14 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
     break;
 
   case 2: // zero low order bits FP = hierarchical fpu, reduced precision fpu
+    //std::cout << "Reduced Precision FPU" << std::endl;
     // invoke for non load/store instructions with Float/Double type
     if (strcmp(opcode, "store") && strcmp(opcode, "load") && (!strcmp(type, "Float") || !strcmp(type, "Double")))
       return_value = ReducedPrecFP::FPOp(model_param, ret, type);
     break;
     
   case 3: // flikker
+    //std::cout << "Flikker" << std::endl;
     if (strcmp(opcode, "store") == 0)
       Flikker::flikkerStore(op1, ret, elapsed_time, type);
     else if (strcmp(opcode, "load") == 0)

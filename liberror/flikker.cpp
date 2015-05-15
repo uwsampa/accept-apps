@@ -13,9 +13,9 @@ namespace {
 
   // probability of bit flip per second
   // 1s refresh cycle, 65 x 10^-9
-  const double p1 = 0.000000065;
+  const double p1 = 0.000000000400;
   // 20s refresh cycle, 400 x 10^-12
-  const double p20 = 0.000000000400;
+  const double p20 = 0.000000065;
 
   inline uint64 getRandom() {
     static uint64 x = 12345;
