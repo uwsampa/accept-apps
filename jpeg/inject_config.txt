@@ -1,4 +1,0 @@
-default 0
-dct 196609
-quantization 196609
-levelShift 196609

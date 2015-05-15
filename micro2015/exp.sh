@@ -1,23 +1,30 @@
 #!/bin/bash
 
+# this script runs error injection experiments
+# a gen-app.py script must be present for each app to be run
+
+WORKING_DIR=`pwd`
+CONFIG_DIR=$WORKING_DIR/configs
+OUTDIR=$WORKING_DIR/results
+
+# base directory for accept-apps and accept repos
+ACCEPT_BASE=~/research
+ACCEPTAPPS_DIR=$ACCEPT_BASE/accept-apps
+ACCEPT_DIR=$ACCEPT_BASE/accept
+
 # acccept-apps to run experiments on
-APPS=(sobel blackscholes)
+APPS=(blackscholes)
 #(sobel blackscholes jpeg)
 # specify output file names
 sobel=(out.pgm)
 blackscholes=(output.txt)
 jpeg=(baboon-220px.rgb.jpg)
 
-WORKING_DIR=`pwd`
-CONFIG_DIR=$WORKING_DIR/configs
 
-# base directory for accept-apps and accept repos
-BASE_DIR=~/research
-ACCEPTAPPS_DIR=$BASE_DIR/accept-apps
-ACCEPT_DIR=$BASE_DIR/accept
-
-# output directory
-OUTDIR=$WORKING_DIR/results
+# create config directory
+if [ ! -d $CONFIG_DIR ]; then
+    mkdir $CONFIG_DIR
+fi
 
 # main loop
 # process each app specified from accpet-apps
@@ -27,8 +34,14 @@ for a in ${APPS[@]}
 do
     echo "processing $a..."
 
+    # generate all configuration files
+    if [ ! -d $CONFIG_DIR/$a ]; then
+        mkdir -p $CONFIG_DIR/$a
+    fi
+    python gen-$a.py $CONFIG_DIR/$a
+
     # make output directory for this app
-    if [ ! -d $OUTDIR ]; then
+    if [ ! -d $OUTDIR/$a ]; then
         mkdir -p $OUTDIR/$a
     fi
 

@@ -2,6 +2,8 @@ TARGET := jpeg
 LDFLAGS := -lm
 RUNARGS := baboon.rgb
 
+CLEANMETOO := baboon.rgb.jpg
+
 LIBERROR_SRCS := liberror.cpp enerj.cpp flikker.cpp reducedprecfp.cpp
 
 SOURCES := jpeg.c huffman.c encoder.c dct.c marker.c quant.c rgbimage.c
