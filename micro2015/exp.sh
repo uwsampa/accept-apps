@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # acccept-apps to run experiments on
-APPS=(sobel)
-#blackscholes jpeg)
+APPS=(sobel blackscholes)
+#(sobel blackscholes jpeg)
 # specify output file names
 sobel=(out.pgm)
 blackscholes=(output.txt)
@@ -25,6 +25,8 @@ libfiles=$ACCEPTAPPS_DIR/liberror/*
 # copy liberror files to directory
 for a in ${APPS[@]}
 do
+    echo "processing $a..."
+
     # make output directory for this app
     if [ ! -d $OUTDIR ]; then
         mkdir -p $OUTDIR/$a
@@ -48,6 +50,7 @@ do
     # run an experiment for each config file present
     for cf in $configs
     do
+        echo "config $cf"
         # rename a copy of the file to inject_config.txt, as expected by accept
         cp $cf inject_config.txt
         # copy paramenters from inject_config.txt to accept_config.txt
@@ -59,6 +62,7 @@ do
         cfname="${cf##*/}"
         cfname="${cfname%.*}"
         fname=$cfname.$ext
+        echo "saving output file to $fname"
         mv $outfile $OUTDIR/$a/$fname
     done
 

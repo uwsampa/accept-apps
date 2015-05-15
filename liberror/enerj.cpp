@@ -146,10 +146,12 @@ void EnerJ::enerjStore(uint64 address, uint64 align, uint64 cycles,
       std::cerr << "Error: unaligned address in store instruction." << std::endl;
       exit(0);
     }
+    /*
     std::cout << "addr: " << std::hex << address 
               << " align: " << align 
               << " cycles: " << std::dec << cycles 
               << " type: " << std::string(type) << std::endl;
+    */
     int num_bytes = getNumBytes(type);
     for (int i = 0; i < num_bytes; ++i) {
       mem[address] = cycles;
@@ -165,14 +167,14 @@ uint64 EnerJ::enerjLoad(uint64 address, uint64 ret, uint64 align, uint64 cycles,
       std::cerr << "Error: unaligned address in load instruction." << std::endl;
       exit(0);
     }
-    
+    /*
     std::cout << "addr: " << std::hex << address 
               << " align: " << align 
               << " ret: " << ret 
               << " cycles: " << std::dec << cycles 
               << " type: " << std::string(type) 
               << " param: " << param << std::endl;
-
+    */
     int level = param % 10;
     int num_bytes = getNumBytes(type);
     int bytes_req = (param / 10) % 10;
