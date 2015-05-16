@@ -13,7 +13,7 @@ ACCEPTAPPS_DIR=$ACCEPT_BASE/accept-apps
 ACCEPT_DIR=$ACCEPT_BASE/accept
 
 # acccept-apps to run experiments on
-APPS=(sobel)
+APPS=(blackscholes)
 #(sobel blackscholes jpeg)
 # specify output file names
 sobel=(out.pgm)
@@ -43,7 +43,7 @@ do
     if [ ! -d $CONFIG_DIR/$a ]; then
         mkdir -p $CONFIG_DIR/$a
     fi
-    python gen-$a.py $CONFIG_DIR/$a
+    python gen-configs.py $a $CONFIG_DIR/$a
 
     # make output directory for this app
     if [ ! -d $OUTDIR/$a ]; then
