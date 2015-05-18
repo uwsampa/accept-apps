@@ -13,12 +13,12 @@ ACCEPTAPPS_DIR=$ACCEPT_BASE/accept-apps
 ACCEPT_DIR=$ACCEPT_BASE/accept
 
 # acccept-apps to run experiments on
-APPS=(blackscholes)
+APPS=(sobel)
 #(sobel blackscholes jpeg)
 # specify output file names
 sobel=(out.pgm)
 blackscholes=(output.txt)
-jpeg=(baboon-220px.rgb.jpg)
+jpeg=(baboon.rgb.jpg)
 
 
 # create config directory
@@ -60,6 +60,11 @@ do
 
     # get inject_config.txt files for this app
     configs=$CONFIG_DIR/$a/*
+
+    echo ""
+    echo "Configs to evaluate..."
+    echo $configs
+
     # run an experiment for each config file present
     for cf in $configs
     do

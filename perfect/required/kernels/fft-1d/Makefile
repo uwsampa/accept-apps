@@ -9,5 +9,5 @@ LDFLAGS := -lm -lrt
 #   ../../../lib/libtiming.a ../../../lib/libxmem.a
 #   -lm -lrt
 
-ACCEPT_DIR := ~/private/accept
+ACCEPT_DIR := ~/research/accept
 include $(ACCEPT_DIR)/accept.mk
