@@ -8,7 +8,7 @@ CONFIG_DIR=$WORKING_DIR/configs
 OUTDIR=$WORKING_DIR/results
 
 # base directory for accept-apps and accept repos
-ACCEPT_BASE=~/research
+# ACCEPT_BASE=~/research
 ACCEPTAPPS_DIR=$ACCEPT_BASE/accept-apps
 ACCEPT_DIR=$ACCEPT_BASE/accept
 
@@ -20,6 +20,11 @@ sobel=(out.pgm)
 blackscholes=(output.txt)
 jpeg=(baboon.rgb.jpg)
 
+if [ ! -d $ACCEPT_BASE ]; then
+   echo "Please set the ACCEPT_BASE to point to the root of the repo:"
+   echo "    e.g. export ACCEPT_BASE=~/accept"
+   exit 0
+fi
 
 # create config directory
 if [ ! -d $CONFIG_DIR ]; then
@@ -38,7 +43,7 @@ do
     if [ ! -d $CONFIG_DIR/$a ]; then
         mkdir -p $CONFIG_DIR/$a
     fi
-    python gen-$a.py $CONFIG_DIR/$a
+    python gen-configs.py $a $CONFIG_DIR/$a
 
     # make output directory for this app
     if [ ! -d $OUTDIR/$a ]; then
