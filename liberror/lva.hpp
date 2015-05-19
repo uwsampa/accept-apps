@@ -1,43 +1,44 @@
-
-typedef unsigned long long uint64;
-typedef long long int64;
+#include <stdint.h>
 
 class LVA {
     typedef union {
 	double d;
 	float f;
-	uint64 b;
-    } dbl_uint64;
+	int8_t  i8;
+	int16_t i16;
+	int32_t i32;
+	uint64_t b;
+    } bitmess;
 
     typedef struct {
-	uint64 tag;
+	uint64_t tag;
 	int confidence;
 	int degree;
 	double LHB[4];
 	int LHB_head;
     } lva_entry;
 
-    
+
 public:
-  static uint64 lvaLoad(uint64 ld_address, uint64 ret,
-      const char* type, uint64 pc);
+  static uint64_t lvaLoad(uint64_t ld_address, uint64_t ret,
+      const char* type, uint64_t pc);
 
 private:
-    static const uint64 max_rand;
+    static const uint64_t max_rand;
     static lva_entry approximator[512];
-    static dbl_uint64 GHB[4];
+    static bitmess GHB[4];
     static int GHB_head;
     static float threshold;
     static float pHitRate;
     static int   degree;
     static bool  init_done;
-    static uint64 stats_accesses;
-    static uint64 stats_cache_misses;
-    static uint64 stats_predictions;
+    static uint64_t stats_accesses;
+    static uint64_t stats_cache_misses;
+    static uint64_t stats_predictions;
 
     static void init();
-    static bool isCacheHit(uint64 ld_address);
-    static uint64 getHash(uint64 pc);
+    static bool isCacheHit(uint64_t ld_address);
+    static uint64_t getHash(uint64_t pc);
     static void print_summary();
 };
 

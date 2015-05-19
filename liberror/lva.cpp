@@ -9,16 +9,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const uint64 LVA::max_rand = -1;
+const uint64_t LVA::max_rand = -1;
 LVA::lva_entry LVA::approximator[512];
-LVA::dbl_uint64 LVA::GHB[4];
-int    LVA::GHB_head = 0;
-bool   LVA::init_done = false;
-uint64 LVA::stats_accesses = 0;
-uint64 LVA::stats_cache_misses = 0;
-uint64 LVA::stats_predictions = 0;
+LVA::bitmess   LVA::GHB[4];
+int      LVA::GHB_head = 0;
+bool     LVA::init_done = false;
+uint64_t LVA::stats_accesses = 0;
+uint64_t LVA::stats_cache_misses = 0;
+uint64_t LVA::stats_predictions = 0;
 
-float  LVA::threshold = 0.05; // error threshold - determines if prediction was accurate
+float  LVA::threshold = 0.10; // error threshold - determines if prediction was accurate
 float  LVA::pHitRate = 0.9;   // cache hit rate
 int    LVA::degree = 1;       // how often is prediction value used
 
@@ -26,8 +26,8 @@ int    LVA::degree = 1;       // how often is prediction value used
 
 namespace {
 
-  inline uint64 getRandom() {
-    static uint64 x = 12345;
+  inline uint64_t getRandom() {
+    static uint64_t x = 12345;
     x ^= (x >> 21);
     x ^= (x << 35);
     x ^= (x >> 4);
@@ -35,14 +35,14 @@ namespace {
   }
 }
 
-bool LVA::isCacheHit(uint64 addr) {
+bool LVA::isCacheHit(uint64_t addr) {
     const double rand_number = static_cast<double>(getRandom()) /
         static_cast<double>(max_rand);
 
     return (rand_number <= pHitRate);
 }
 
-uint64 LVA::getHash(uint64 pc) {
+uint64_t LVA::getHash(uint64_t pc) {
     return pc;// ^
     //       (GHB[0].b >> fuzzy_mantissa_sft) ^
     //       (GHB[1].b >> fuzzy_mantissa_sft) ^
@@ -51,7 +51,7 @@ uint64 LVA::getHash(uint64 pc) {
 }
 
 
-uint64 LVA::lvaLoad(uint64 ld_address, uint64 ret, const char* type, uint64 pc) {
+uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint64_t pc) {
     if(init_done == false)
 	init();
     stats_accesses++;
@@ -62,18 +62,19 @@ uint64 LVA::lvaLoad(uint64 ld_address, uint64 ret, const char* type, uint64 pc) 
     }
     stats_cache_misses++;
 
-    LVA::dbl_uint64 precise;
+    bitmess precise;
     precise.b = ret;
-    //printf("pc: %lld, ret: %llx, type: %s\n", pc, ret, type);
-    //printf("float: %f, double: %f\n", precise.f, precise.d);
+    //printf("pc: %ld, ret: %lx, type: %s\n", pc, ret, type);
+    //printf("float: %f, double: %f, int8: %d, int16: %d, int32: %d\n",
+    //        precise.f, precise.d, precise.i8, precise.i16, precise.i32);
 
-    dbl_uint64 retval;
+    bitmess retval;
     retval.b = ret;
 
     // miss in the cache
 
-    uint64 tag = getHash(pc);
-    uint64 idx = tag & 0x1FF;
+    uint64_t tag = getHash(pc);
+    uint64_t idx = tag & 0x1FF;
     //printf("tag: %llx, idx: %lld\n", tag, idx);
     if(approximator[idx].tag != tag) {
 	//printf("Tag miss\n");
@@ -84,9 +85,9 @@ uint64 LVA::lvaLoad(uint64 ld_address, uint64 ret, const char* type, uint64 pc) 
 
     if(approximator[idx].confidence >= 0) {
 	//enough confidence to use predictor
-	printf("Using LVA\n");
+	//printf("Using LVA\n");
 	stats_predictions++;
-	LVA::dbl_uint64 r;
+	bitmess r;
 	double p = (approximator[idx].LHB[0] +
 	            approximator[idx].LHB[1] +
 	            approximator[idx].LHB[2] +
@@ -94,8 +95,18 @@ uint64 LVA::lvaLoad(uint64 ld_address, uint64 ret, const char* type, uint64 pc) 
 
 	if(strcmp(type, "Float") == 0)
 	    retval.f = p;
-	else
+	else if(strcmp(type, "Double") == 0)
 	    retval.d = p;
+	else if(strcmp(type, "Int8") == 0)
+	    retval.i8 = p;
+	else if(strcmp(type, "Int16") == 0)
+	    retval.i16 = p;
+	else if(strcmp(type, "Int32") == 0)
+	    retval.i32 = p;
+	else {
+	    printf("Unsupported prediction type! [%s]\n", type);
+	    abort();
+	}
     }
 
     // update degree
@@ -107,8 +118,18 @@ uint64 LVA::lvaLoad(uint64 ld_address, uint64 ret, const char* type, uint64 pc) 
     approximator[idx].LHB_head = (approximator[idx].LHB_head + 1) & 0x3;
     if(strcmp(type, "Float") == 0)
         approximator[idx].LHB[approximator[idx].LHB_head] = precise.f;
-    else
+    else if(strcmp(type, "Double") == 0)
         approximator[idx].LHB[approximator[idx].LHB_head] = precise.d;
+    else if(strcmp(type, "Int32") == 0)
+        approximator[idx].LHB[approximator[idx].LHB_head] = precise.i32;
+    else if(strcmp(type, "Int16") == 0)
+        approximator[idx].LHB[approximator[idx].LHB_head] = precise.i16;
+    else if(strcmp(type, "Int8") == 0)
+        approximator[idx].LHB[approximator[idx].LHB_head] = precise.i8;
+    else {
+	    printf("Unsupported prediction type! [%s]\n", type);
+	    abort();
+    }
 
     // update GHB
     GHB_head = (GHB_head + 1) & 0x3;
@@ -123,8 +144,17 @@ uint64 LVA::lvaLoad(uint64 ld_address, uint64 ret, const char* type, uint64 pc) 
     double error;
     if(strcmp(type, "Float") == 0)
 	error = fabsf(fabsf(precise.f - retval.f)/precise.f);
-    else
+    else if(strcmp(type, "Double") == 0)
 	error = fabs(fabs(precise.d - retval.d)/precise.d);
+    else if(strcmp(type, "Int32") == 0)
+	error = fabs(fabs(precise.i32 - retval.i32)/precise.i32);
+    else if(strcmp(type, "Int16") == 0)
+	error = fabs(fabs(precise.i16 - retval.i16)/precise.i16);
+    else if(strcmp(type, "Int8") == 0)
+	error = fabs(fabs(precise.i8 - retval.i8)/precise.i8);
+    else
+	abort(); // should never get here
+
     if(error < threshold) {
 	//printf("[%lld]Increasing confidence! Error: %f\n", idx, error);
 	approximator[idx].confidence++;
@@ -159,7 +189,7 @@ void LVA::init() {
 }
 
 void LVA::print_summary() {
-    printf("LVA accesses:\t\t%lld\n", stats_accesses);
-    printf("LVA cache misses:\t%lld\n", stats_cache_misses);
-    printf("LVA predictions:\t%lld\n", stats_predictions);
+    printf("LVA accesses:\t\t%ld\n", stats_accesses);
+    printf("LVA cache misses:\t%ld\n", stats_cache_misses);
+    printf("LVA predictions:\t%ld\n", stats_predictions);
 }
