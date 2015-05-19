@@ -52,6 +52,12 @@ if __name__ == "__main__":
     dump(bench,outdir,'flikker',1)
     dump(bench,outdir,'flikker',2)
 
+    # dump lva
+    dump(bench,outdir,'lva', 0x0000)
+    dump(bench,outdir,'lva', 0x4000)
+    dump(bench,outdir,'lva', 0x8000)
+    dump(bench,outdir,'lva', 0xC000)
+
     # dump ReducedPrecFP
     dump(bench,outdir,'reducedprecfp',8)
     dump(bench,outdir,'reducedprecfp',16)

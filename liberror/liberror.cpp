@@ -81,8 +81,7 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
     // needs overall (approx&precise) cache simulator
     // applies to FP load instructions
     //std::cout << "[pc, opcode, type] = [" << model_param << "," << opcode << "," << type << "]" << std::endl;
-    if ((strcmp(opcode, "load") == 0) &&
-        (strcmp(type, "Float") == 0 || strcmp(type, "Double") == 0))
+    if (strcmp(opcode, "load") == 0)
       return_value = LVA::lvaLoad(op1 /*ld addr*/, ret /*true value*/, type, model_param /*pc*/);
     break;
 
