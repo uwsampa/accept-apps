@@ -40,28 +40,33 @@ void sobel_filtering( )
   }
 
   /* New loop variables APPROX */
-  APPROX int xa;
-  APPROX int ya;
+  int xa;
+  int ya;
+  APPROX double amin = min;
+  APPROX double amax = max;
   /* New pixel_value APPROX */
   APPROX double pixel_value_app;
+  APPROX int aweight[3][3] = {{ -1,  0,  1 },
+		      { -2,  0,  2 },
+		      { -1,  0,  1 }};
   /* Initialization of image2[y][x] */
   x_size2 = x_size1;
   y_size2 = y_size1;
-  for (ya = 0; ENDORSE(ya < y_size2); ya++) {
-    for (xa = 0; ENDORSE(xa < x_size2); xa++) {
+  for (ya = 0; ya < y_size2; ya++) {
+    for (xa = 0; xa < x_size2; xa++) {
       image2[ya][xa] = 0;
     }
   }
   /* Generation of image2 after linear transformtion */
-  for (ya = 1; ENDORSE(ya < y_size1 - 1); ya++) {
-    for (xa = 1; ENDORSE(xa < x_size1 - 1); xa++) {
+  for (ya = 1; ya < y_size1 - 1; ya++) {
+    for (xa = 1; xa < x_size1 - 1; xa++) {
       pixel_value_app = 0.0;
       for (j = -1; j <= 1; j++) {
 	    for (i = -1; i <= 1; i++) {
-	      pixel_value_app += weight[j + 1][i + 1] * image1[ya + j][xa + i];
+	      pixel_value_app += aweight[j + 1][i + 1] * image1[ya + j][xa + i];
 	    }
       }
-      pixel_value_app = MAX_BRIGHTNESS * (pixel_value_app - min) / (max - min);
+      pixel_value_app = MAX_BRIGHTNESS * (pixel_value_app - amin) / (amax - amin);
       image2[ya][xa] = (unsigned char)pixel_value_app;
     }
   }

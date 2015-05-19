@@ -2,7 +2,7 @@ TARGET := jpeg
 LDFLAGS := -lm
 RUNARGS := baboon.rgb
 
-CLEANMETOO := baboon.rgb.jpg
+CLEANMETOO := baboon.rgb.jpg data/baboon-220px.rgb.jpg
 
 LIBERROR_SRCS := liberror.cpp enerj.cpp flikker.cpp reducedprecfp.cpp
 
