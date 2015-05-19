@@ -43,11 +43,11 @@ bool LVA::isCacheHit(uint64 addr) {
 }
 
 uint64 LVA::getHash(uint64 pc) {
-    return pc ^
-           (GHB[0].b >> fuzzy_mantissa_sft) ^
-           (GHB[1].b >> fuzzy_mantissa_sft) ^
-           (GHB[2].b >> fuzzy_mantissa_sft) ^
-           (GHB[3].b >> fuzzy_mantissa_sft);
+    return pc;// ^
+    //       (GHB[0].b >> fuzzy_mantissa_sft) ^
+    //       (GHB[1].b >> fuzzy_mantissa_sft) ^
+    //       (GHB[2].b >> fuzzy_mantissa_sft) ^
+    //       (GHB[3].b >> fuzzy_mantissa_sft);
 }
 
 
