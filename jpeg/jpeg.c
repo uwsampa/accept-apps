@@ -59,7 +59,7 @@ int main (int argc, const char* argv[]) {
 
 	fp = fopen(outputFileName, "wb");
 	if (fp != NULL) {
-		fwrite(outputBuffer, 1, outputBufferPtr - outputBuffer, fp);
+		fwrite(outputBuffer, 1, srcImage.w*srcImage.h, fp);
 		fclose(fp);
 	}
 	free(outputBuffer);
