@@ -21,8 +21,9 @@ uint64_t LVA::stats_predictions = 0;
 float  LVA::threshold = 0.10; // error threshold - determines if prediction was accurate
 float  LVA::pHitRate = 0.9;   // cache hit rate
 int    LVA::degree = 1;       // how often is prediction value used
+int    LVA::hash_method = 0;  // how many elements of the GHB are used in the hash
 
-#define fuzzy_mantissa_sft 10
+#define fuzzy_mantissa_sft 16 // leave only 8 bits in the mantissa
 
 namespace {
 
@@ -43,17 +44,36 @@ bool LVA::isCacheHit(uint64_t addr) {
 }
 
 uint64_t LVA::getHash(uint64_t pc) {
-    return pc;// ^
-    //       (GHB[0].b >> fuzzy_mantissa_sft) ^
-    //       (GHB[1].b >> fuzzy_mantissa_sft) ^
-    //       (GHB[2].b >> fuzzy_mantissa_sft) ^
-    //       (GHB[3].b >> fuzzy_mantissa_sft);
+    switch (hash_method) {
+    case 0:
+	return pc;
+	
+    case 1:
+	return pc ^
+           (GHB[GHB_head].b >> fuzzy_mantissa_sft);
+
+    case 2:
+	return pc ^
+           (GHB[GHB_head].b >> fuzzy_mantissa_sft) ^
+           (GHB[(GHB_head-1)&0x3].b >> fuzzy_mantissa_sft);
+
+    case 4:
+	return pc ^
+           (GHB[0].b >> fuzzy_mantissa_sft) ^
+           (GHB[1].b >> fuzzy_mantissa_sft) ^
+           (GHB[2].b >> fuzzy_mantissa_sft) ^
+           (GHB[3].b >> fuzzy_mantissa_sft);
+
+    default:
+	abort();
+    }
 }
 
 
 uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint64_t pc) {
     if(init_done == false)
-	init();
+	init(pc);
+	
     stats_accesses++;
 
     if (isCacheHit(ld_address)) {
@@ -170,7 +190,7 @@ uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint6
     return retval.b;
 }
 
-void LVA::init() {
+void LVA::init(uint64_t param) {
     for(int i = 0; i < 512; i++) {
 	approximator[i].degree = 0;
 	approximator[i].confidence = -8; // this ensures that the predictor won't be used for the first 8 times
@@ -182,6 +202,27 @@ void LVA::init() {
     GHB[1].b = 0;
     GHB[2].b = 0;
     GHB[3].b = 0;
+
+    switch((param >> 14) & 0x3) {
+    case 0:
+	hash_method = 0;
+	threshold = 0.1;
+	break;
+    case 1:
+	hash_method = 1;
+	threshold = 0.1;
+	break;
+    case 2:
+	hash_method = 0;
+	threshold = 0.2;
+	break;
+    case 3:
+	hash_method = 1;
+	threshold = 0.2;
+	break;
+    default:
+	abort();
+    }
 
     atexit(print_summary);
 

@@ -31,14 +31,14 @@ private:
     static float threshold;
     static float pHitRate;
     static int   degree;
+    static int   hash_method;
     static bool  init_done;
     static uint64_t stats_accesses;
     static uint64_t stats_cache_misses;
     static uint64_t stats_predictions;
 
-    static void init();
+    static void init(uint64_t param);
     static bool isCacheHit(uint64_t ld_address);
     static uint64_t getHash(uint64_t pc);
     static void print_summary();
 };
-
