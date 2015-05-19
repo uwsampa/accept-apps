@@ -2,7 +2,7 @@ TARGET := blackscholes
 LDFLAGS := -lm -pthread
 CFLAGS := -pthread -DENABLE_THREADS
 
-LIBERROR_SRCS := liberror.cpp enerj.cpp flikker.cpp reducedprecfp.cpp
+LIBERROR_SRCS := liberror.cpp enerj.cpp flikker.cpp reducedprecfp.cpp lva.cpp
 
 SOURCES := blackscholes.m4.cpp
 SOURCES += $(LIBERROR_SRCS)
