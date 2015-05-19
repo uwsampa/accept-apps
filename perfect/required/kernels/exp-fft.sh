@@ -10,11 +10,12 @@ OUTDIR=$WORKING_DIR/results
 # base directory for accept-apps and accept repos
 ACCEPT_BASE=~/research
 ACCEPTAPPS_DIR=$ACCEPT_BASE/accept-apps
-PERFECT_DIR=$ACCEPTAPPS_DIR/perfect/pa1/kernels
-ACCEPT_DIR=$ACCEPT_BASE/accept
+PERFECT_DIR=$ACCEPTAPPS_DIR/perfect/required/kernels
+ACCEPT_DIR=/sampa/share/accept/accept
+#ACCEPT_DIR=$ACCEPT_BASE/accept
 
 # acccept-apps to run experiments on
-APPS=(2d_convolution)
+APPS=(fft-1d)
 #(sobel blackscholes jpeg)
 # specify output file names
 
@@ -64,13 +65,14 @@ do
     # get inject_config.txt files for this app
     configs=$CONFIG_DIR/$a/*
 
-    echo ""
-    echo "Configs to evaluate..."
-    echo $configs
+    #echo ""
+    #echo "Configs to evaluate..."
+    #echo $configs
 
     # run an experiment for each config file present
     for cf in $configs
     do
+	pwd
         echo "config $cf"
         # rename a copy of the file to inject_config.txt, as expected by accept
         cp $cf inject_config.txt
@@ -82,9 +84,11 @@ do
         #ext="${outfile##*.}"
         cfname="${cf##*/}"
         cfname="${cfname%.*}"
-        mv 2dconv_output.0.mat $OUTDIR/$a/$cfname-0.mat
-        mv 2dconv_output.1.mat $OUTDIR/$a/$cfname-1.mat
-        mv 2dconv_output.2.mat $OUTDIR/$a/$cfname-2.mat
+	mv fft_output.mat $OUTDIR/$a/$cfname.mat
+	mv random_input.mat $OUTDIR/$a/$cfname-input.mat
+        #mv histeq_output.0.mat $OUTDIR/$a/$cfname-0.mat
+        #mv 2dconv_output.1.mat $OUTDIR/$a/$cfname-1.mat
+        #mv 2dconv_output.2.mat $OUTDIR/$a/$cfname-2.mat
         #fname=$cfname.$ext
         #echo "saving output file to $fname"
         #mv $outfile $OUTDIR/$a/$fname

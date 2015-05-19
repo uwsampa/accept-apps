@@ -18,7 +18,8 @@ benchmarkPhases = {
     'jpeg': ['dct', 'quantization', 'levelShift'],
     'sobel': ['sobel_filtering'],
     '2d_convolution' : ['conv2d'],
-    'histogram_equalization' : ['hist']
+    'histogram_equalization' : ['hist'],
+    'fft-1d' : ['fft']
 }
 
 def dump(bench,outdir,base,mparam):
