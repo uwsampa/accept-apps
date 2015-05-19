@@ -16,7 +16,9 @@ approxModelMap = {
 benchmarkPhases = {
     'blackscholes': ['_Z19BlkSchlsEqEuroNoDivfffffif', '_Z4CNDFf'],
     'jpeg': ['dct', 'quantization', 'levelShift'],
-    'sobel': ['sobel_filtering']
+    'sobel': ['sobel_filtering'],
+    '2d_convolution' : ['conv2d'],
+    'histogram_equalization' : ['hist']
 }
 
 def dump(bench,outdir,base,mparam):

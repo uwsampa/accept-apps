@@ -1,5 +1,5 @@
 TARGET := 2d_convolution
-CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_SMALL
+CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
 LDFLAGS := -lm -lrt
 
 ACCEPT_DIR := ~/research/accept

@@ -99,7 +99,7 @@
 #include "2d_convolution.h"
 
 #if !defined(BATCH_SIZE)
-#define BATCH_SIZE (30)
+#define BATCH_SIZE (3)
 #endif
 
 #if INPUT_SIZE == INPUT_SIZE_SMALL
