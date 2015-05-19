@@ -1,5 +1,6 @@
 #include "enerj.hpp"
 #include "reducedprecfp.hpp"
+#include "lva.hpp"
 #include "flikker.hpp"
 
 
@@ -67,7 +68,7 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
     if (strcmp(opcode, "store") && strcmp(opcode, "load") && (!strcmp(type, "Float") || !strcmp(type, "Double")))
       return_value = ReducedPrecFP::FPOp(model_param, ret, type);
     break;
-    
+
   case 3: // flikker
     //std::cout << "Flikker" << std::endl;
     if (strcmp(opcode, "store") == 0)
@@ -77,7 +78,12 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
     break;
 
   case 4: // load-value approximation
-    // need cache simulator
+    // needs overall (approx&precise) cache simulator
+    // applies to FP load instructions
+    //std::cout << "[pc, opcode, type] = [" << model_param << "," << opcode << "," << type << "]" << std::endl;
+    if ((strcmp(opcode, "load") == 0) &&
+        (strcmp(type, "Float") == 0 || strcmp(type, "Double") == 0))
+      return_value = LVA::lvaLoad(op1 /*ld addr*/, ret /*true value*/, type, model_param /*pc*/);
     break;
 
   case 5: // fuzzy memoization for fp

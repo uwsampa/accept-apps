@@ -4,7 +4,7 @@ RUNARGS := baboon.rgb
 
 CLEANMETOO := baboon.rgb.jpg
 
-LIBERROR_SRCS := liberror.cpp enerj.cpp flikker.cpp reducedprecfp.cpp
+LIBERROR_SRCS := liberror.cpp enerj.cpp flikker.cpp reducedprecfp.cpp lva.cpp
 
 SOURCES := jpeg.c huffman.c encoder.c dct.c marker.c quant.c rgbimage.c
 SOURCES += $(LIBERROR_SRCS)
