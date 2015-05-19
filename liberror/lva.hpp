@@ -28,11 +28,16 @@ private:
     static dbl_uint64 GHB[4];
     static int GHB_head;
     static float threshold;
-    static  float pHitRate;
+    static float pHitRate;
+    static int   degree;
+    static bool  init_done;
+    static uint64 stats_accesses;
+    static uint64 stats_cache_misses;
+    static uint64 stats_predictions;
 
     static void init();
     static bool isCacheHit(uint64 ld_address);
     static uint64 getHash(uint64 pc);
-    static bool init_done;
+    static void print_summary();
 };
 
