@@ -33,7 +33,10 @@ npuMap = {
 benchmarkPhases = {
     'blackscholes': ['_Z19BlkSchlsEqEuroNoDivfffffif', '_Z4CNDFf'],
     'jpeg': ['dct', 'quantization', 'levelShift'],
-    'sobel': ['sobel_filtering']
+    'sobel': ['sobel_filtering'],
+    '2d_convolution' : ['conv2d'],
+    'histogram_equalization' : ['hist'],
+    'fft-1d' : ['fft']
 }
 
 def dump(bench,outdir,base,mparam,coarse):
@@ -73,6 +76,12 @@ if __name__ == "__main__":
     # dump Flikker
     dump(bench,outdir,'flikker',1,coarseDisable)
     dump(bench,outdir,'flikker',2,coarseDisable)
+
+    # dump lva
+    dump(bench,outdir,'lva', 0x0000)
+    dump(bench,outdir,'lva', 0x4000)
+    dump(bench,outdir,'lva', 0x8000)
+    dump(bench,outdir,'lva', 0xC000)
 
     # dump ReducedPrecFP
     dump(bench,outdir,'reducedprecfp',8,coarseDisable)

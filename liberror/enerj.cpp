@@ -155,7 +155,7 @@ void EnerJ::enerjStore(uint64 address, uint64 align, uint64 cycles,
     int num_bytes = getNumBytes(type);
     for (int i = 0; i < num_bytes; ++i) {
       mem[address] = cycles;
-      address += 4U;
+      address += 1U;
     }
   }
 }
@@ -195,7 +195,7 @@ uint64 EnerJ::enerjLoad(uint64 address, uint64 ret, uint64 align, uint64 cycles,
       }
       
       mem[address] = cycles;
-      address += 4U;
+      address += 1U;
     }
   }
   return ret;

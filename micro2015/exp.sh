@@ -18,10 +18,17 @@ sobel=(out.pgm)
 blackscholes=(output.txt)
 jpeg=(baboon.rgb.jpg)
 
-if [ ! -d $ACCEPT_BASE ]; then
+if [[ -z $ACCEPT_BASE || (! -d $ACCEPT_BASE) ]]; then
    echo "Please set the ACCEPT_BASE to point to the root of the repo:"
    echo "    e.g. export ACCEPT_BASE=~/accept"
    exit 0
+fi
+
+if [[ ! -x $ACCEPT_DIR/bin/inject_config.py ]]; then
+    echo "Cannot find '$ACCEPT_DIR/bin/inject_config.py'."
+    echo "This file is necessary to run these experiments"
+    echo "Please make sure that ACCEPT_DIR points to the correct place"
+    exit 0
 fi
 
 # create config directory
@@ -63,6 +70,11 @@ do
 
     # get inject_config.txt files for this app
     configs=$CONFIG_DIR/$a/*
+
+    echo ""
+    echo "Configs to evaluate..."
+    echo $configs
+
     # run an experiment for each config file present
     for cf in $configs
     do

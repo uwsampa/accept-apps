@@ -59,7 +59,7 @@ void Flikker::flikkerStore(uint64 address, uint64 align, uint64 cycles,
   int num_bytes = getNumBytes(type);
   for (int i = 0; i < num_bytes; ++i) {
     mem[address] = cycles;
-    address += 4U;
+    address += 1U;
   }
 }
 
@@ -92,7 +92,7 @@ uint64 Flikker::flikkerLoad(uint64 address, uint64 ret, uint64 align, uint64 cyc
     }
     
     mem[address] = cycles;
-    address += 4U;
+    address += 1U;
   }
 
   return ret;
