@@ -46,7 +46,6 @@ UINT8* encodeImage(
 	outputBuffer = writeMarkers(outputBuffer, imageFormat, srcImage->w, srcImage->h);
 
 	for (i = 0; i < srcImage->h; i += 8) {
-		printf("Row %d\n", i);
 		for (j = 0; j < srcImage->w; j += 8) {
 			readMcuFromRgbImage(srcImage, j, i, Y1);
 
