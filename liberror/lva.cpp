@@ -135,28 +135,27 @@ uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint6
 	return retval.b;
 
     // train predictor
-    approximator[idx].LHB_head = (approximator[idx].LHB_head + 1) & 0x3;
+    double fp_precise;
     if(strcmp(type, "Float") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.f;
+        fp_precise = precise.f;
     else if(strcmp(type, "Double") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.d;
+        fp_precise = precise.d;
     else if(strcmp(type, "Int32") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.i32;
+        fp_precise = precise.i32;
     else if(strcmp(type, "Int16") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.i16;
+        fp_precise = precise.i16;
     else if(strcmp(type, "Int8") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.i8;
+        fp_precise = precise.i8;
     else {
 	    printf("Unsupported prediction type! [%s]\n", type);
 	    abort();
     }
+    approximator[idx].LHB_head = (approximator[idx].LHB_head + 1) & 0x3;
+    approximator[idx].LHB[approximator[idx].LHB_head] = fp_precise;
 
     // update GHB
     GHB_head = (GHB_head + 1) & 0x3;
-    if(strcmp(type, "Float") == 0)
-	GHB[GHB_head].f = precise.f;
-    else
-	GHB[GHB_head].f = precise.d;
+    GHB[GHB_head].f = fp_precise;
 
     approximator[idx].degree = degree;
 
