@@ -1,9 +1,11 @@
 #!/bin/bash
 
+# BEFORE USING: 'source /sampa/share/accept/accept/activate.sh'
+
 # this script runs error injection experiments
 
 # acccept-apps to run experiments on
-APPS=(sobel blackscholes jpeg)
+APPS=(blackscholes jpeg sobel)
 # specify output file names
 sobel=(out.pgm)
 blackscholes=(output.txt)
@@ -30,22 +32,24 @@ if [[ ! -x $ACCEPT_DIR/bin/inject_config.py ]]; then
     exit 0
 fi
 
+WORKING_DIR=`pwd`
+
 # main loop
 # process each app specified from accpet-apps
 libfiles=$ACCEPTAPPS_DIR/liberror/*
 # copy liberror files to directory
-for a in ${APPS[@]}
+for APP in ${APPS[@]}
 do
-    CONFIG_DIR=$APP/inject_configs
-    OUTDIR=$APP/outputs
+    CONFIG_DIR=$WORKING_DIR/$APP/inject_configs
+    OUTDIR=$WORKING_DIR/$APP/outputs
 
-    echo "processing $a..."
+    echo "processing $APP..."
 
     # generate all configuration files
     if [ ! -d $CONFIG_DIR ]; then
         mkdir -p $CONFIG_DIR
-        python gen-configs.py $a $CONFIG_DIR
     fi
+    python gen-configs.py $APP $CONFIG_DIR
 
     # make output directory for this app
     if [ ! -d $OUTDIR ]; then
@@ -53,11 +57,11 @@ do
     fi
 
     # get name out output file for this app
-    outfiles="$a[0]"
+    outfiles="$APP[0]"
     outfile=${!outfiles[0]}
 
     # move into app directory
-    cd $ACCEPTAPPS_DIR/$a
+    cd $ACCEPTAPPS_DIR/$APP
 
     # copy library files into directory
     cp $libfiles .
@@ -106,3 +110,4 @@ do
     # change back to previous directory
     cd -
 done
+#  LocalWords:  jpg

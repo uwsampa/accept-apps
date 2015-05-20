@@ -78,16 +78,16 @@ if __name__ == "__main__":
     dump(bench,outdir,'flikker',2,coarseDisable)
 
     # dump lva
-    dump(bench,outdir,'lva', 0x0000)
-    dump(bench,outdir,'lva', 0x4000)
-    dump(bench,outdir,'lva', 0x8000)
-    dump(bench,outdir,'lva', 0xC000)
+    dump(bench,outdir,'lva', 0x0000,coarseDisable)
+    dump(bench,outdir,'lva', 0x4000,coarseDisable)
+    dump(bench,outdir,'lva', 0x8000,coarseDisable)
+    dump(bench,outdir,'lva', 0xC000,coarseDisable)
 
     # dump ReducedPrecFP
     dump(bench,outdir,'reducedprecfp',8,coarseDisable)
     dump(bench,outdir,'reducedprecfp',16,coarseDisable)
 
     # dump Neural Acceleration
-    dump(bench,outdir,'dnpu',npuMap[bench],coarseEnable)
-    dump(bench,outdir,'anpu',npuMap[bench],coarseEnable)
+    #dump(bench,outdir,'dnpu',npuMap[bench],coarseEnable)
+    #dump(bench,outdir,'anpu',npuMap[bench],coarseEnable)
 

@@ -2,9 +2,10 @@
 
 APP=(fft-1d)
 
-CONFIG_DIR=$APP/inject_configs
-OUTDIR=$APP/outputs
-INPUT_DIR=$APP/inputs
+WORKING_DIR=`pwd`
+CONFIG_DIR=$WORKING_DIR/$APP/inject_configs
+OUTDIR=$WORKING_DIR/$APP/outputs
+INPUT_DIR=$WORKING_DIR/$APP/inputs
 
 # base directory for accept-apps and accept repos
 ACCEPT_BASE=~/research
@@ -36,6 +37,11 @@ fi
 # make output directory for this app
 if [ ! -d $OUTDIR ]; then
     mkdir -p $OUTDIR
+fi
+
+# make inputs directory for this app
+if [ ! -d $INPUT_DIR ]; then
+    mkdir -p $INPUT_DIR
 fi
 
 # move into app directory
