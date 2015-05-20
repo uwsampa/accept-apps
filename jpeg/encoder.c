@@ -24,6 +24,9 @@ INT16 global_ldc1;
 INT16 global_ldc2;
 INT16 global_ldc3;
 
+void ACCEPTRegion(unsigned char* image, int image_size) {
+}
+
 UINT8* encodeImage(
 	RgbImage* srcImage,
 	UINT8 *outputBuffer,
@@ -61,10 +64,16 @@ UINT8* encodeMcu(
 	UINT32 imageFormat,
 	UINT8 *outputBuffer
 ) {
+
 	levelShift(Y1);
 	dct(Y1);
 	quantization(Y1, ILqt);
+
+	// Inject the error
+	ACCEPTRegion((char*) Temp, BLOCK_SIZE);
+
 	outputBuffer = huffman(1, outputBuffer);
+
 
 	return outputBuffer;
 }

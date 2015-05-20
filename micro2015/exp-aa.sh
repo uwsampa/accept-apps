@@ -1,24 +1,23 @@
 #!/bin/bash
 
+# BEFORE USING: 'source /sampa/share/accept/accept/activate.sh'
+
 # this script runs error injection experiments
-# a gen-app.py script must be present for each app to be run
-
-WORKING_DIR=`pwd`
-CONFIG_DIR=$WORKING_DIR/configs
-OUTDIR=$WORKING_DIR/results
-
-# base directory for accept-apps and accept repos
-# ACCEPT_BASE=~/research
-ACCEPTAPPS_DIR=$ACCEPT_BASE/accept-apps
-ACCEPT_DIR=$ACCEPT_BASE/accept
 
 # acccept-apps to run experiments on
-APPS=(sobel)
-#(sobel blackscholes jpeg)
+APPS=(blackscholes jpeg sobel)
 # specify output file names
 sobel=(out.pgm)
 blackscholes=(output.txt)
 jpeg=(baboon.rgb.jpg)
+
+# base directory for accept-apps and accept repos
+ACCEPT_BASE=~/research
+ACCEPTAPPS_DIR=$ACCEPT_BASE/accept-apps
+
+# if on cluster, point to shared accept install
+ACCEPT_DIR=/sampa/share/accept/accept
+#ACCEPT_DIR=$ACCEPT_BASE/accept
 
 if [[ -z $ACCEPT_BASE || (! -d $ACCEPT_BASE) ]]; then
    echo "Please set the ACCEPT_BASE to point to the root of the repo:"
@@ -33,36 +32,36 @@ if [[ ! -x $ACCEPT_DIR/bin/inject_config.py ]]; then
     exit 0
 fi
 
-# create config directory
-if [ ! -d $CONFIG_DIR ]; then
-    mkdir $CONFIG_DIR
-fi
+WORKING_DIR=`pwd`
 
 # main loop
 # process each app specified from accpet-apps
 libfiles=$ACCEPTAPPS_DIR/liberror/*
 # copy liberror files to directory
-for a in ${APPS[@]}
+for APP in ${APPS[@]}
 do
-    echo "processing $a..."
+    CONFIG_DIR=$WORKING_DIR/$APP/inject_configs
+    OUTDIR=$WORKING_DIR/$APP/outputs
+
+    echo "processing $APP..."
 
     # generate all configuration files
-    if [ ! -d $CONFIG_DIR/$a ]; then
-        mkdir -p $CONFIG_DIR/$a
+    if [ ! -d $CONFIG_DIR ]; then
+        mkdir -p $CONFIG_DIR
     fi
-    python gen-configs.py $a $CONFIG_DIR/$a
+    python gen-configs.py $APP $CONFIG_DIR
 
     # make output directory for this app
-    if [ ! -d $OUTDIR/$a ]; then
-        mkdir -p $OUTDIR/$a
+    if [ ! -d $OUTDIR ]; then
+        mkdir -p $OUTDIR
     fi
 
     # get name out output file for this app
-    outfiles="$a[0]"
+    outfiles="$APP[0]"
     outfile=${!outfiles[0]}
 
     # move into app directory
-    cd $ACCEPTAPPS_DIR/$a
+    cd $ACCEPTAPPS_DIR/$APP
 
     # copy library files into directory
     cp $libfiles .
@@ -71,7 +70,7 @@ do
     make build_orig
 
     # get inject_config.txt files for this app
-    configs=$CONFIG_DIR/$a/*
+    configs=$CONFIG_DIR/*
 
     echo ""
     echo "Configs to evaluate..."
@@ -93,7 +92,7 @@ do
         cfname="${cfname%.*}"
         fname=$cfname.$ext
         echo "saving output file to $fname"
-        mv $outfile $OUTDIR/$a/$fname
+        mv $outfile $OUTDIR/$fname
     done
 
     # cleanup libfiles
@@ -111,3 +110,4 @@ do
     # change back to previous directory
     cd -
 done
+#  LocalWords:  jpg

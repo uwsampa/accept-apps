@@ -5,6 +5,9 @@
 #include "mypgm.h"
 #include <enerc.h>
 
+void ACCEPTRegion(unsigned char* image, int image_size) {
+}
+
 void sobel_filtering( )
      /* Spatial filtering of image data */
      /* Sobel filter (horizontal differentiation */
@@ -12,8 +15,8 @@ void sobel_filtering( )
 {
   /* Definition of Sobel filter in horizontal direction */
   int weight[3][3] = {{ -1,  0,  1 },
-		      { -2,  0,  2 },
-		      { -1,  0,  1 }};
+                      { -2,  0,  2 },
+                      { -1,  0,  1 }};
   double pixel_value;
   double min, max;
   int x, y, i, j;  /* Loop variable */
@@ -26,9 +29,9 @@ void sobel_filtering( )
     for (x = 1; x < x_size1 - 1; x++) {
       pixel_value = 0.0;
       for (j = -1; j <= 1; j++) {
-	    for (i = -1; i <= 1; i++) {
-	      pixel_value += weight[j + 1][i + 1] * ENDORSE(image1[y + j][x + i]);
-	    }
+        for (i = -1; i <= 1; i++) {
+          pixel_value += weight[j + 1][i + 1] * ENDORSE(image1[y + j][x + i]);
+        }
       }
       if (pixel_value < min) min = pixel_value;
       if (pixel_value > max) max = pixel_value;
@@ -62,14 +65,16 @@ void sobel_filtering( )
     for (xa = 1; xa < x_size1 - 1; xa++) {
       pixel_value_app = 0.0;
       for (j = -1; j <= 1; j++) {
-	    for (i = -1; i <= 1; i++) {
-	      pixel_value_app += aweight[j + 1][i + 1] * image1[ya + j][xa + i];
-	    }
+        for (i = -1; i <= 1; i++) {
+          pixel_value_app += aweight[j + 1][i + 1] * image1[ya + j][xa + i];
+        }
       }
       pixel_value_app = MAX_BRIGHTNESS * (pixel_value_app - amin) / (amax - amin);
-      image2[ya][xa] = (unsigned char)pixel_value_app;
+      image2[ya][xa] = ENDORSE((unsigned char)pixel_value_app);
     }
   }
+  
+  ACCEPTRegion(image2, x_size1 * y_size1);
 }
 
 int main(int argc, const char** argv)
