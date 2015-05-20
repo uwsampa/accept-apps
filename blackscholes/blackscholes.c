@@ -45,6 +45,7 @@ MAIN_ENV
 //Precision to use for calculations
 #define fptype float
 
+
 int NUM_RUNS = 10;
 
 typedef struct OptionData_ {
@@ -72,6 +73,9 @@ APPROX fptype * volatility;
 APPROX fptype * otime;
 int numError = 0;
 int nThreads;
+
+void ACCEPTRegion(unsigned char* image, int image_size) {
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Cumulative Normal Distribution Function
@@ -202,7 +206,10 @@ fptype BlkSchlsEqEuroNoDiv( APPROX fptype sptprice,
         NegNofXd2 = (1.0 - ENDORSE(NofXd2));
         OptionPrice = (FutureValueX * NegNofXd2) - (sptprice * NegNofXd1);
     }
-    
+
+    // Inject the error
+    ACCEPTRegion(ENDORSE((unsigned char*) &OptionPrice), 1);
+
     return ENDORSE(OptionPrice);
 }
 
@@ -247,6 +254,7 @@ int bs_thread(void *tid_ptr) {
             }
 #endif
         }
+
     }
     _dummy = _dummy;
 

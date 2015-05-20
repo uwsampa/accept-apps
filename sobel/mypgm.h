@@ -2,7 +2,7 @@
 #include <enerc.h>
 
 /* Constant declaration */
-#define MAX_IMAGESIZE  4096
+#define MAX_IMAGESIZE  512
 #define MAX_BRIGHTNESS  255 /* Maximum gray level */
 #define GRAYLEVEL       256 /* No. of gray levels */
 #define MAX_FILENAME    256 /* Filename length limit */
@@ -11,7 +11,7 @@
 /* Global constant declaration */
 /* Image storage arrays */
 APPROX unsigned char image1[MAX_IMAGESIZE][MAX_IMAGESIZE];
-APPROX unsigned char image2[MAX_IMAGESIZE][MAX_IMAGESIZE];
+unsigned char image2[MAX_IMAGESIZE][MAX_IMAGESIZE];
 int x_size1, y_size1, /* width & height of image1*/
   x_size2, y_size2; /* width & height of image2 */
 
@@ -68,7 +68,7 @@ void load_image_data(const char *file_name)
   printf("     Maximum gray level = %d\n\n",max_gray);
   if (x_size1 > MAX_IMAGESIZE || y_size1 > MAX_IMAGESIZE) {
     printf("     Image size exceeds %d x %d\n\n", 
-	   MAX_IMAGESIZE, MAX_IMAGESIZE);
+     MAX_IMAGESIZE, MAX_IMAGESIZE);
     printf("     Please use smaller images!\n\n");
     exit(1);
   }
@@ -106,9 +106,10 @@ void save_image_data( )
   fprintf(fp, "%d %d\n", x_size2, y_size2);
   fprintf(fp, "%d\n", MAX_BRIGHTNESS);
   /* Output of image data */
+  fprintf(stderr, "\nSize2: %d %d\n", x_size2, y_size2);
   for (y = 0; y < y_size2; y++) {
     for (x = 0; x < x_size2; x++) {
-      fputc(ENDORSE(image2[y][x]), fp);
+      fputc(image2[y][x], fp);
     }
   }
   printf("\n-----Image data output OK-----\n\n");

@@ -7,12 +7,12 @@ import itertools
 IMGDIR = 'saved_outputs'
 
 def load():
-    return 'file:baboon.rgb.jpg'
+    return 'file:lena.rgb.jpg'
 
 def score(orig, relaxed):
-    print 'Orig: %s' % orig
+    # print 'Orig: %s' % orig
     orig_image = PIL.Image.open(orig)
-    print 'Relaxed: %s' % relaxed
+    # print 'Relaxed: %s' % relaxed
     relaxed_image = PIL.Image.open(relaxed)
     error = 0
     total = 0
@@ -25,9 +25,6 @@ def score(orig, relaxed):
 
     for ppixel, apixel in itertools.izip(orig_data, relaxed_data):
         # root-mean-square error per pixel
-        pxerr = sqrt(((ppixel[0] - apixel[0])**2 +
-                      (ppixel[1] - apixel[1])**2 +
-                      (ppixel[2] - apixel[2])**2) / 3) / 255
-        error += 1.0 - pxerr
+        error += ((ppixel-apixel)/256)**2
         total += 1
     return error / total
