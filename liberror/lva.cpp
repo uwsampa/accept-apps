@@ -25,22 +25,10 @@ int    LVA::hash_method = 0;  // how many elements of the GHB are used in the ha
 
 #define fuzzy_mantissa_sft 16 // leave only 8 bits in the mantissa
 
-namespace {
-
-  inline uint64_t getRandom() {
-    static uint64_t x = 12345;
-    x ^= (x >> 21);
-    x ^= (x << 35);
-    x ^= (x >> 4);
-    return x;
-  }
-}
 
 bool LVA::isCacheHit(uint64_t addr) {
-    const double rand_number = static_cast<double>(getRandom()) /
-        static_cast<double>(max_rand);
 
-    return (rand_number <= pHitRate);
+    return (drand48() <= pHitRate);
 }
 
 uint64_t LVA::getHash(uint64_t pc) {
@@ -183,6 +171,8 @@ uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint6
 }
 
 void LVA::init(uint64_t param) {
+    srand48(time(NULL));
+
     for(int i = 0; i < 512; i++) {
 	approximator[i].degree = 0;
 	approximator[i].confidence = -8; // this ensures that the predictor won't be used for the first 8 times
@@ -219,6 +209,10 @@ void LVA::init(uint64_t param) {
     atexit(print_summary);
 
     init_done = true;
+    printf("LVA config param: %lx\n", param);
+    printf("LVA config hash: %d\n", hash_method);
+    printf("LVA config threshold: %f\n", threshold);
+
 }
 
 void LVA::print_summary() {
