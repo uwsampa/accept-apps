@@ -1,6 +1,7 @@
 #include "enerj.hpp"
 #include "reducedprecfp.hpp"
 #include "flikker.hpp"
+#include "npu.hpp"
 
 
 #include <cstring>
@@ -99,3 +100,49 @@ uint64 injectInst(char* opcode, int64 param, uint64 ret, uint64 op1,
   return return_value;
 }
 
+/*
+ * injectRegion drives all of the coarse error injection routines
+ * the injection routine(s) called depend on the param input
+ *
+ * 
+ *
+ *
+ */
+void injectRegion(int64 param, int64 nargs, unsigned char* image, int im_size) {
+
+  static uint64 instrumentation_time = 0U;
+  uint64 before_time;
+  rdtscll(before_time);
+  static uint64 initial_time = before_time;
+  int64 elapsed_time = before_time - initial_time - instrumentation_time;
+  if (elapsed_time < 0) {
+    std::cerr << "\nNegative elapsed time\n" << std::endl;
+    exit(0);
+  }
+
+  // decode parameter bits so we can pick model and pass model parameter
+  int64 model = ((param & MODEL_MASK) >> 16) & PARAM_MASK; // to be safe, re-mask the low 16-bits after shifting
+  int64 model_param = (param & PARAM_MASK);
+
+  switch(model) {
+
+    case 0: // 0 = do nothing, otherwise known as precise execution
+      break;
+
+    case 1: // Digital NPU (ISCA2014)
+      invokeDigitalNPU(model_param, image, im_size);
+      break;
+
+    case 2: // Analog NPU (ISCA2014)
+      invokeAnalogNPU(model_param, image, im_size);
+      break;
+
+    default: // default is precise, do nothing
+      break;
+  }
+
+  uint64 after_time;
+  rdtscll(after_time);
+  instrumentation_time += after_time - before_time;
+
+}
