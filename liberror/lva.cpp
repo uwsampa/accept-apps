@@ -160,27 +160,20 @@ uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint6
     approximator[idx].degree = degree;
 
     // compute confidence
-    double error;
-    if(strcmp(type, "Float") == 0)
-	error = fabsf(fabsf(precise.f - retval.f)/precise.f);
-    else if(strcmp(type, "Double") == 0)
-	error = fabs(fabs(precise.d - retval.d)/precise.d);
-    else if(strcmp(type, "Int32") == 0)
-	error = fabs(fabs(precise.i32 - retval.i32)/precise.i32);
-    else if(strcmp(type, "Int16") == 0)
-	error = fabs(fabs(precise.i16 - retval.i16)/precise.i16);
-    else if(strcmp(type, "Int8") == 0)
-	error = fabs(fabs(precise.i8 - retval.i8)/precise.i8);
-    else
-	abort(); // should never get here
+    double pred = (approximator[idx].LHB[0] +
+	           approximator[idx].LHB[1] +
+	           approximator[idx].LHB[2] +
+	           approximator[idx].LHB[3]) / 4.0;
+
+    double error = fabs((fp_precise - pred)/fp_precise);
 
     if(error < threshold) {
-	//printf("[%lld]Increasing confidence! Error: %f\n", idx, error);
+	//printf("[%ld]Increasing confidence! Error: %f\n", idx, error);
 	approximator[idx].confidence++;
 	if(approximator[idx].confidence == 8)
 	    approximator[idx].confidence = 7;
     } else {
-	//printf("[%lld]Decreasing confidence! Error: %f\n", idx, error);
+	//printf("[%ld]Decreasing confidence! Error: %f\n", idx, error);
 	approximator[idx].confidence--;
 	if(approximator[idx].confidence == -9)
 	    approximator[idx].confidence = -8;
