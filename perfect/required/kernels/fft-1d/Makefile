@@ -9,5 +9,6 @@ LDFLAGS := -lm -lrt
 #   ../../../lib/libtiming.a ../../../lib/libxmem.a
 #   -lm -lrt
 
+#ACCEPT_DIR := ~/research/accept
 ACCEPT_DIR := /sampa/share/accept/accept
 include $(ACCEPT_DIR)/accept.mk
