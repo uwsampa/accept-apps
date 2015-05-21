@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <limits>
+#include <ctime>
 
 typedef unsigned long long uint64;
 typedef long long int64;

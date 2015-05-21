@@ -99,20 +99,23 @@ namespace {
     ret &= (mask << shift);
   }
 
-  inline uint64 rend(uint64 x) {
-    x = (x & 0x00000000FFFFFFFF) << 32 | (x & 0xFFFFFFFF00000000) >> 32;
-    x = (x & 0x0000FFFF0000FFFF) << 16 | (x & 0xFFFF0000FFFF0000) >> 16;
-    x = (x & 0x00FF00FF00FF00FF) << 8  | (x & 0xFF00FF00FF00FF00) >> 8;
-    return x;
+  inline uint64 getRandom64() {
+    srand(time(NULL));
+    uint64 r = rand();
+    r <<= 15;
+    r ^= rand();
+    r <<= 15;
+    r ^= rand();
+    r <<= 15;
+    r ^= rand();
+    r <<= 15;
+    r ^= rand();
+    return r;
   }
-  
-  // TODO: this is deterministic, need to use different random number gen
-  inline uint64 getRandom() {
-    static uint64 x = 12345;
-    x ^= (x >> 21);
-    x ^= (x << 35);
-    x ^= (x >> 4);
-    return x;
+
+  inline double getRandomProb() {
+    srand(time(NULL));
+    return ((double)rand())/(1.0*RAND_MAX);
   }
 
   int getNumBytes(const char* type) {
@@ -187,8 +190,7 @@ uint64 EnerJ::enerjLoad(uint64 address, uint64 ret, uint64 align, uint64 cycles,
         const double pFlip = getPMem(level) * time_elapsed;
         
         for (int j = 0; j < 8; ++j) {
-          const double rand_number = static_cast<double>(getRandom()) /
-            static_cast<double>(max_rand);
+          const double rand_number = getRandomProb();
           if (rand_number < pFlip)
             flip_bit(ret, i * 8 + j);
         }
@@ -203,8 +205,7 @@ uint64 EnerJ::enerjLoad(uint64 address, uint64 ret, uint64 align, uint64 cycles,
 
 uint64 EnerJ::BinOp(int64 param, uint64 ret, const char* type) {
   if ((param/100)%10 == 1) { // only execute this code if param indicates error injection requested
-    double rand_number = static_cast<double>(getRandom()) /
-      static_cast<double>(max_rand);
+    double rand_number = getRandomProb();
 
     uint64 zero = 0ULL;
     int level = param % 10;
@@ -237,7 +238,7 @@ uint64 EnerJ::BinOp(int64 param, uint64 ret, const char* type) {
       nbytes = (nbytes < num_bytes) ? nbytes : num_bytes;
       double pALU = getPALU(level);
       if (rand_number < pALU) {
-        uint64 r = getRandom();
+        uint64 r = getRandom64();
         memcpy(&ret, &r, nbytes*sizeof(char));
         /*
         std::cout << "Type: " << std::string(type) << " " << num_bytes << " "

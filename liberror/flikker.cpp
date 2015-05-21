@@ -17,12 +17,23 @@ namespace {
   // 20s refresh cycle, 400 x 10^-12
   const double p20 = 0.000000065;
 
-  inline uint64 getRandom() {
-    static uint64 x = 12345;
-    x ^= (x >> 21);
-    x ^= (x << 35);
-    x ^= (x >> 4);
-    return x;
+  inline uint64 getRandom64() {
+    srand(time(NULL));
+    uint64 r = rand();
+    r <<= 15;
+    r ^= rand();
+    r <<= 15;
+    r ^= rand();
+    r <<= 15;
+    r ^= rand();
+    r <<= 15;
+    r ^= rand();
+    return r;
+  }
+
+  inline double getRandomProb() {
+    srand(time(NULL));
+    return ((double)rand())/(1.0*RAND_MAX);
   }
 
   int getNumBytes(const char* type) {
@@ -85,8 +96,7 @@ uint64 Flikker::flikkerLoad(uint64 address, uint64 ret, uint64 align, uint64 cyc
     const double pFlip = pError * time_elapsed;
     
     for (int j = 0; j < 8; ++j) {
-      const double rand_number = static_cast<double>(getRandom()) /
-        static_cast<double>(max_rand);
+      const double rand_number = getRandomProb();
       if (rand_number < pFlip)
         flip_bit(ret, i * 8 + j);
     }
