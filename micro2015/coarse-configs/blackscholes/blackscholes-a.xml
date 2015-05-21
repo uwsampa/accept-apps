@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<usage>
+  <phase model="default" name="default"/>
+  <phase model="blackscholes-a-b" name="BlkSchlsEqEuroNoDiv"/>
+  <phase model="blackscholes-a-cndf" name="CNDF"/>
+</usage>

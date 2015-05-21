@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<usage>
+  <phase model="default" name="default"/>
+  <phase model="jpeg-dnpu" name="dct"/>
+  <phase model="jpeg-dnpu-zero" name="quantization"/>
+  <phase model="jpeg-dnpu-zero" name="levelShift"/>
+</usage>

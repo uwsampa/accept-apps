@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<usage>
+  <phase model="default" name="default"/>
+  <phase model="jpeg-p-dct" name="dct"/>
+  <phase model="jpeg-p-q" name="quantization"/>
+  <phase model="jpeg-p-ls" name="levelShift"/>
+</usage>
