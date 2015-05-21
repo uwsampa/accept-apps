@@ -21,7 +21,7 @@ if __name__ == "__main__":
     fout = open(outfile,'w')
     for fname in files:
         error = eval.score(orig,os.path.join(resdir,fname))
-        line = fname+",{:16.16f}".format(error)
+        line = fname+",{0:16.16f}".format(error)
         print(line)
         fout.write(line+'\n')
 
