@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const uint64_t LVA::max_rand = -1;
 LVA::lva_entry LVA::approximator[512];
 LVA::bitmess   LVA::GHB[4];
 int      LVA::GHB_head = 0;
@@ -26,7 +25,7 @@ int    LVA::hash_method = 0;  // how many elements of the GHB are used in the ha
 #define fuzzy_mantissa_sft 16 // leave only 8 bits in the mantissa
 
 namespace {
-
+  const uint64_t max_rand = -1;
   inline uint64_t getRandom64() {
     static bool init = false;
     static uint64_t x = 12345;

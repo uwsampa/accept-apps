@@ -24,7 +24,7 @@ public:
       const char* type, uint64_t pc);
 
 private:
-    static const uint64_t max_rand;
+  //    static const uint64_t max_rand;
     static lva_entry approximator[512];
     static bitmess GHB[4];
     static int GHB_head;

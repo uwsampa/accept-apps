@@ -10,7 +10,7 @@
 #include<string>
 
 std::map<uint64, uint64> EnerJ::mem;
-const uint64 EnerJ::max_rand = -1;
+//const uint64 EnerJ::max_rand = -1;
 
 // param is a three digit number
 // thousands digit enables/disables memory injection (0 = off, 1 = on)
@@ -19,6 +19,8 @@ const uint64 EnerJ::max_rand = -1;
 // ones digit specifies level (1 to 3) (1 = mild, 2 = med, 3 = aggr)
 
 namespace {
+
+  const uint64 max_rand = -1;
 
   const double processor_freq = 2000000000.0;
 

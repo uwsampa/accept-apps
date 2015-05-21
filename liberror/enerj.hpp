@@ -13,7 +13,7 @@ public:
 
 private:
   static std::map<uint64, uint64> mem;
-  static const uint64 max_rand;
+  //  static const uint64 max_rand;
   static const double pError;
 };
 

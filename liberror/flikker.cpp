@@ -6,9 +6,11 @@
 #include<cstdlib>
 
 std::map<uint64, uint64> Flikker::mem;
-const uint64 Flikker::max_rand = -1;
+//const uint64 Flikker::max_rand = -1;
 
 namespace {
+  const uint64 max_rand = -1;
+
   const double processor_freq = 2000000000.0;
 
   // probability of bit flip per second
