@@ -2,6 +2,8 @@ TARGET := fft-1d
 CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_MEDIUM
 LDFLAGS := -lm -lrt
 
+CLEANMETOO := *.bc inject_config.txt
+
 #cc -o fft-1d 
 #   -Iinc -I../../../lib -DINPUT_SIZE=INPUT_SIZE_LARGE
 #   -std=c89 -pedantic -ansi -Wall -g -O3
