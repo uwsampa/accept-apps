@@ -27,9 +27,9 @@ int    LVA::hash_method = 0;  // how many elements of the GHB are used in the ha
 
 namespace {
 
-  inline uint64 getRandom64() {
+  inline uint64_t getRandom64() {
     static bool init = false;
-    static uint64 x = 12345;
+    static uint64_t x = 12345;
     if (!init) {
       srand(time(NULL));
       x = rand();
