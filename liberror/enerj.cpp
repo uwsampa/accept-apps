@@ -100,6 +100,19 @@ namespace {
   }
 
   inline uint64 getRandom64() {
+    static bool init = false;
+    static uint64 x = 12345;
+    if (!init) {
+      srand(time(NULL));
+      x = rand();
+      init = true;
+    }
+    x ^= (x >> 21);
+    x ^= (x << 35);
+    x ^= (x >> 4);
+    return x;
+
+    /*
     srand(time(NULL));
     uint64 r = rand();
     r <<= 15;
@@ -111,11 +124,15 @@ namespace {
     r <<= 15;
     r ^= rand();
     return r;
+    */
   }
 
   inline double getRandomProb() {
+    return (double)getRandom64() / (1.0*RAND_MAX);
+    /*
     srand(time(NULL));
     return ((double)rand())/(1.0*RAND_MAX);
+    */
   }
 
   int getNumBytes(const char* type) {
