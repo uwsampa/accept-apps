@@ -35,7 +35,7 @@ benchmarkPhases = {
     'jpeg': ['dct', 'quantization', 'levelShift'],
     'sobel': ['sobel_filtering'],
     '2d_convolution' : ['conv2d'],
-    'histogram_equalization' : ['hist'],
+    'histogram_equalization' : ['histEq'],
     'fft-1d' : ['fft']
 }
 
