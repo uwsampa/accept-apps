@@ -49,8 +49,7 @@ namespace {
 
 bool LVA::isCacheHit(uint64_t addr) {
   const double rand_number = getRandomProb();
-
-    return (rand_number <= pHitRate);
+    return (drand48() <= pHitRate);
 }
 
 uint64_t LVA::getHash(uint64_t pc) {
@@ -145,53 +144,45 @@ uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint6
 	return retval.b;
 
     // train predictor
-    approximator[idx].LHB_head = (approximator[idx].LHB_head + 1) & 0x3;
+    double fp_precise;
     if(strcmp(type, "Float") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.f;
+        fp_precise = precise.f;
     else if(strcmp(type, "Double") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.d;
+        fp_precise = precise.d;
     else if(strcmp(type, "Int32") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.i32;
+        fp_precise = precise.i32;
     else if(strcmp(type, "Int16") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.i16;
+        fp_precise = precise.i16;
     else if(strcmp(type, "Int8") == 0)
-        approximator[idx].LHB[approximator[idx].LHB_head] = precise.i8;
+        fp_precise = precise.i8;
     else {
 	    printf("Unsupported prediction type! [%s]\n", type);
 	    abort();
     }
+    approximator[idx].LHB_head = (approximator[idx].LHB_head + 1) & 0x3;
+    approximator[idx].LHB[approximator[idx].LHB_head] = fp_precise;
 
     // update GHB
     GHB_head = (GHB_head + 1) & 0x3;
-    if(strcmp(type, "Float") == 0)
-	GHB[GHB_head].f = precise.f;
-    else
-	GHB[GHB_head].f = precise.d;
+    GHB[GHB_head].f = fp_precise;
 
     approximator[idx].degree = degree;
 
     // compute confidence
-    double error;
-    if(strcmp(type, "Float") == 0)
-	error = fabsf(fabsf(precise.f - retval.f)/precise.f);
-    else if(strcmp(type, "Double") == 0)
-	error = fabs(fabs(precise.d - retval.d)/precise.d);
-    else if(strcmp(type, "Int32") == 0)
-	error = fabs(fabs(precise.i32 - retval.i32)/precise.i32);
-    else if(strcmp(type, "Int16") == 0)
-	error = fabs(fabs(precise.i16 - retval.i16)/precise.i16);
-    else if(strcmp(type, "Int8") == 0)
-	error = fabs(fabs(precise.i8 - retval.i8)/precise.i8);
-    else
-	abort(); // should never get here
+    double pred = (approximator[idx].LHB[0] +
+	           approximator[idx].LHB[1] +
+	           approximator[idx].LHB[2] +
+	           approximator[idx].LHB[3]) / 4.0;
+
+    double error = fabs((fp_precise - pred)/fp_precise);
 
     if(error < threshold) {
-	//printf("[%lld]Increasing confidence! Error: %f\n", idx, error);
+	//printf("[%ld]Increasing confidence! Error: %f\n", idx, error);
 	approximator[idx].confidence++;
 	if(approximator[idx].confidence == 8)
 	    approximator[idx].confidence = 7;
     } else {
-	//printf("[%lld]Decreasing confidence! Error: %f\n", idx, error);
+	//printf("[%ld]Decreasing confidence! Error: %f\n", idx, error);
 	approximator[idx].confidence--;
 	if(approximator[idx].confidence == -9)
 	    approximator[idx].confidence = -8;
@@ -201,6 +192,8 @@ uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint6
 }
 
 void LVA::init(uint64_t param) {
+    srand48(time(NULL));
+
     for(int i = 0; i < 512; i++) {
 	approximator[i].degree = 0;
 	approximator[i].confidence = -8; // this ensures that the predictor won't be used for the first 8 times
@@ -237,6 +230,10 @@ void LVA::init(uint64_t param) {
     atexit(print_summary);
 
     init_done = true;
+    printf("LVA config param: %lx\n", param);
+    printf("LVA config hash: %d\n", hash_method);
+    printf("LVA config threshold: %f\n", threshold);
+
 }
 
 void LVA::print_summary() {
