@@ -9,6 +9,7 @@ OUT_DIR=react_configs
 formatAndMove ()
 {
     xmllint --format $1 > tmp.xml && mv tmp.xml $1
+    mv $1 $OUT_DIR/$1
 }
 
 # Ensure that paths are correctly set
