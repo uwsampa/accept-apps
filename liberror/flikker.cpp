@@ -46,7 +46,7 @@ namespace {
   }
 
   inline double getRandomProb() {
-    return (double)getRandom64() / (1.0*RAND_MAX);
+    return static_cast<double>(getRandom64())/static_cast<double>(max_rand);
     /*
     srand(time(NULL));
     return ((double)rand())/(1.0*RAND_MAX);
