@@ -152,12 +152,12 @@ uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint6
 	    printf("Unsupported prediction type! [%s]\n", type);
 	    abort();
 	}
-    }
 
-    // update degree
-    approximator[idx].degree--;
-    if(approximator[idx].degree > 0)
-	return retval.b;
+	// update degree. If degree larger 0, do not fetch from memory
+	approximator[idx].degree--;
+	if(approximator[idx].degree > 0)
+	    return retval.b;
+    }
 
     // train predictor
     double fp_precise;
@@ -172,8 +172,8 @@ uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint6
     else if(strcmp(type, "Int8") == 0)
         fp_precise = precise.i8;
     else {
-	    printf("Unsupported prediction type! [%s]\n", type);
-	    abort();
+	printf("Unsupported prediction type! [%s]\n", type);
+	abort();
     }
     approximator[idx].LHB_head = (approximator[idx].LHB_head + 1) & 0x3;
     approximator[idx].LHB[approximator[idx].LHB_head] = fp_precise;
@@ -226,18 +226,22 @@ void LVA::init(uint64_t param) {
     case 0:
 	hash_method = 0;
 	threshold = 0.1;
+	degree = 1;
 	break;
     case 1:
 	hash_method = 1;
 	threshold = 0.1;
+	degree = 1;
 	break;
     case 2:
 	hash_method = 0;
 	threshold = 0.2;
+	degree = 1;
 	break;
     case 3:
-	hash_method = 1;
-	threshold = 0.2;
+	hash_method = 0;
+	threshold = 0.1;
+	degree = 2;
 	break;
     default:
 	abort();
