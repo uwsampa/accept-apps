@@ -11,12 +11,15 @@ coarseDisable = False
 approxModelMap = {
     # fine grained techniques 
     'precise' : 0,
-    'enerj': 1,
+    'overscaledalu': 1,
     'reducedprecfp': 2,
     'flikker': 3,
     'lva': 4,
-    'fuzzymemoifp': 5,
-    'fuzzymemoiint': 6,
+    'sram': 5,
+    'dram': 6,
+    'combo1': 7,
+    'combo2': 8,
+
     # coarse techniques
     'dnpu' : 1,
     'anpu' : 2
@@ -59,19 +62,25 @@ if __name__ == "__main__":
     outdir = sys.argv[2]
 
     # dump precise
-    dump(bench,outdir,'precise',0,False)
+    dump(bench,outdir,'precise',0,coarseDisable)
 
-    # dump EnerJ configs
     bytes=range(1,9)
     level=[1,2,3]
     for b in bytes:
         for l in level:
-            mparam = (100 + b*10 + l) # no mem, alu
-            dump(bench,outdir,'enerj',mparam,coarseDisable)
-            mparam = (1000 + b*10 + l) # mem, no alu
-            dump(bench,outdir,'enerj',mparam,coarseDisable)
-            mparam = (1100 + b*10 + l) # mem and alu
-            dump(bench,outdir,'enerj',mparam,coarseDisable)
+            mparam = (b*10 + l) # set number of bytes and level
+            # dump overscaled fpu
+            dump(bench,outdir,'overscaledalu',mparam,coarseDisable)
+            # dump ReducedPrecFP
+            dump(bench,outdir,'reducedprecfp',mparam,coarseDisable)
+            # dump sram and dram configs
+            dump(bench,outdir,'sram',mparam,coarseDisable)
+            dump(bench,outdir,'dram',mparam,coarseDisable)
+            # dump combo 1: overscaled alu + reduced precision fpu + sram
+            dump(bench,outdir,'combo1',mparam,coarseDisable)
+            # dump combo 2: overscaled alu + reduced precision fpu
+            dump(bench,outdir,'combo2',mparam,coarseDisable)
+
 
     # dump Flikker
     dump(bench,outdir,'flikker',1,coarseDisable)
@@ -82,10 +91,6 @@ if __name__ == "__main__":
     dump(bench,outdir,'lva', 0x4000,coarseDisable)
     dump(bench,outdir,'lva', 0x8000,coarseDisable)
     dump(bench,outdir,'lva', 0xC000,coarseDisable)
-
-    # dump ReducedPrecFP
-    dump(bench,outdir,'reducedprecfp',8,coarseDisable)
-    dump(bench,outdir,'reducedprecfp',16,coarseDisable)
 
     # dump Neural Acceleration
     #dump(bench,outdir,'dnpu',npuMap[bench],coarseEnable)

@@ -1,12 +1,9 @@
 #include <cstring>
 #include <iostream>
 #include <cstdlib>
-#include <cmath>
+#include <math.h>
 #include <limits>
 #include <ctime>
-
-typedef unsigned long long uint64;
-typedef long long int64;
 
 // These numbers were produced with the gaussian
 // program under modeling/npu-gaussian-tuning

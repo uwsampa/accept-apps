@@ -7,7 +7,7 @@
 
 #include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 
 LVA::lva_entry LVA::approximator[512];
 LVA::bitmess   LVA::GHB[4];
@@ -25,48 +25,9 @@ int    LVA::hash_method = 0;  // how many elements of the GHB are used in the ha
 
 #define fuzzy_mantissa_sft 16 // leave only 8 bits in the mantissa
 
-namespace {
-  const uint64_t max_rand = -1;
-  inline uint64_t getRandom64() {
-    static bool init = false;
-    static uint64_t x = 12345;
-    if (!init) {
-      srand(time(NULL));
-      x = rand();
-      init = true;
-    }
-    x ^= (x >> 21);
-    x ^= (x << 35);
-    x ^= (x >> 4);
-    return x;
-
-    /*
-    srand(time(NULL));
-    uint64 r = rand();
-    r <<= 15;
-    r ^= rand();
-    r <<= 15;
-    r ^= rand();
-    r <<= 15;
-    r ^= rand();
-    r <<= 15;
-    r ^= rand();
-    return r;
-    */
-  }
-
-  inline double getRandomProb() {
-    return static_cast<double>(getRandom64())/static_cast<double>(max_rand);
-    /*
-    srand(time(NULL));
-    return ((double)rand())/(1.0*RAND_MAX);
-    */
-  }
-}
-
 bool LVA::isCacheHit(uint64_t addr) {
-  const double rand_number = getRandomProb();
-    return (drand48() <= pHitRate);
+  //const double rand_number = getRandomProb();
+  return (drand48() <= pHitRate);
 }
 
 uint64_t LVA::getHash(uint64_t pc) {

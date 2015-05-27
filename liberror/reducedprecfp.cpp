@@ -1,32 +1,58 @@
 #include "reducedprecfp.hpp"
 
-#include<cstring>
-#include<ctime>
-#include<iostream>
-#include<cstdlib>
-
 namespace {
-  // number of mantissa bits
-  int getNumBits(const char* type) {
-    if (strcmp(type, "Float") == 0)return 23 ;
-    if (strcmp(type, "Double") == 0) return 52;
-    return 0;
+#include "liberrorutil.h"
+  
+  const int fp1 = 16;
+  const int fp2 = 8;
+  const int fp3 = 4;
+
+  const int dp1 = 32;
+  const int dp2 = 16;
+  const int dp3 = 8;
+
+  inline int getFPPrec(int level) {
+    switch (level) {
+    case 1:
+      return fp1;
+    case 2:
+      return fp2;
+    case 3:
+      return fp3;
+    default:
+      return fp1;
+    }
   }
 
-  inline void flip_bit(uint64& n, int bit) {
-    uint64 mask = 1ULL << bit;
-    if (n & mask) n &= ~mask;
-    else n |= mask;
+  inline int getDPPrec(int level) {
+    switch (level) {
+    case 1:
+      return dp1;
+    case 2:
+      return dp2;
+    case 3:
+      return dp3;
+    default:
+      return dp1;
+    }
   }
+
+  inline int getPrec(const char* type, int level) {
+    if (!strcmp(type,"Float")) {
+      return getFPPrec(level);
+    } else if (!strcmp(type, "Double")) {
+      return getDPPrec(level);
+    } else {
+      return -1;
+    }
+  }
+
 }
 
-// keep 'param' bits of mantissa
-// 'param' = 0 retains full precision
-// 'param' > 0 results in keeping 'param' bits of mantissa
-uint64 ReducedPrecFP::FPOp(int64 param, uint64 ret, const char* type) {
-  if (param <= 0) return ret; // 0 or negative bits to mask
-  int mantissa = getNumBits(type); // fetch max number of mantissa bits
-  int shift = param > mantissa ? mantissa : param; // guarantee don't mask off sign or exp
-  int64 mask = ~((int64)0x0) << (mantissa - shift);
-  return ret & mask;
+uint64_t ReducedPrecFP::FPOp(int64_t param, uint64_t ret, const char* type) {
+  int level = (param%10);
+  int reqPrec = getPrec(type, level);
+  if (reqPrec == -1) { return ret; }
+  maskMantissa(ret, type, reqPrec);
+  return ret;
 }
