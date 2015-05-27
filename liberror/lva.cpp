@@ -16,6 +16,7 @@ bool     LVA::init_done = false;
 uint64_t LVA::stats_accesses = 0;
 uint64_t LVA::stats_cache_misses = 0;
 uint64_t LVA::stats_predictions = 0;
+uint64_t LVA::stats_fetch_avoided = 0;
 
 float  LVA::threshold = 0.10; // error threshold - determines if prediction was accurate
 float  LVA::pHitRate = 0.9;   // cache hit rate
@@ -155,8 +156,10 @@ uint64_t LVA::lvaLoad(uint64_t ld_address, uint64_t ret, const char* type, uint6
 
 	// update degree. If degree larger 0, do not fetch from memory
 	approximator[idx].degree--;
-	if(approximator[idx].degree > 0)
+	if(approximator[idx].degree > 0) {
+	    stats_fetch_avoided++;
 	    return retval.b;
+	}
     }
 
     // train predictor
@@ -250,14 +253,16 @@ void LVA::init(uint64_t param) {
     atexit(print_summary);
 
     init_done = true;
-    printf("LVA config param: %lx\n", param);
-    printf("LVA config hash: %d\n", hash_method);
-    printf("LVA config threshold: %f\n", threshold);
+    //printf("LVA config param: %lx\n", param);
+    //printf("LVA config hash: %d\n", hash_method);
+    //printf("LVA config threshold: %f\n", threshold);
 
 }
 
 void LVA::print_summary() {
-    printf("LVA accesses:\t\t%ld\n", stats_accesses);
-    printf("LVA cache misses:\t%ld\n", stats_cache_misses);
-    printf("LVA predictions:\t%ld\n", stats_predictions);
+    std::cout << "LVA accesses:\t\t"      << stats_accesses      << std::endl;
+    std::cout << "LVA cache misses:\t"    << stats_cache_misses  << std::endl;
+    std::cout << "LVA predictions:\t"     << stats_predictions   << std::endl;
+    std::cout << "LVA fetches avoided:\t" << stats_fetch_avoided << std::endl;
+
 }

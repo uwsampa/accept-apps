@@ -36,6 +36,7 @@ private:
     static uint64_t stats_accesses;
     static uint64_t stats_cache_misses;
     static uint64_t stats_predictions;
+    static uint64_t stats_fetch_avoided;
 
     static void init(uint64_t param);
     static bool isCacheHit(uint64_t ld_address);
