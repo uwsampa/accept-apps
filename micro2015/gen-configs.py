@@ -39,11 +39,16 @@ benchmarkPhases = {
     'sobel': ['sobel_filtering'],
     '2d_convolution' : ['conv2d'],
     'histogram_equalization' : ['histEq'],
-    'fft-1d' : ['fft']
+    'fft-1d' : ['fft'],
+    'dwt53' : ['dwt53_row_transpose']
 }
 
 def dump(bench,outdir,base,mparam,coarse):
     model=approxModelMap[base]
+    
+    if not os.path.exists(outdir):
+        os.makedirs(d)
+
     name=os.path.join(outdir,base+'-'+str(mparam)+'.txt')
     f = open(name,'w')
     if (coarse):

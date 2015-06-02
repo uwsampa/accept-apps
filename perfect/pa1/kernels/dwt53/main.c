@@ -99,7 +99,7 @@
 #include "dwt53.h"
 
 #if !defined(BATCH_SIZE)
-#define BATCH_SIZE (30)
+#define BATCH_SIZE (1)
 #endif
 
 #if INPUT_SIZE == INPUT_SIZE_SMALL

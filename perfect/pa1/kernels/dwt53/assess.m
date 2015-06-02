@@ -1,4 +1,4 @@
-batch_size = 30;
+batch_size = 1;
 
 err = 0.0;
 combined_err = 0.0;
