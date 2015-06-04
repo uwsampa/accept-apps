@@ -2,7 +2,7 @@
 TARGET := sobel
 CLEANMETOO := out.pgm *.bc inject_config.txt
 
-LIBERROR_SRCS := liberror.cpp flikker.cpp enerj.cpp lva.cpp npu.cpp overscaledalu.cpp reducedprecfp.cpp
+LIBERROR_SRCS := liberror.cpp flikker.cpp lva.cpp npu.cpp overscaledalu.cpp reducedprecfp.cpp sram.cpp dram.cpp
 
 RUNARGS := i1.pgm
 TESTARGS := i2.pgm
