@@ -1,6 +1,9 @@
 TARGET := lucas-kanade
-CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_MEDIUM
+CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
 LDFLAGS := -lm -lrt
 
-ACCEPT_DIR := ~/private/accept
+CLEANMETOO += output.mat
+
+ACCEPT_DIR ?= /sampa/share/accept/accept
+
 include $(ACCEPT_DIR)/accept.mk

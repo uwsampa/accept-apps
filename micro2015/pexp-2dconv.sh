@@ -49,6 +49,7 @@ configs=( $CONFIG_DIR/* )
 #echo ${configs[@]}
 
 # run an experiment for each config file present
+:'
 for cf in ${configs[@]}
 do
     sbatch -c 1 -s --job-name=$USER-$JOB_SET_ID <<-EOF 
@@ -57,9 +58,8 @@ srun -c 1 -s ./run-2dconv.sh $cf $APP $APP_DIR $OUTDIR $ACCEPT_DIR $ACCEPTAPPS_D
 EOF
 
 done
+'
 
-
-: '
 lencfg=${#configs[@]}
 echo $lencfg
 BATCH_SIZE=12
@@ -85,22 +85,17 @@ do
     touch $tempsb
     echo "#!/bin/bash" > $tempsb
     echo "#SBATCH -N 1" >> $tempsb
-    echo "#SBATCH -n $exp_to_run" >> $tempsb
-    echo "#SBATCH --ntasks-per-node $exp_to_run" >> $tempsb
-    echo "#SBATCH -s" >> $tempsb
     echo "" >> $tempsb
     
     for (( i=$startidx; i<=$endidx; i++ ))
     do
 	cf=${configs[$i]}
-	echo "srun -n 1 $WORKING_DIR/run-2dconv.sh $cf $APP $APP_DIR $OUTDIR $ACCEPT_DIR $ACCEPTAPPS_DIR &> $APP.$i.log &" >> $tempsb
+	echo "$WORKING_DIR/run-2dconv.sh $cf $APP $APP_DIR $OUTDIR $ACCEPT_DIR $ACCEPTAPPS_DIR &> $APP.$i.log &> $OUTDIR/$APP-$cf.log &" >> $tempsb
     done
 
     # invoke sbatch on the collection of jobs
-    sbatch --job-name=$USER-$JOB_SET_ID $tempsb
+    #sbatch --job-name=$USER-$JOB_SET_ID $tempsb
 
     # increment number of experiments dispatched
     exp_exe=$(($exp_exe+$exp_to_run))
 done
-
-'

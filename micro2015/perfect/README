@@ -1,0 +1,22 @@
+before running experiments, source cfg-perfect.sh by executing:
+**this is also sourced by run-kernel.sh, and assumes cfg-perfect.sh in same directory
+
+source cfg-perfect.sh
+
+
+
+Notes of kernels:
+2d_convolution: LARGE, long run time
+dwt53: LARGE, bad annotations (seg faults on large fraction of runs)
+histogram_equalization: LARGE
+fft-1d: LARGE, annotations not representative of how we would approximate fft
+fft-2d: SMALL
+bp: SMALL, long run times
+pfa-interp1: LARGE
+pfa-interp2: LARGE
+inner-product: LARGE
+outer-product: LARGE
+system-solve: LARGE
+change-detection: LARGE
+debayer: LARGE
+lucas-kanade: LARGE

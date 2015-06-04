@@ -33,21 +33,23 @@ npuMap = {
 }
 
 # Maps the benchmark to the phases
+# TODO: add other PERFECT apps/kernels
 benchmarkPhases = {
     'blackscholes': ['_Z19BlkSchlsEqEuroNoDivfffffif', '_Z4CNDFf'],
     'jpeg': ['dct', 'quantization', 'levelShift'],
     'sobel': ['sobel_filtering'],
     '2d_convolution' : ['conv2d'],
     'histogram_equalization' : ['histEq'],
+    'dwt53' : ['dwt53_row_transpose'],
     'fft-1d' : ['fft'],
-    'dwt53' : ['dwt53_row_transpose']
+    'fft-2d' : ['fft']
 }
 
 def dump(bench,outdir,base,mparam,coarse):
     model=approxModelMap[base]
     
     if not os.path.exists(outdir):
-        os.makedirs(d)
+        os.makedirs(outdir)
 
     name=os.path.join(outdir,base+'-'+str(mparam)+'.txt')
     f = open(name,'w')
