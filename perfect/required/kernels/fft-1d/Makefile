@@ -2,7 +2,7 @@ TARGET := fft-1d
 CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
 LDFLAGS := -lm -lrt
 
-CLEANMETOO := *.bc inject_config.txt
+CLEANMETOO := *.bc inject_config.txt random_input.mat fft_output.mat
 
 #cc -o fft-1d 
 #   -Iinc -I../../../lib -DINPUT_SIZE=INPUT_SIZE_LARGE

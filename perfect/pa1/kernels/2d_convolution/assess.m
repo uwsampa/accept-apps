@@ -24,6 +24,7 @@ for i = 0:(batch_size - 1)
     err_total = sum(sum(diff));
     err = (err_total / 255.0) / (rows(output_reference) * columns(output_reference));
   else
+    ## disp("unknown")
     err = 1.0;
   endif
   
@@ -31,4 +32,4 @@ for i = 0:(batch_size - 1)
   
 endfor
 
-fprintf(stdout, '%.4f\n', combined_err / batch_size);
+fprintf(stdout, '%.16f\n', combined_err / batch_size);

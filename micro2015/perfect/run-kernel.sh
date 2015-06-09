@@ -10,11 +10,12 @@
 # 3: configuration file (full file path)
 # 4: kernel specific output directory (e.g.: .../experiments/pa1/dwt53
 # 5: kernel specific output file name
-# 6: kernel specific input file name
+# 6: output evaluation (1 = octave, 0 = cat)
+# 7: kernel specific input file name
 
-if ! (( ($# == 5) || ($# == 6) )); then
+if ! (( ($# == 6) || ($# == 7) )); then
     echo "Invalid number of arguments"
-    echo "./run-kernel.sh App Kernel Config OutputDirectory KernelOutputFileName [KernelInputFileName]"
+    echo "./run-kernel.sh App Kernel Config OutputDirectory KernelOutputFileName RunOctave [KernelInputFileName]"
     exit 0
 fi
 
@@ -25,10 +26,11 @@ KERNEL=$2
 cf=$3
 OUTDIR=$4
 OUTFILE=$5
+RUNOCTAVE=$6
 INFILE=
 
-if [ $# -eq 6 ]; then
-    INFILE=$6
+if [ $# -eq 7 ]; then
+    INFILE=$7
 fi
 
 # make paths absolute
@@ -81,6 +83,7 @@ fi
 #echo $cf
 #echo $OUTDIR
 #echo $OUTFILE
+#echo $RUNOCTAVE
 
 # ensure RUNSHIM is not set in environment
 unset RUNSHIM
@@ -100,15 +103,17 @@ cp $cf inject_config.txt
 $ACCEPT_DIR/bin/inject_config.py
 # run the experiment
 make run_opt
-# save output file
-OUTFILE_EXT="${OUTFILE##*.}"
-echo "outfile: $OUTFILE"
-echo "outfile_ext: $OUTFILE_EXT"
-mv $OUTFILE $OFDIR/$cfname.$OUTFILE_EXT
-# save input file if required
-if [ $# -eq 6 ]; then
-    INFILE_EXT="${INFILE##*.}"
-    mv $INFILE $IFDIR/$cfname.$INFILE_EXT
+
+# TODO: instead of saving output files, let's just process and generate the error metric
+errfile=$cfname.err
+if [ $RUNOCTAVE -eq 1 ]; then
+    echo "RUNOCTAVE: running octave"
+    # run Octave and store result in errfile, then save errfile
+    octave -q assess.m > $errfile
+    mv $errfile $OFDIR/
+else
+    # move and rename output file (which is just a file with error metric result)
+    mv $OUTFILE $OFDIR/$errfile
 fi
 
 # change back to previous directory

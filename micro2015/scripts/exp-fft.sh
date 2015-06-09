@@ -59,7 +59,7 @@ configs=$CONFIG_DIR/*
 # run an experiment for each config file present
 for cf in $configs
 do
-	  pwd
+    pwd
     echo "config: $cf"
     # rename a copy of the file to inject_config.txt, as expected by accept
     cp $cf inject_config.txt
@@ -70,8 +70,8 @@ do
     # save output file
     cfname="${cf##*/}"
     cfname="${cfname%.*}"
-	  mv fft_output.mat $OUTDIR/$cfname.mat
-	  mv random_input.mat $INPUT_DIR/$cfname-input.mat
+    mv fft_output.mat $OUTDIR/$cfname.mat
+    mv random_input.mat $INPUT_DIR/$cfname-input.mat
 done
 
     # cleanup libfiles

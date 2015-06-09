@@ -2,7 +2,7 @@ TARGET := change-detection
 CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
 LDFLAGS := -lm -lrt
 
-CLEANMETOO += err.txt
+CLEANMETOO += err.txt large_kernel3_output.bin
 
 RUNARGS := inout
 

@@ -3,6 +3,8 @@ annotated for compilation with accept. The composite (app) tests are not,
 nor is the sorting kernel, as it didn't seem like a good testbed to deal with
 approximate sorting.
 
+
+*** Outdated ***
 Most of the input / golden output files necessary to run the benchmarks have
 been omitted, as they are quite large. They can be downloaded along with the
 original suite at http://hpc.pnl.gov/PERFECT/. This work is based on version
@@ -20,3 +22,9 @@ You can just copy the inout/ directory from the suite (i.e. suite/sar/inout),
 though you may not want to duplicate unused inputs if you're low on disk space.
 
 Some of the benchmarks expect octave to be installed to run the quality metric.
+
+*** Inputs and Outputs ***
+
+Execute the following command to make all symlinks for inputs/outputs work properly:
+
+ln -s /path/to/.../PERFECT/suite data

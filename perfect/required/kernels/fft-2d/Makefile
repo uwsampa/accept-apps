@@ -4,6 +4,8 @@ TARGET := fft-2d
 CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_SMALL
 LDFLAGS := -lm -lrt
 
+CLEANMETOO += random_input.mat fft_output.mat
+
 ACCEPT_DIR ?= /sampa/share/accept/accept
 
 include $(ACCEPT_DIR)/accept.mk

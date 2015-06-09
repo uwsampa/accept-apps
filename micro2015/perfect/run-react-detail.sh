@@ -32,6 +32,7 @@ do
         fbase="${fname%%.*}"
         $REACT $ARCH_FILE $p $cf $MODEL_DIR/
         mv summary.csv $OUT_DIR/$fbase-summary.csv
+	# comment out the next line if detailed dump not enabled by react
         mv summary-detail.csv $OUT_DIR/$fbase-summary-detail.csv
     done
 done

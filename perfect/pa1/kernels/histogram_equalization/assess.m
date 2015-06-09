@@ -31,4 +31,4 @@ for i = 0:(batch_size - 1)
   
 endfor
 
-fprintf(stdout, 'error: %.16f\n', combined_err / batch_size);
+fprintf(stdout, '%.16f\n', combined_err / batch_size);

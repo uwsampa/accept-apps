@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 	
 	FILE *fp = fopen("err.txt", "wb");
 	assert(fp != NULL);
-	fprintf(fp, "%.2f\n", err);
+	fprintf(fp, "%.16f\n", err);
 	fclose(fp);
 
         if (validation_warning)

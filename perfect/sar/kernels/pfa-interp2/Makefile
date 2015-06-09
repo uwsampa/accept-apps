@@ -2,7 +2,7 @@ TARGET := pfa_interp2
 CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
 LDFLAGS := -lm -lrt
 
-CLEANMETOO += snr.txt
+CLEANMETOO += snr.txt large_kernel2_output.bin
 
 RUNARGS := inout
 

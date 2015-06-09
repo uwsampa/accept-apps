@@ -24,6 +24,7 @@ fi
 
 # main loop
 # process each app specified from accpet-apps
+libfiles=$ACCEPTAPPS_DIR/liberror/*
 
 echo "processing $APP..."
 
@@ -43,6 +44,14 @@ if [ ! -d $INPUT_DIR ]; then
     mkdir -p $INPUT_DIR
 fi
 
+# move into app directory
+cd $APP_DIR/$APP
+
+# copy library files into directory
+cp $libfiles .
+
+# run build_orig to generate accept_config.txt file
+make build_orig
 
 # get inject_config.txt files for this app
 configs=$CONFIG_DIR/*
@@ -50,12 +59,31 @@ configs=$CONFIG_DIR/*
 # run an experiment for each config file present
 for cf in $configs
 do
-
-
-	sbatch --job-name=$USER-$JOB_SET_ID <<-EOF 
-#!/bin/bash
-srun ./run-hist.sh $cf $APP $APP_DIR $OUTDIR $ACCEPT_DIR $ACCEPTAPPS_DIR
-EOF
-
+    pwd
+    echo "config: $cf"
+    # rename a copy of the file to inject_config.txt, as expected by accept
+    cp $cf inject_config.txt
+    # copy paramenters from inject_config.txt to accept_config.txt
+    $ACCEPT_DIR/bin/inject_config.py
+    # run the experiment
+    make run_opt
+    # save output file
+    cfname="${cf##*/}"
+    cfname="${cfname%.*}"
+    mv histeq_output.0.mat $OUTDIR/$cfname.mat
 done
 
+    # cleanup libfiles
+echo "removing libfiles..."
+echo ""
+for lfpath in ${libfiles[@]}
+do
+    lf="${lfpath##*/}"
+    rm $lf
+done
+
+    # cleanup
+make clean
+
+    # change back to previous directory
+cd -
