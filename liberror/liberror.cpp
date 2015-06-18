@@ -100,6 +100,7 @@ uint64_t injectInst(char* opcode, int64_t param, uint64_t ret, uint64_t op1,
     }
     break;
 
+    // combo1
   case 7:
     if (!strcmp(opcode, "store")) {
       // do nothing on stores (using SRAM model)
@@ -113,6 +114,7 @@ uint64_t injectInst(char* opcode, int64_t param, uint64_t ret, uint64_t op1,
     }
     break;
 
+    // combo2
   case 8:
     if (!strcmp(opcode, "store")) {
       // do nothing on stores

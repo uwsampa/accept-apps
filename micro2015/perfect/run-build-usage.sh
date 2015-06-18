@@ -2,9 +2,20 @@
 
 REACT_HOME=~/research/approx-limit
 
+if ! (( ($# == 2) )); then
+    echo "Invalid number of arguments"
+    echo "./run-build-usage.sh App Kernel"
+    exit 0
+fi
+
+APP=$1
+KERNEL=$2
+
+PERFECT_EXP=~/research/accept-apps/micro2015/perfect/experiments/$APP/$KERNEL
+
 shopt -s nullglob
-CONFIGS=inject_configs/*
-OUT_DIR=react_configs
+CONFIGS=$PERFECT_EXP/inject_configs/*
+OUT_DIR=$PERFECT_EXP/react_configs
 
 formatAndMove ()
 {

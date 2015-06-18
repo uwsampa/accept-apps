@@ -45,9 +45,9 @@ benchmarkPhases = {
     'inner-product' : ['cconj', 'cmult', 'complex_inner_product'],
     'outer-product' : ['cconj', 'cmult', 'stap_compute_covariance_estimate'],
     'system-solve' : ['cconj', 'cmult', 'cholesky_factorization', 'forward_and_back_substitution'],
-    'bp' : ['cconj', 'cmult', 'sar_backprojection'],
-    'pfa-interp1' : ['cconj', 'cmult', 'sar_interp1'],
-    'pfa-interp2' : ['cconj', 'cmult', 'sinc', 'sar_interp2'],
+    'bp' : ['cmult', 'sar_backprojection'],
+    'pfa-interp1' : ['sar_interp1'],
+    'pfa-interp2' : ['sinc', 'sar_interp2'],
     'change-detection' : ['wami_gmm'],
     'debayer' : ['compute_and_clamp_pixel', 'compute_and_clamp_pixel_fractional_neg', 'interp_G_at_RRR_or_G_at_BBB', 'interp_R_at_BBB_or_B_at_RRR', 'interp_R_at_GBR_or_B_at_GRB', 'interp_R_at_GRB_or_B_at_GBR', 'wami_debayer'],
     'lucas-kanade' : ['hessian', 'interpolate', 'steepest_descent', 'warp_image']

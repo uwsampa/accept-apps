@@ -20,3 +20,13 @@ system-solve: LARGE
 change-detection: LARGE
 debayer: LARGE
 lucas-kanade: LARGE
+
+
+Steps for energy and error numbers:
+
+1. on cluster, execute run.py to run error injection experiments
+2. for each kernel, execute './run-profiling.sh app kernel' once to generate profile
+3. execute ./run-build-usage.sh for each app/kernel './run-build-usage.sh app kernel'
+4. execute ./run-compute.sh to compile profile file from raw data for all app/kernel pairs
+5. go to approx-limit/models/simple and build REACT by executing 'make', then compile models using './run-build-models.sh'
+6. execute ./run-react-detail.sh to generate energy numbers for all app/kernel pairs
