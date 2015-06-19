@@ -3,4 +3,4 @@
 	url = https://github.com/ransford/mspsim.git
 [submodule "plat/msp430/mspdebug-wrapper"]
 	path = plat/msp430/mspdebug-wrapper
-	url = https://ransford/mspdebug-wrapper.git
+	url = https://github.com/ransford/mspdebug-wrapper.git
