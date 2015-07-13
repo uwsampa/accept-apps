@@ -17,8 +17,8 @@ void sobel_filtering( )
   int weight[3][3] = {{ -1,  0,  1 },
                       { -2,  0,  2 },
                       { -1,  0,  1 }};
-  double pixel_value;
-  double min, max;
+  int pixel_value;
+  int min, max;
   int x, y, i, j;  /* Loop variable */
   
   /* Maximum values calculation after filtering*/
@@ -45,10 +45,10 @@ void sobel_filtering( )
   /* New loop variables APPROX */
   int xa;
   int ya;
-  APPROX double amin = min;
-  APPROX double amax = max;
+  APPROX int amin = min;
+  APPROX int amax = max;
   /* New pixel_value APPROX */
-  APPROX double pixel_value_app;
+  APPROX int pixel_value_app;
   APPROX int aweight[3][3] = {{ -1,  0,  1 },
 		      { -2,  0,  2 },
 		      { -1,  0,  1 }};
