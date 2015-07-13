@@ -127,6 +127,24 @@ uint64_t injectInst(char* opcode, int64_t param, uint64_t ret, uint64_t op1,
     }
     break;
 
+  case 9: {
+    // Bitmasking
+    uint64_t mask = 0x00000000FFFFFFFFull;
+    // Break down the model_param into a right and left mask
+    uint32_t hishift = (model_param >> 8) & 0xFF;
+    uint32_t loshift = (model_param & 0xFF);
+    // Now left shift the mask by model_param
+    uint32_t lomask = mask << loshift;
+    // Now right shift the mask by model_param
+    uint32_t himask = mask >> hishift;
+    return_value = ret&lomask&himask;
+    // std::cout << "[loshift,hishift] = [" << loshift << "," << hishift << "]" << std::endl;
+    // std::cout << "[lomask,himask] = [" << std::hex << lomask << "," << himask << "]" << std::dec << std::endl;
+    // std::cout << "[before,after] = [" << ret << "," << return_value << "]" << std::endl;
+    // }
+    break;
+  }
+
   default: // default is also precise, do nothing
     break;
   }
