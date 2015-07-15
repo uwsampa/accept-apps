@@ -112,6 +112,7 @@ def dump_relax_config(config, fname):
     """Write a relaxation configuration to a file-like object. The
     configuration should be a sequence of tuples.
     """
+    logging.debug("-----------FILE DUMP BEGIN-----------")
     with open(fname, 'w') as f:
         for conf in config:
             mode = 0
@@ -119,6 +120,7 @@ def dump_relax_config(config, fname):
                 mode = (9<<16) + (conf['himask']<<8) + conf['lomask']
             f.write(str(mode)+ ' ' + conf['insn'] + '\n')
             logging.debug(str(mode)+ ' ' + conf['insn'])
+    logging.debug("----------- FILE DUMP END -----------")
 
 #################################################
 # Parameterisation testing
@@ -142,8 +144,11 @@ def test_config(config):
     # Dump config
     dump_relax_config(config, tmpdir+'/'+ACCEPT_CONFIG)
     # Full compile and program run
-    logging.info('Lanching compile and run...')
-    shell(shlex.split('make run_opt'), cwd=tmpdir)
+    logging.debug('Lanching compile and run...')
+    try:
+        shell(shlex.split('make run_opt'), cwd=tmpdir)
+    except:
+        logging.info('Make error!')
 
     # Now that we're done with the compilation, evaluate results
     output_fp = os.path.join(tmpdir,APPROX_OUTPUT)
@@ -230,9 +235,9 @@ def tune_lomask(base_config, target_error, passlimit, rate=1):
         for idx, conf in enumerate(base_config):
             logging.info ("Increasing lomask on instruction #{} : {}".format(idx, conf['insn']))
             if conf['relax']==0:
-                logging.info ("Skipping current instruction\n")
+                logging.info ("Skipping current instruction")
             elif (base_config[idx]['himask']+base_config[idx]['lomask']) == 32:
-                logging.info ("Fully masked out instruction: skip\n")
+                logging.info ("Fully masked out instruction: skip")
             else:
                 # Generate temporary configuration
                 tmp_config = copy.deepcopy(base_config)
@@ -249,10 +254,12 @@ def tune_lomask(base_config, target_error, passlimit, rate=1):
                     minerror = error
                     minidx = idx
         # Apply LSB masking to the instruction that are not impacted by it
+        logging.debug ("Zero-error instruction list: {}".format(zero_error))
         for idx in zero_error:
             base_config[idx]['lomask'] += rate
             logging.info ("Increasing lomask on instruction #{} to {}".format(idx, tmp_config[idx]['lomask']))
         # Apply LSB masking to the instruction that minimizes positive error
+        logging.debug ("[minerror, target_error] = [{}, {}]".format(minerror, target_error))
         if minerror <= target_error:
             base_config[minidx]['lomask'] += rate
             prev_minerror = minerror
@@ -260,7 +267,7 @@ def tune_lomask(base_config, target_error, passlimit, rate=1):
         # Empty list
         elif not zero_error:
             break
-        logging.info ("Bit tuning pass #{} done!".format(tuning_pass)
+        logging.info ("Bit tuning pass #{} done!\n".format(tuning_pass))
 
 def tune_width(inject_config_fn, target_error, passlimit):
     """Performs instruction masking tuning
@@ -269,17 +276,13 @@ def tune_width(inject_config_fn, target_error, passlimit):
     config = gen_default_config(inject_config_fn)
 
     # Let's tune the high mask bits (0 performance degradation)
-    # tune_himask(config)
+    tune_himask(config)
 
     # Now let's tune the low mask bits (performance degradation allowed)
     tune_lomask(config, target_error, passlimit)
 
-    for conf in config:
-        print conf
-
     # Dump back to the fine (ACCEPT) configuration file.
-    with open(ACCEPT_CONFIG, 'w') as f:
-        dump_relax_config(config, f)
+    dump_relax_config(config, ACCEPT_CONFIG)
 
 def cli():
     parser = argparse.ArgumentParser(
