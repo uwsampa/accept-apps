@@ -224,6 +224,8 @@ def tune_lomask(base_config, target_error, passlimit, rate=1):
     logging.info ("Tuning low-order bit mask\n")
     # Previous min error (to keep track of instructions that don't impact error)
     prev_minerror = 0.0
+    # List of instructions that are tuned optimally
+    maxed_insn = []
     # Passes
     for tuning_pass in range(0, passlimit):
         logging.info ("Bit tuning pass #{}".format(tuning_pass))
@@ -234,7 +236,7 @@ def tune_lomask(base_config, target_error, passlimit, rate=1):
         # Now iterate over all instructions
         for idx, conf in enumerate(base_config):
             logging.info ("Increasing lomask on instruction #{} : {}".format(idx, conf['insn']))
-            if conf['relax']==0:
+            if conf['relax']==0 or idx in maxed_insn:
                 logging.info ("Skipping current instruction")
             elif (base_config[idx]['himask']+base_config[idx]['lomask']) == 32:
                 logging.info ("Fully masked out instruction: skip")
@@ -253,6 +255,10 @@ def tune_lomask(base_config, target_error, passlimit, rate=1):
                     logging.info ("New min error!")
                     minerror = error
                     minidx = idx
+                else:
+                    # The error is too large, so let's tell the autotuner
+                    # not to revisit this instruction during later passes
+                    maxed_insn.append(idx)
         # Apply LSB masking to the instruction that are not impacted by it
         logging.debug ("Zero-error instruction list: {}".format(zero_error))
         for idx in zero_error:
