@@ -7,8 +7,20 @@ import shlex
 import eval
 import math
 import copy
+import argparse
+import logging
 
-MASKMAX = 32
+ACCEPT_CONFIG = 'accept_config.txt'
+INJECT_CONFIG = 'inject_config.txt'
+
+PRECISE_OUTPUT = 'orig.pgm'
+APPROX_OUTPUT = 'out.pgm'
+
+MASK_MAX = 32
+
+#################################################
+# General OS function helpers
+#################################################
 
 def shell(command, cwd=None, shell=False):
     """Execute a command (via a shell or directly). Capture the stdout
@@ -35,6 +47,10 @@ def copy_directory(src, dest):
     except OSError as e:
         print('Directory not copied. Error: %s' % e)
 
+#################################################
+# Configuration file reading/processing
+#################################################
+
 def parse_relax_config(f):
     """Parse a relaxation configuration from a file-like object.
     Generates (ident, param) tuples.
@@ -45,90 +61,18 @@ def parse_relax_config(f):
             param, ident = line.split(None, 1)
             yield ident, int(param)
 
-def dump_relax_config(config, fname):
-    """Write a relaxation configuration to a file-like object. The
-    configuration should be a sequence of tuples.
-    """
-    with open(fname, 'w') as f:
-        for conf in config:
-            mode = 0
-            if conf['relax']==1:
-                mode = (9<<16) + (conf['himask']<<8) + conf['lomask']
-            f.write(str(mode)+ ' ' + conf['insn'] + '\n')
-            # print (str(mode)+ ' ' + conf['insn'])
-
-def test_config(config):
-    """Creates a temporary directory to run ACCEPT with
-    the passed in config object for precision relaxation.
+def gen_default_config(inject_config_fn):
+    """Reads in the coarse error injection descriptor,
+    generates the default config by running make run_orig.
+    Returns a config object.
     """
     curdir = os.getcwd()
-    dirname = os.path.basename(os.path.normpath(curdir))
-    tmpdir = tempfile.mkdtemp()+'/'+dirname
-    print tmpdir
-    copy_directory(curdir, tmpdir)
-    shell(shlex.split('make clean'), cwd=tmpdir)
-    dump_relax_config(config, tmpdir+'/accept_config.txt')
-    shell(shlex.split('make run_opt'), cwd=tmpdir)
 
-    # Now that we're done with the compilation, evaluate results
-    output_fp = os.path.join(tmpdir,'out.pgm')
-    if os.path.isfile(output_fp):
-        error = eval.score('precise.pgm',os.path.join(tmpdir,'out.pgm'))
-    else:
-        # Program crashed
-        error = 1000000.0
-    # os.removedirs(tmpdir)
-    return error
-
-def tune_himask(config, idx):
-    print ("------------------------")
-    print ("Tuning instruction " + str(idx))
-    print ("------------------------")
-    # If the instruction cannot be tuned, return 0
-    if config[idx]['relax']==0:
-        print "skip"
-        return 0
-    # Temporary configuration
-    tmp_config = copy.deepcopy(config)
-    # Initialize the mask and best mask variables
-    maskval = MASKMAX/2
-    best = 0
-    # Now to the autotune part - do a log mask exploration
-    for i in range(0, int(math.log(MASKMAX, 2))):
-        print "testing himask of value: " + str(maskval)
-        tmp_config[idx]['himask'] = maskval
-        error = test_config(tmp_config)
-        if error==0:
-            best = maskval
-            maskval += MASKMAX>>(i+2)
-        else:
-            maskval -= MASKMAX>>(i+2)
-        print "error: " + str(error)
-
-    return best
-
-def adapt_config(coarse_fn, fine_fn):
-    """Take a coarse (per-function) configuration file and apply it to a
-    fine (per-instruction) ACCEPT configuration file. The latter is
-    modified on disk.
-
-    The first argument is the filename of a text file containing
-    entries like this:
-
-        function_name parameter
-
-    where the parameter is an integer. There can also be a line where
-    the function_name is "default", in which case all other instructions
-    (outside of the listed functions) are given this parameter.
-
-    All non-instruction parameters are left as 0.
-
-    The second argument is the filename of an ACCEPT configuration file.
-    """
-    # Load the coarse configuration file.
+    # Load the coarse configuration
+    logging.info('Reading in the coarse config file: {}'.format(inject_config_fn))
     params = {}
     default_param = 0
-    with open(coarse_fn) as f:
+    with open(inject_config_fn) as f:
         for line in f:
             line = line.strip()
             if line:
@@ -139,9 +83,13 @@ def adapt_config(coarse_fn, fine_fn):
                 else:
                     params[func] = param
 
+    logging.info('Generating the fine config file: {}'.format(ACCEPT_CONFIG))
+    shell(shlex.split('make clean'), cwd=curdir)
+    shell(shlex.split('make run_orig'), cwd=curdir)
+
     # Load ACCEPT config and adjust parameters.
     config = []
-    with open(fine_fn) as f:
+    with open(ACCEPT_CONFIG) as f:
         for ident, param in parse_relax_config(f):
             # Turn everything off except selected functions.
             param = 0
@@ -158,63 +106,217 @@ def adapt_config(coarse_fn, fine_fn):
 
             config.append({'insn': ident, 'relax': param, 'himask': 0, 'lomask': 0})
 
-    # Now test the base config
-    # test_config(config)
+    return config
 
-    # Let's tune the high mask bits (0 performance degradation)
-    for idx, conf in enumerate(config):
-        himask = tune_himask(config, idx)
-        config[idx]['himask'] = himask
+def dump_relax_config(config, fname):
+    """Write a relaxation configuration to a file-like object. The
+    configuration should be a sequence of tuples.
+    """
+    with open(fname, 'w') as f:
+        for conf in config:
+            mode = 0
+            if conf['relax']==1:
+                mode = (9<<16) + (conf['himask']<<8) + conf['lomask']
+            f.write(str(mode)+ ' ' + conf['insn'] + '\n')
+            logging.debug(str(mode)+ ' ' + conf['insn'])
 
-    # Now let's relax the instructions
-    target_error = 0.1
-    bitbudget = 1000
-    rate = 1
-    prev_minerror = 0.0
-    for bit in range(0,bitbudget):
-        print ("------------------------")
-        print ("Bit tuning # " + str(bit))
-        print ("------------------------")
-        minerror, minidx = float("inf"), -1
-        zero_error = []
-        # for idx, conf in enumerate(config):
-        for idx in range(0,len(config)):
-            conf = config[idx]
-            print ("Testing instruction " + str(idx))
-            if config[idx]['relax']==0:
-                print "skip"
-            else:
-                tmp_config = copy.deepcopy(config)
-                tmp_config[idx]['lomask'] += rate
-                print "testing lomask of value: " + str(tmp_config[idx]['lomask'])
+#################################################
+# Parameterisation testing
+#################################################
+
+def test_config(config):
+    """Creates a temporary directory to run ACCEPT with
+    the passed in config object for precision relaxation.
+    """
+    # Get the current working directory
+    curdir = os.getcwd()
+    # Get the last level directory name (the one we're in)
+    dirname = os.path.basename(os.path.normpath(curdir))
+    # Create a temporary directory
+    tmpdir = tempfile.mkdtemp()+'/'+dirname
+    logging.debug('New directory created: {}'.format(tmpdir))
+    # Transfer files over
+    copy_directory(curdir, tmpdir)
+    # Cleanup
+    shell(shlex.split('make clean'), cwd=tmpdir)
+    # Dump config
+    dump_relax_config(config, tmpdir+'/'+ACCEPT_CONFIG)
+    # Full compile and program run
+    logging.info('Lanching compile and run...')
+    shell(shlex.split('make run_opt'), cwd=tmpdir)
+
+    # Now that we're done with the compilation, evaluate results
+    output_fp = os.path.join(tmpdir,APPROX_OUTPUT)
+    if os.path.isfile(output_fp):
+        error = eval.score(PRECISE_OUTPUT,os.path.join(tmpdir,APPROX_OUTPUT))
+        logging.info('Reported application error: {}'.format(error))
+    else:
+        # Program crashed, set the error to an arbitratily high number
+        logging.info('Program crashed')
+        error = 1000000000.0
+    # Remove the temporary directory
+    shutil.rmtree(tmpdir)
+    # Return the error
+    return error
+
+def tune_himask(base_config):
+    """ Tunes the most significant bit masking at an instruction
+    granularity without affecting application error.
+    """
+    logging.info ("Tuning high-order bit mask\n")
+    for idx, conf in enumerate(base_config):
+        logging.info ("Tuning instruction: {}".format(conf['insn']))
+        # If the instruction should not be tuned, return 0
+        if conf['relax']==0:
+            logging.info ("Skipping current instruction\n")
+        else:
+            # Generate temporary configuration
+            tmp_config = copy.deepcopy(base_config)
+            # Initialize the mask and best mask variables
+            mask_val = MASK_MAX/2
+            best_mask = 0
+            # Now to the autotune part - do a log exploration
+            for i in range(0, int(math.log(MASK_MAX, 2))):
+                logging.info ("Testing himask: {}".format(mask_val))
+                # Set the mask in the temporary config
+                tmp_config[idx]['himask'] = mask_val
+                # Test the config
                 error = test_config(tmp_config)
-                print "error: " + str(error)
+                # Check the error, and modify mask_val accordingly
+                if error==0:
+                    logging.info ("New best mask!")
+                    best_mask = mask_val
+                    mask_val += MASK_MAX>>(i+2)
+                else:
+                    mask_val -= MASK_MAX>>(i+2)
+            # Corner case: bitmask=31, test 32
+            if best_mask==MASK_MAX-1:
+                mask_val = MASK_MAX
+                logging.info ("Testing himask: {}".format(mask_val))
+                # Set the mask in the temporary config
+                tmp_config[idx]['himask'] = MASK_MAX
+                # Test the config
+                error = test_config(tmp_config)
+                if error==0:
+                    logging.info ("New best mask!")
+                    best_mask = mask_val
+            # Set the himask of that instruction
+            base_config[idx]['himask'] = best_mask
+            logging.info ("Himask tuned to: {}\n".format(best_mask))
+
+    return best_mask
+
+def tune_lomask(base_config, target_error, passlimit, rate=1):
+    """ Tunes the least significant bits masking to meet the
+    specified error requirements, given a passlimit.
+    The tuning algorithm performs multiple passes over every
+    instructions. For each pass, it masks the LSB of each instuction
+    DST register value. At the end of each pass, it masks off the
+    instructions that don't affect error at all, and masks the instruction
+    that affects error the least. This process is repeated until the target
+    error is violated, or the passlimit is reached.
+    """
+    logging.info ("Tuning low-order bit mask\n")
+    # Previous min error (to keep track of instructions that don't impact error)
+    prev_minerror = 0.0
+    # Passes
+    for tuning_pass in range(0, passlimit):
+        logging.info ("Bit tuning pass #{}".format(tuning_pass))
+        # Keep track of the instruction that results in the least postive error
+        minerror, minidx = float("inf"), -1
+        # Keep track of the instructions that results zero error
+        zero_error = []
+        # Now iterate over all instructions
+        for idx, conf in enumerate(base_config):
+            logging.info ("Increasing lomask on instruction #{} : {}".format(idx, conf['insn']))
+            if conf['relax']==0:
+                logging.info ("Skipping current instruction\n")
+            elif (base_config[idx]['himask']+base_config[idx]['lomask']) == 32:
+                logging.info ("Fully masked out instruction: skip\n")
+            else:
+                # Generate temporary configuration
+                tmp_config = copy.deepcopy(base_config)
+                # Increment the LSB mask value
+                tmp_config[idx]['lomask'] += rate
+                logging.info ("Testing lomask: {}".format(tmp_config[idx]['lomask']))
+                # Test the config
+                error = test_config(tmp_config)
+                # Update min error accordingly
                 if error == prev_minerror:
-                    # Check if we're zeroing all of the bits
-                    if (tmp_config[idx]['himask']+tmp_config[idx]['lomask']) < 32:
-                        zero_error.append(idx)
+                    zero_error.append(idx)
                 elif error<minerror:
-                    print "new min error!!!"
+                    logging.info ("New min error!")
                     minerror = error
                     minidx = idx
-        print zero_error
+        # Apply LSB masking to the instruction that are not impacted by it
         for idx in zero_error:
-            config[idx]['lomask'] += rate
-            print("Increasing bitmask @ insn %d to %d" % (idx, config[idx]['lomask']))
+            base_config[idx]['lomask'] += rate
+            logging.info ("Increasing lomask on instruction #{} to {}".format(idx, tmp_config[idx]['lomask']))
+        # Apply LSB masking to the instruction that minimizes positive error
         if minerror <= target_error:
-            config[minidx]['lomask'] += rate
+            base_config[minidx]['lomask'] += rate
             prev_minerror = minerror
-            print("Increasing bitmask @ insn %d to %d" % (minidx, config[minidx]['lomask']))
+            logging.info ("Increasing lomask on instruction #{} to {}".format(minidx, tmp_config[minidx]['lomask']))
+        # Empty list
         elif not zero_error:
             break
+        logging.info ("Bit tuning pass #{} done!".format(tuning_pass)
+
+def tune_width(inject_config_fn, target_error, passlimit):
+    """Performs instruction masking tuning
+    """
+    # Generate default configuration
+    config = gen_default_config(inject_config_fn)
+
+    # Let's tune the high mask bits (0 performance degradation)
+    # tune_himask(config)
+
+    # Now let's tune the low mask bits (performance degradation allowed)
+    tune_lomask(config, target_error, passlimit)
 
     for conf in config:
         print conf
 
     # Dump back to the fine (ACCEPT) configuration file.
-    # with open(fine_fn, 'w') as f:
-    #     dump_relax_config(config, f)
+    with open(ACCEPT_CONFIG, 'w') as f:
+        dump_relax_config(config, f)
 
+def cli():
+    parser = argparse.ArgumentParser(
+        description='Bit-width tuning using masking'
+    )
+    parser.add_argument(
+        '-f', dest='inject_config_fn', action='store', type=str, required=False,
+        default=INJECT_CONFIG, help='error injection configuration file'
+    )
+    parser.add_argument(
+        '-t', dest='target_error', action='store', type=float, required=False,
+        default=0.1, help='target application error'
+    )
+    parser.add_argument(
+        '-p', dest='passlimit', action='store', type=int, required=False,
+        default=1000, help='maximum number of passes when masking off LSBs'
+    )
+    parser.add_argument(
+        '-c', dest='clusterworkers', action='store', type=int, required=False,
+        default=0, help='parallelize on cluster'
+    )
+    parser.add_argument(
+        '-d', dest='debug', action='store_true', required=False,
+        default=False, help='print out debug messages'
+    )
+    args = parser.parse_args()
+
+    if(args.debug):
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
+
+    if args.clusterworkers>0:
+        # No support for cluster workers yet
+        print("Not supported")
+    else:
+        tune_width(args.inject_config_fn, args.target_error, args.passlimit)
 
 if __name__ == '__main__':
-    adapt_config('inject_config.txt', 'accept_config.txt')
+    cli()
