@@ -16,7 +16,8 @@ INJECT_CONFIG = 'inject_config.txt'
 PRECISE_OUTPUT = 'orig.pgm'
 APPROX_OUTPUT = 'out.pgm'
 
-MASK_MAX = 32
+DATA_WIDTH = 32
+MASK_MAX = DATA_WIDTH
 
 #################################################
 # General OS function helpers
@@ -123,8 +124,27 @@ def dump_relax_config(config, fname):
     logging.debug("----------- FILE DUMP END -----------")
 
 #################################################
-# Parameterisation testing
+# Configuration function
 #################################################
+
+def print_config(config):
+    """Prints out the configuration.
+    """
+    logging.debug("-----------CONFIG DUMP BEGIN-----------")
+    for conf in config:
+        print conf
+    logging.debug("----------- CONFIG DUMP END -----------")
+
+def eval_compression_factor(config):
+    """Evaluate number of bits saved from compression.
+    """
+    bits, total = 0, 0
+    for conf in config:
+        # Only account for the instructions that we can relax
+        if (conf['relax']):
+            bits += conf['himask']+conf['lomask']
+            total += DATA_WIDTH
+    return bits/total
 
 def test_config(config):
     """Creates a temporary directory to run ACCEPT with
@@ -163,6 +183,10 @@ def test_config(config):
     shutil.rmtree(tmpdir)
     # Return the error
     return error
+
+#################################################
+# Parameterisation testing
+#################################################
 
 def tune_himask(base_config):
     """ Tunes the most significant bit masking at an instruction
@@ -207,7 +231,8 @@ def tune_himask(base_config):
                     best_mask = mask_val
             # Set the himask of that instruction
             base_config[idx]['himask'] = best_mask
-            logging.info ("Himask tuned to: {}\n".format(best_mask))
+            logging.info ("Himask tuned to: {}".format(best_mask))
+            logging.info ("[error, savings]: [0.0, {}]\n".format(eval_compression_factor(base_config)))
 
     return best_mask
 
@@ -270,10 +295,15 @@ def tune_lomask(base_config, target_error, passlimit, rate=1):
             base_config[minidx]['lomask'] += rate
             prev_minerror = minerror
             logging.info ("Increasing lomask on instruction #{} to {}".format(minidx, tmp_config[minidx]['lomask']))
+            logging.info ("[error, savings]: [{}, {}]\n".format(minerror, eval_compression_factor(base_config)))
         # Empty list
         elif not zero_error:
             break
         logging.info ("Bit tuning pass #{} done!\n".format(tuning_pass))
+
+#################################################
+# Main Function
+#################################################
 
 def tune_width(inject_config_fn, target_error, passlimit):
     """Performs instruction masking tuning
@@ -289,6 +319,13 @@ def tune_width(inject_config_fn, target_error, passlimit):
 
     # Dump back to the fine (ACCEPT) configuration file.
     dump_relax_config(config, ACCEPT_CONFIG)
+
+    # Print the final conf object
+    print_config(config)
+
+#################################################
+# Argument validation
+#################################################
 
 def cli():
     parser = argparse.ArgumentParser(
