@@ -21,6 +21,7 @@ PRECISE_OUTPUT = 'orig.pgm'
 APPROX_OUTPUT = 'out.pgm'
 
 # PARAMETERS
+RESET_CYCLE = 1
 DATA_WIDTH = 32
 MASK_MAX = DATA_WIDTH
 
@@ -173,16 +174,18 @@ def test_config(config):
     try:
         shell(shlex.split('make run_opt'), cwd=tmpdir)
     except:
-        logging.info('Make error!')
+        logging.warning('Make error!')
+        print_config(config)
 
     # Now that we're done with the compilation, evaluate results
     output_fp = os.path.join(tmpdir,APPROX_OUTPUT)
     if os.path.isfile(output_fp):
         error = eval.score(PRECISE_OUTPUT,os.path.join(tmpdir,APPROX_OUTPUT))
-        logging.info('Reported application error: {}'.format(error))
+        logging.debug('Reported application error: {}'.format(error))
     else:
         # Program crashed, set the error to an arbitratily high number
-        logging.info('Program crashed')
+        logging.warning('Program crashed!')
+        print_config(config)
         error = float('inf')
     # Remove the temporary directory
     shutil.rmtree(tmpdir)
@@ -205,14 +208,14 @@ def tune_himask_insn(base_config, idx):
     best_mask = 0
     # Now to the autotune part - do a log exploration
     for i in range(0, int(math.log(MASK_MAX, 2))):
-        logging.info ("Increasing himask on instruction {} to {}".format(idx, base_config[idx]['insn']))
+        logging.info ("Increasing himask on instruction {} to {}".format(idx, mask_val))
         # Set the mask in the temporary config
         tmp_config[idx]['himask'] = mask_val
         # Test the config
         error = test_config(tmp_config)
         # Check the error, and modify mask_val accordingly
         if error==0:
-            logging.info ("New best mask!")
+            logging.debug ("New best mask!")
             best_mask = mask_val
             mask_val += MASK_MAX>>(i+2)
         else:
@@ -220,32 +223,76 @@ def tune_himask_insn(base_config, idx):
     # Corner case: bitmask=31, test 32
     if best_mask==MASK_MAX-1:
         mask_val = MASK_MAX
-        logging.info ("Testing himask: {}".format(mask_val))
+        logging.info ("Increasing himask on instruction {} to {}".format(idx, mask_val))
         # Set the mask in the temporary config
         tmp_config[idx]['himask'] = MASK_MAX
         # Test the config
         error = test_config(tmp_config)
         if error==0:
-            logging.info ("New best mask!")
+            logging.debug ("New best mask!")
             best_mask = mask_val
-    # Set the himask of that instruction
-    base_config[idx]['himask'] = best_mask
-    logging.info ("Himask tuned to: {}".format(best_mask))
-    logging.info ("[error, savings]: [0.0, {}]\n".format(eval_compression_factor(base_config)))
+    # Return the mask value
+    return best_mask
 
 def tune_himask(base_config, clusterworkers):
     """ Tunes the most significant bit masking at an instruction
     granularity without affecting application error.
     """
-    logging.info ("Tuning high-order bit mask\n")
+    logging.info ("##########################")
+    logging.info ("Tuning high-order bit mask")
+    logging.info ("##########################\n")
+
+    # Map job IDs to instruction index
+    jobs = {}
+    jobs_lock = threading.Lock()
+
+    # Map instructions to errors
+    insn_himasks = collections.defaultdict(list)
+
+    def completion(jobid, output):
+        with jobs_lock:
+            idx = jobs.pop(jobid)
+        logging.info ("Bit tuning on instruction {} done!".format(idx))
+        insn_himasks[idx] = output
+
+    if (clusterworkers):
+        # Kill the master/workers in case previous run failed
+        logging.info ("Stopping master/workers that are still running")
+        cw.slurm.stop()
+        # Start the workers & master
+        logging.info ("Starting {} worker(s)".format(clusterworkers))
+        cw.slurm.start(nworkers=clusterworkers)
+        client = cw.client.ClientThread(completion, cw.slurm.master_host())
+        client.start()
+
     for idx, conf in enumerate(base_config):
         logging.info ("Tuning instruction: {}".format(conf['insn']))
         # If the instruction should not be tuned, return 0
         if conf['relax']==0:
-            logging.info ("Skipping current instruction\n")
+            insn_himasks[idx] = 0
+            logging.info ("Skipping current instruction {} - relaxation disallowed".format(idx))
         else:
-            tune_himask_insn(base_config, idx)
-    return best_mask
+            if (clusterworkers):
+                jobid = cw.randid()
+                with jobs_lock:
+                    jobs[jobid] = idx
+                client.submit(jobid, tune_himask_insn, base_config, idx)
+            else:
+                insn_himasks[idx] = tune_himask_insn(base_config, idx)
+
+    if (clusterworkers):
+        logging.info('All jobs submitted for himaks tuning')
+        client.wait()
+        logging.info('All jobs finished for himaks tuning')
+        cw.slurm.stop()
+
+    # Post processing
+    logging.debug ("Himasks: {}".format(insn_himasks))
+    for idx, conf in enumerate(base_config):
+        base_config[idx]['himask'] = insn_himasks[idx]
+        logging.info ("Himask of instruction {} tuned to {}".format(idx, insn_himasks[idx]))
+    logging.info ("[error, savings]: [0.0, {}]\n".format(eval_compression_factor(base_config)))
+
 
 def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
     """ Tunes the least significant bits masking to meet the
@@ -257,7 +304,9 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
     that affects error the least. This process is repeated until the target
     error is violated, or the passlimit is reached.
     """
-    logging.info ("Tuning low-order bit mask\n")
+    logging.info ("#########################")
+    logging.info ("Tuning low-order bit mask")
+    logging.info ("#########################\n")
 
     # Map job IDs to instruction index
     jobs = {}
@@ -289,18 +338,21 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
     # Passes
     for tuning_pass in range(0, passlimit):
         logging.info ("Bit tuning pass #{}".format(tuning_pass))
+        # Every RESET_CYCLE reset the maxed_insn
+        if tuning_pass % RESET_CYCLE == 0:
+            maxed_insn = []
         # Now iterate over all instructions
         for idx, conf in enumerate(base_config):
             logging.info ("Increasing lomask on instruction {} to {}".format(idx, conf['insn']))
             if conf['relax']==0:
                 insn_errors[idx] = float('inf')
                 logging.info ("Skipping current instruction {} - relaxation disallowed".format(idx))
-            elif idx in maxed_insn:
-                insn_errors[idx] = float('inf')
-                logging.info ("Skipping current instruction {} - will degrade quality too much".format(idx))
             elif (base_config[idx]['himask']+base_config[idx]['lomask']) == 32:
                 insn_errors[idx] = float('inf')
                 logging.info ("Skipping current instruction {} - bitmask max reached".format(idx))
+            elif idx in maxed_insn:
+                insn_errors[idx] = float('inf')
+                logging.info ("Skipping current instruction {} - will degrade quality too much".format(idx))
             else:
                 # Generate temporary configuration
                 tmp_config = copy.deepcopy(base_config)
@@ -321,11 +373,10 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
             client.wait()
             logging.info('All jobs finished for pass #{}'.format(tuning_pass))
 
-        ###################
-        # Post Processing #
-        ###################
-        logging.debug ("Errors: {}".format(insn_errors))
+        # Post Processing
 
+        # Report all errors
+        logging.debug ("Errors: {}".format(insn_errors))
         # Keep track of the instruction that results in the least postive error
         minerror, minidx = float("inf"), -1
         # Keep track of the instructions that results zero error
