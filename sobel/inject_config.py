@@ -205,7 +205,7 @@ def tune_himask_insn(base_config, idx):
     best_mask = 0
     # Now to the autotune part - do a log exploration
     for i in range(0, int(math.log(MASK_MAX, 2))):
-        logging.info ("Increasing himask on instruction {} to {}".format(idx, conf['insn']))
+        logging.info ("Increasing himask on instruction {} to {}".format(idx, base_config[idx]['insn']))
         # Set the mask in the temporary config
         tmp_config[idx]['himask'] = mask_val
         # Test the config
@@ -347,6 +347,9 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
         for idx in zero_error:
             base_config[idx]['lomask'] += rate
             logging.info ("Increasing lomask on instruction {} to {}".format(idx, tmp_config[idx]['lomask']))
+        # Report savings
+        if zero_error:
+            logging.info ("[error, savings]: [{}, {}]\n".format(minerror, eval_compression_factor(base_config)))
         # Apply LSB masking to the instruction that minimizes positive error
         logging.debug ("[minerror, target_error] = [{}, {}]".format(minerror, target_error))
         if minerror <= target_error:
