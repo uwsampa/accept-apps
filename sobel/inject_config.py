@@ -10,12 +10,14 @@ import copy
 import argparse
 import logging
 
+# FILE NAMES
 ACCEPT_CONFIG = 'accept_config.txt'
 INJECT_CONFIG = 'inject_config.txt'
-
+LOG_FILE = 'inject_config.log'
 PRECISE_OUTPUT = 'orig.pgm'
 APPROX_OUTPUT = 'out.pgm'
 
+# PARAMETERS
 DATA_WIDTH = 32
 MASK_MAX = DATA_WIDTH
 
@@ -351,12 +353,28 @@ def cli():
         '-d', dest='debug', action='store_true', required=False,
         default=False, help='print out debug messages'
     )
+    parser.add_argument(
+        '-log', dest='logpath', action='store', type=str, required=False,
+        default=LOG_FILE, help='path to log file'
+    )
     args = parser.parse_args()
 
+    # Take care of logger
+    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+    rootLogger = logging.getLogger()
+
+    fileHandler = logging.FileHandler(args.logpath)
+    fileHandler.setFormatter(logFormatter)
+    rootLogger.addHandler(fileHandler)
+
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logFormatter)
+    rootLogger.addHandler(consoleHandler)
+
     if(args.debug):
-        logging.getLogger().setLevel(logging.DEBUG)
+        rootLogger.setLevel(logging.DEBUG)
     else:
-        logging.getLogger().setLevel(logging.INFO)
+        rootLogger.setLevel(logging.INFO)
 
     if args.clusterworkers>0:
         # No support for cluster workers yet
