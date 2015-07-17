@@ -39,7 +39,6 @@ def init_step_count():
     global step_count
     step_count = 0
 
-
 #################################################
 # General OS function helpers
 #################################################
@@ -224,13 +223,12 @@ def report_error_and_savings(base_config, error, recompute=False, error_fn=ERROR
     global step_count
     if recompute:
         error = test_config(config)
-    logging.info ("[step, error, savings]: [{}, {}]\n".format(step_count, error, eval_compression_factor(base_config)))
+    logging.info ("[step, error, savings]: [{}, {}, {}]\n".format(step_count, error, eval_compression_factor(base_config)))
     # Also log to file:
     with open(error_fn, 'a') as f:
         f.write("{}\t{}\t{}\n".format(step_count, error, eval_compression_factor(base_config)))
     # Increment global
     step_count+=1
-
 
 #################################################
 # Parameterisation testing
