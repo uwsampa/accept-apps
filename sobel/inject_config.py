@@ -227,7 +227,7 @@ def report_error_and_savings(base_config, error, recompute=False, error_fn=ERROR
     logging.info ("[step, error, savings]: [{}, {}]\n".format(step_count, error, eval_compression_factor(base_config)))
     # Also log to file:
     with open(error_fn, 'a') as f:
-        f.write("[{}\t{}\t{}]\n".format(step_count, error, eval_compression_factor(base_config)))
+        f.write("{}\t{}\t{}\n".format(step_count, error, eval_compression_factor(base_config)))
     # Increment global
     step_count+=1
 
