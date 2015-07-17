@@ -17,13 +17,28 @@ import collections
 ACCEPT_CONFIG = 'accept_config.txt'
 INJECT_CONFIG = 'inject_config.txt'
 LOG_FILE = 'inject_config.log'
-PRECISE_OUTPUT = 'orig.pgm'
-APPROX_OUTPUT = 'out.pgm'
+ERROR_LOG_FILE = 'error.log'
+
+# OUTPUT FILES
+OUTPUT_FILE_EXT = '.pgm'
+PRECISE_OUTPUT = 'orig'+OUTPUT_FILE_EXT
+APPROX_OUTPUT = 'out'+OUTPUT_FILE_EXT
 
 # PARAMETERS
 RESET_CYCLE = 1
 DATA_WIDTH = 32
 MASK_MAX = DATA_WIDTH
+
+# Globals
+step_count = 0
+
+#################################################
+# Global handling
+#################################################
+def init_step_count():
+    global step_count
+    step_count = 0
+
 
 #################################################
 # General OS function helpers
@@ -53,6 +68,14 @@ def copy_directory(src, dest):
     # Any error saying that the directory doesn't exist
     except OSError as e:
         print('Directory not copied. Error: %s' % e)
+
+def create_overwrite_directory(dirpath):
+    """If the path exists, deletes the dir.
+    Creates a new directory.
+    """
+    if os.path.exists(dirpath):
+        shutil.rmtree(dirpath)
+    os.makedirs(dirpath)
 
 #################################################
 # Configuration file reading/processing
@@ -152,7 +175,7 @@ def eval_compression_factor(config):
             total += DATA_WIDTH
     return float(bits)/total
 
-def test_config(config):
+def test_config(config, dstpath=None):
     """Creates a temporary directory to run ACCEPT with
     the passed in config object for precision relaxation.
     """
@@ -182,6 +205,8 @@ def test_config(config):
     if os.path.isfile(output_fp):
         error = eval.score(PRECISE_OUTPUT,os.path.join(tmpdir,APPROX_OUTPUT))
         logging.debug('Reported application error: {}'.format(error))
+        if(dstpath):
+            shutil.copyfile(os.path.join(tmpdir,APPROX_OUTPUT), dstpath)
     else:
         # Program crashed, set the error to an arbitratily high number
         logging.warning('Program crashed!')
@@ -192,12 +217,27 @@ def test_config(config):
     # Return the error
     return error
 
+def report_error_and_savings(base_config, error, recompute=False, error_fn=ERROR_LOG_FILE):
+    """Reports the error of the current config,
+    and the savings from minimizing Bit-width.
+    """
+    global step_count
+    if recompute:
+        error = test_config(config)
+    logging.info ("[step, error, savings]: [{}, {}]\n".format(step_count, error, eval_compression_factor(base_config)))
+    # Also log to file:
+    with open(error_fn, 'a') as f:
+        f.write("[{}\t{}\t{}]\n".format(step_count, error, eval_compression_factor(base_config)))
+    # Increment global
+    step_count+=1
+
+
 #################################################
 # Parameterisation testing
 #################################################
 
 def tune_himask_insn(base_config, idx):
-    """ Tunes the most significant bit masking of
+    """Tunes the most significant bit masking of
     an instruction given its index without affecting
     application error.
     """
@@ -235,12 +275,12 @@ def tune_himask_insn(base_config, idx):
     return best_mask
 
 def tune_himask(base_config, clusterworkers):
-    """ Tunes the most significant bit masking at an instruction
+    """Tunes the most significant bit masking at an instruction
     granularity without affecting application error.
     """
     logging.info ("##########################")
     logging.info ("Tuning high-order bit mask")
-    logging.info ("##########################\n")
+    logging.info ("##########################")
 
     # Map job IDs to instruction index
     jobs = {}
@@ -291,11 +331,11 @@ def tune_himask(base_config, clusterworkers):
     for idx, conf in enumerate(base_config):
         base_config[idx]['himask'] = insn_himasks[idx]
         logging.info ("Himask of instruction {} tuned to {}".format(idx, insn_himasks[idx]))
-    logging.info ("[error, savings]: [0.0, {}]\n".format(eval_compression_factor(base_config)))
+    report_error_and_savings(base_config, 0.0)
 
 
 def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
-    """ Tunes the least significant bits masking to meet the
+    """Tunes the least significant bits masking to meet the
     specified error requirements, given a passlimit.
     The tuning algorithm performs multiple passes over every
     instructions. For each pass, it masks the LSB of each instuction
@@ -306,7 +346,7 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
     """
     logging.info ("#########################")
     logging.info ("Tuning low-order bit mask")
-    logging.info ("#########################\n")
+    logging.info ("#########################")
 
     # Map job IDs to instruction index
     jobs = {}
@@ -330,6 +370,18 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
         cw.slurm.start(nworkers=clusterworkers)
         client = cw.client.ClientThread(completion, cw.slurm.master_host())
         client.start()
+
+    # Get the current working directory
+    curdir = os.getcwd()
+    # Get the last level directory name (the one we're in)
+    dirname = os.path.basename(os.path.normpath(curdir))
+    # Create a temporary output directory
+    outputsdir = curdir+'/../'+dirname+'_outputs'
+    tmpoutputsdir = curdir+'/../'+dirname+'_tmpoutputs'
+    create_overwrite_directory(outputsdir)
+    create_overwrite_directory(tmpoutputsdir)
+    logging.debug('Output directory created: {}'.format(outputsdir))
+    logging.debug('Tmp output directory created: {}'.format(tmpoutputsdir))
 
     # Previous min error (to keep track of instructions that don't impact error)
     prev_minerror = 0.0
@@ -356,6 +408,9 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
             else:
                 # Generate temporary configuration
                 tmp_config = copy.deepcopy(base_config)
+                # Derive the output path
+                output_path = tmpoutputsdir+'/'+'out_'+str(tuning_pass)+'_'+str(idx)+OUTPUT_FILE_EXT
+                logging.debug ("File output path of instruction {}: {}".format(tmp_config[idx]['lomask'], output_path))
                 # Increment the LSB mask value
                 tmp_config[idx]['lomask'] += rate
                 logging.info ("Testing lomask of value {} on instruction {}".format(tmp_config[idx]['lomask'], idx))
@@ -364,9 +419,9 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
                     jobid = cw.randid()
                     with jobs_lock:
                         jobs[jobid] = idx
-                    client.submit(jobid, test_config, tmp_config)
+                    client.submit(jobid, test_config, tmp_config, output_path)
                 else:
-                    error = test_config(tmp_config)
+                    error = test_config(tmp_config, output_path)
                     insn_errors[idx] = error
         if (clusterworkers):
             logging.info('All jobs submitted for pass #{}'.format(tuning_pass))
@@ -400,14 +455,19 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
             logging.info ("Increasing lomask on instruction {} to {}".format(idx, tmp_config[idx]['lomask']))
         # Report savings
         if zero_error:
-            logging.info ("[error, savings]: [{}, {}]\n".format(minerror, eval_compression_factor(base_config)))
+            report_error_and_savings(base_config, prev_minerror)
         # Apply LSB masking to the instruction that minimizes positive error
         logging.debug ("[minerror, target_error] = [{}, {}]".format(minerror, target_error))
         if minerror <= target_error:
             base_config[minidx]['lomask'] += rate
             prev_minerror = minerror
             logging.info ("Increasing lomask on instruction {} to {}".format(minidx, tmp_config[minidx]['lomask']))
-            logging.info ("[error, savings]: [{}, {}]\n".format(minerror, eval_compression_factor(base_config)))
+            report_error_and_savings(base_config, minerror)
+            # Copy file output
+            src_path = tmpoutputsdir+'/out_'+str(tuning_pass)+'_'+str(minidx)+OUTPUT_FILE_EXT
+            dst_path = outputsdir+'/out_{0:05d}'.format(step_count)+OUTPUT_FILE_EXT
+            shutil.copyfile(src_path, dst_path)
+            create_overwrite_directory(tmpoutputsdir)
         # Empty list
         elif not zero_error:
             break
@@ -415,6 +475,9 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
 
     if(clusterworkers):
         cw.slurm.stop()
+
+    # Transfer files over
+    copy_directory(outputsdir, curdir+'/outputs')
 
 #################################################
 # Main Function
@@ -425,6 +488,9 @@ def tune_width(inject_config_fn, clusterworkers, target_error, passlimit):
     """
     # Generate default configuration
     config = gen_default_config(inject_config_fn)
+
+    # Initialize globals
+    init_step_count()
 
     # Let's tune the high mask bits (0 performance degradation)
     tune_himask(config, clusterworkers)
