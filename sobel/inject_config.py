@@ -133,7 +133,7 @@ def gen_default_config(inject_config_fn):
                 else:
                     param = default_param
 
-            config.append({'insn': ident, 'relax': param, 'himask': 0, 'lomask': 0})
+            config.append({'insn': ident, 'relax': param, 'signed':False, 'himask': 0, 'lomask': 0})
 
     return config
 
@@ -239,8 +239,17 @@ def tune_himask_insn(base_config, idx):
     an instruction given its index without affecting
     application error.
     """
+    # Test MSB to see if dealing with signed or unsigned
+    mask_val = 1
     # Generate temporary configuration
     tmp_config = copy.deepcopy(base_config)
+
+    logging.info ("Testing for signed on instruction {} to {}".format(idx, mask_val))
+    logging.info ("Testing for unsigned on instruction {} to {}".format(idx, mask_val))
+    # Set the mask in the temporary config
+    tmp_config[idx]['himask'] = mask_val
+    # Test the config
+    error = test_config(tmp_config)
     # Initialize the mask and best mask variables
     mask_val = MASK_MAX>>1
     best_mask = 0
@@ -536,7 +545,7 @@ def cli():
     )
     args = parser.parse_args()
 
-    # Take care of logger
+    # Take care of log formatting
     logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s", datefmt='%m/%d/%Y %I:%M:%S %p')
     rootLogger = logging.getLogger()
 
