@@ -2,7 +2,7 @@ ACCEPT_DIR ?= /sampa/home/moreau/Desktop/research/accept
 ACCEPTAPPS_DIR ?= /sampa/home/moreau/Desktop/research/accept-apps
 
 TARGET := sobel
-CLEANMETOO := out.pgm *.bc
+CLEANMETOO := out.pgm *.bc *.out *.log ../sobel_outputs ../sobel_tmp_outputs
 
 LIBERROR_DIR = $(ACCEPTAPPS_DIR)/liberror
 LIBERROR_FNAMES := liberror.cpp flikker.cpp lva.cpp npu.cpp overscaledalu.cpp reducedprecfp.cpp sram.cpp dram.cpp

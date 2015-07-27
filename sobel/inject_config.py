@@ -19,6 +19,9 @@ INJECT_CONFIG = 'inject_config.txt'
 LOG_FILE = 'inject_config.log'
 ERROR_LOG_FILE = 'error.log'
 
+# DIR NAMES
+OUTPUT_DIR = 'outputs'
+
 # OUTPUT FILES
 OUTPUT_FILE_EXT = '.pgm'
 PRECISE_OUTPUT = 'orig'+OUTPUT_FILE_EXT
@@ -99,7 +102,10 @@ def parse_relax_config(f):
             param, ident = line.split(None, 1)
             yield ident, int(param)
 
-def read_config(fname):
+def read_config(fname, params={}, default_param=0):
+    """Reads in a fine error injection descriptor.
+    Returns a config object.
+    """
     config = []
     with open(fname) as f:
         for ident, param in parse_relax_config(f):
@@ -151,7 +157,9 @@ def gen_default_config(inject_config_fn):
     shell(shlex.split('make run_orig'), cwd=curdir)
 
     # Load ACCEPT config and adjust parameters.
-    return read_config(ACCEPT_CONFIG)
+    config = read_config(ACCEPT_CONFIG, params, default_param)
+
+    return config
 
 def dump_relax_config(config, fname):
     """Write a relaxation configuration to a file-like object. The
@@ -162,7 +170,7 @@ def dump_relax_config(config, fname):
         for conf in config:
             mode = 0
             if conf['relax']==1:
-                mode = get_param_from_masks(conf['himask'], conf(['lomask'])
+                mode = get_param_from_masks(conf['himask'], conf['lomask'])
             f.write(str(mode)+ ' ' + conf['insn'] + '\n')
             logging.debug(str(mode)+ ' ' + conf['insn'])
     logging.debug("----------- FILE DUMP END -----------")
@@ -492,7 +500,7 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
         cw.slurm.stop()
 
     # Transfer files over
-    copy_directory(outputsdir, curdir+'/outputs')
+    shutil.move(outputsdir, curdir+'/'+OUTPUT_DIR)
 
 #################################################
 # Main Function
@@ -516,13 +524,20 @@ def tune_width(inject_config_fn, accept_config_fn, clusterworkers, target_error,
     tune_himask(config, clusterworkers)
 
     # Now let's tune the low mask bits (performance degradation allowed)
-    # tune_lomask(config, clusterworkers, target_error, passlimit)
+    tune_lomask(config, clusterworkers, target_error, passlimit)
+
+    # Print the final conf object
+    print_config(config)
 
     # Dump back to the fine (ACCEPT) configuration file.
     dump_relax_config(config, ACCEPT_CONFIG)
 
-    # Print the final conf object
-    print_config(config)
+    # Finally, transfer all files in the outputs dir
+    if (os.path.isdir(OUTPUT_DIR)):
+        shutil.move(ACCEPT_CONFIG, OUTPUT_DIR+'/'+ACCEPT_CONFIG)
+        shutil.move(INJECT_CONFIG, OUTPUT_DIR+'/'+INJECT_CONFIG)
+        shutil.move(LOG_FILE, OUTPUT_DIR+'/'+LOG_FILE)
+        shutil.move(ERROR_LOG_FILE, OUTPUT_DIR+'/'+ERROR_LOG_FILE)
 
 #################################################
 # Argument validation
