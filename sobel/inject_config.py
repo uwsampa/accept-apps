@@ -176,7 +176,7 @@ def print_config(config):
     """
     logging.debug("-----------CONFIG DUMP BEGIN-----------")
     for conf in config:
-        print conf
+        logging.debug(conf)
     logging.debug("----------- CONFIG DUMP END -----------")
 
 def eval_compression_factor(config):
@@ -255,17 +255,9 @@ def tune_himask_insn(base_config, idx):
     an instruction given its index without affecting
     application error.
     """
-    # Test MSB to see if dealing with signed or unsigned
-    mask_val = 1
     # Generate temporary configuration
     tmp_config = copy.deepcopy(base_config)
 
-    logging.info ("Testing for signed on instruction {} to {}".format(idx, mask_val))
-    logging.info ("Testing for unsigned on instruction {} to {}".format(idx, mask_val))
-    # Set the mask in the temporary config
-    tmp_config[idx]['himask'] = mask_val
-    # Test the config
-    error = test_config(tmp_config)
     # Initialize the mask and best mask variables
     mask_val = MASK_MAX>>1
     best_mask = 0
@@ -294,7 +286,7 @@ def tune_himask_insn(base_config, idx):
         if error==0:
             logging.debug ("New best mask!")
             best_mask = mask_val
-    # Return the mask value
+    # Return the mask value, and type tuple
     return best_mask
 
 def tune_himask(base_config, clusterworkers):
@@ -335,7 +327,7 @@ def tune_himask(base_config, clusterworkers):
             insn_himasks[idx] = 0
             logging.info ("Skipping current instruction {} - relaxation disallowed".format(idx))
         else:
-            if (clusterworkers):
+            if (clusterworkers>0):
                 jobid = cw.randid()
                 with jobs_lock:
                     jobs[jobid] = idx
@@ -524,7 +516,7 @@ def tune_width(inject_config_fn, accept_config_fn, clusterworkers, target_error,
     tune_himask(config, clusterworkers)
 
     # Now let's tune the low mask bits (performance degradation allowed)
-    tune_lomask(config, clusterworkers, target_error, passlimit)
+    # tune_lomask(config, clusterworkers, target_error, passlimit)
 
     # Dump back to the fine (ACCEPT) configuration file.
     dump_relax_config(config, ACCEPT_CONFIG)
