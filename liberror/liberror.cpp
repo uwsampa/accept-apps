@@ -132,14 +132,13 @@ uint64_t injectInst(char* opcode, int64_t param, uint64_t ret, uint64_t op1,
     uint64_t mask = 0x00000000FFFFFFFFull;
     // Break down the model_param into a right and left mask
     uint32_t hishift = (model_param >> 8) & 0xFF;
-    bool hisigned = ( (hishift&0x80 ) != 0 );
-    hishift &= 0x7F;
     uint32_t loshift = (model_param & 0xFF);
     // Now left shift the mask by model_param
     uint32_t lomask = mask << loshift;
     // Now right shift the mask by model_param
     uint32_t himask = 0;
-    if (hisigned) {
+    // Check if we are dealing with a signed negative
+    if (ret&&0x80000000) {
       himask = mask << (32-hishift);
       return_value = ret&lomask|himask;
     } else {

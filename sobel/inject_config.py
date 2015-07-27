@@ -133,7 +133,7 @@ def gen_default_config(inject_config_fn):
                 else:
                     param = default_param
 
-            config.append({'insn': ident, 'relax': param, 'signed':False, 'himask': 0, 'lomask': 0})
+            config.append({'insn': ident, 'relax': param, 'himask': 0, 'lomask': 0})
 
     return config
 
@@ -145,7 +145,6 @@ def dump_relax_config(config, fname):
     with open(fname, 'w') as f:
         for conf in config:
             mode = 0
-            himask = conf['himask'] | (0x80 if conf['signed'] else 0x00)
             if conf['relax']==1:
                 mode = (9<<16) + (conf['himask']<<8) + conf['lomask']
             f.write(str(mode)+ ' ' + conf['insn'] + '\n')
@@ -240,24 +239,8 @@ def tune_himask_insn(base_config, idx):
     an instruction given its index without affecting
     application error.
     """
-    # Test MSB to see if dealing with signed or unsigned
-    mask_val = 1
-
     # Generate temporary configuration
     tmp_config = copy.deepcopy(base_config)
-
-    # Check if we are using signed representation
-    logging.info ("Testing for signed representation on instruction {}".format(idx))
-    # Set the mask in the temporary config
-    tmp_config[idx]['himask'] = mask_val
-    tmp_config[idx]['signed'] = True
-    # Test the config
-    error = test_config(tmp_config)
-    if error > 0:
-        tmp_config[idx]['signed'] = False
-        logging.info ("Instruction {} seems to be unsigned".format(idx))
-    else:
-        logging.info ("Instruction {} seems to be signed".format(idx))
 
     # Initialize the mask and best mask variables
     mask_val = MASK_MAX>>1
@@ -288,7 +271,7 @@ def tune_himask_insn(base_config, idx):
             logging.debug ("New best mask!")
             best_mask = mask_val
     # Return the mask value, and type tuple
-    return (best_mask, tmp_config[idx]['signed'])
+    return best_mask
 
 def tune_himask(base_config, clusterworkers):
     """Tunes the most significant bit masking at an instruction
@@ -325,7 +308,7 @@ def tune_himask(base_config, clusterworkers):
         logging.info ("Tuning instruction: {}".format(conf['insn']))
         # If the instruction should not be tuned, return 0
         if conf['relax']==0:
-            insn_himasks[idx] = (0, False)
+            insn_himasks[idx] = 0
             logging.info ("Skipping current instruction {} - relaxation disallowed".format(idx))
         else:
             if (clusterworkers>0):
@@ -345,8 +328,8 @@ def tune_himask(base_config, clusterworkers):
     # Post processing
     logging.debug ("Himasks: {}".format(insn_himasks))
     for idx, conf in enumerate(base_config):
-        base_config[idx]['himask'] = insn_himasks[idx][0]
-        logging.info ("Himask of instruction {} tuned to {}, signed: {}".format(idx, insn_himasks[idx][0], insn_himasks[idx][1]))
+        base_config[idx]['himask'] = insn_himasks[idx]
+        logging.info ("Himask of instruction {} tuned to {}".format(idx, insn_himasks[idx]))
     report_error_and_savings(base_config, 0.0)
 
 
