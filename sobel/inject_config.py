@@ -80,6 +80,15 @@ def create_overwrite_directory(dirpath):
 # Configuration file reading/processing
 #################################################
 
+def get_param_from_masks(himask, lomask):
+    return (9<<16) + (himask<<8) + lomask
+
+def get_masks_from_param(param):
+    param -= (9<<16)
+    himask = (param >> 8) & 0xFF;
+    lomask = (param & 0xFF);
+    return himask, lomask
+
 def parse_relax_config(f):
     """Parse a relaxation configuration from a file-like object.
     Generates (ident, param) tuples.
@@ -89,6 +98,31 @@ def parse_relax_config(f):
         if line:
             param, ident = line.split(None, 1)
             yield ident, int(param)
+
+def read_config(fname):
+    config = []
+    with open(fname) as f:
+        for ident, param in parse_relax_config(f):
+            # Turn everything off except selected functions.
+            param = 0
+
+            # If this is in a function indicated in the parameters file,
+            # adjust the parameter accordingly.
+            if ident.startswith('instruction'):
+                _, i_ident = ident.split()
+                func, _, _ = i_ident.split(':')
+                if func in params:
+                    param = params[func]
+                else:
+                    param = default_param
+
+            if (param > 1):
+                himask, lomask = get_masks_from_param(param)
+                config.append({'insn': ident, 'relax': 1, 'himask': himask, 'lomask': lomask})
+            else:
+                config.append({'insn': ident, 'relax': param, 'himask': 0, 'lomask': 0})
+
+    return config
 
 def gen_default_config(inject_config_fn):
     """Reads in the coarse error injection descriptor,
@@ -117,25 +151,7 @@ def gen_default_config(inject_config_fn):
     shell(shlex.split('make run_orig'), cwd=curdir)
 
     # Load ACCEPT config and adjust parameters.
-    config = []
-    with open(ACCEPT_CONFIG) as f:
-        for ident, param in parse_relax_config(f):
-            # Turn everything off except selected functions.
-            param = 0
-
-            # If this is in a function indicated in the parameters file,
-            # adjust the parameter accordingly.
-            if ident.startswith('instruction'):
-                _, i_ident = ident.split()
-                func, _, _ = i_ident.split(':')
-                if func in params:
-                    param = params[func]
-                else:
-                    param = default_param
-
-            config.append({'insn': ident, 'relax': param, 'signed':False, 'himask': 0, 'lomask': 0})
-
-    return config
+    return read_config(ACCEPT_CONFIG)
 
 def dump_relax_config(config, fname):
     """Write a relaxation configuration to a file-like object. The
@@ -146,7 +162,7 @@ def dump_relax_config(config, fname):
         for conf in config:
             mode = 0
             if conf['relax']==1:
-                mode = (9<<16) + (conf['himask']<<8) + conf['lomask']
+                mode = get_param_from_masks(conf['himask'], conf(['lomask'])
             f.write(str(mode)+ ' ' + conf['insn'] + '\n')
             logging.debug(str(mode)+ ' ' + conf['insn'])
     logging.debug("----------- FILE DUMP END -----------")
@@ -490,11 +506,16 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
 # Main Function
 #################################################
 
-def tune_width(inject_config_fn, clusterworkers, target_error, passlimit):
+def tune_width(inject_config_fn, accept_config_fn, clusterworkers, target_error, passlimit):
     """Performs instruction masking tuning
     """
     # Generate default configuration
-    config = gen_default_config(inject_config_fn)
+    if (accept_config_fn):
+        config = read_config(accept_config_fn)
+        print_config(config)
+        exit()
+    else:
+        config = gen_default_config(inject_config_fn)
 
     # Initialize globals
     init_step_count()
@@ -522,6 +543,10 @@ def cli():
     parser.add_argument(
         '-f', dest='inject_config_fn', action='store', type=str, required=False,
         default=INJECT_CONFIG, help='error injection configuration file'
+    )
+    parser.add_argument(
+        '-r', dest='accept_config_fn', action='store', type=str, required=False,
+        default=None, help='accept_config_file'
     )
     parser.add_argument(
         '-t', dest='target_error', action='store', type=float, required=False,
@@ -562,7 +587,8 @@ def cli():
     else:
         rootLogger.setLevel(logging.INFO)
 
-    tune_width(args.inject_config_fn, args.clusterworkers, args.target_error, args.passlimit)
+    # Tuning
+    tune_width(args.inject_config_fn, args.accept_config_fn, args.clusterworkers, args.target_error, args.passlimit)
 
 if __name__ == '__main__':
     cli()
