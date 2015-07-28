@@ -138,7 +138,7 @@ uint64_t injectInst(char* opcode, int64_t param, uint64_t ret, uint64_t op1,
     // Now right shift the mask by model_param
     uint32_t himask = 0;
     // Check if we are dealing with a signed negative
-    if (ret&&0x80000000) {
+    if (ret&0x80000000) {
       himask = mask << (32-hishift);
       return_value = ret&lomask|himask;
     } else {
