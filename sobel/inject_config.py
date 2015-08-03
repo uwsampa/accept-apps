@@ -29,8 +29,6 @@ APPROX_OUTPUT = 'out'+OUTPUT_FILE_EXT
 
 # PARAMETERS
 RESET_CYCLE = 1
-DATA_WIDTH = 32
-MASK_MAX = DATA_WIDTH
 
 # Globals
 step_count = 0
@@ -83,6 +81,27 @@ def create_overwrite_directory(dirpath):
 # Configuration file reading/processing
 #################################################
 
+def get_bitwidth_from_type(typeStr):
+    if (typeStr=="Half"):
+        return 16
+    elif(typeStr=="Float"):
+        return 32
+    elif(typeStr=="Double"):
+        return 64
+    elif (typeStr=="Int1"):
+        return 1
+    elif (typeStr=="Int8"):
+        return 8
+    elif (typeStr=="Int16"):
+        return 16
+    elif (typeStr=="Int32"):
+        return 32
+    elif (typeStr=="Int64"):
+        return 64
+    else:
+        logging.error('Unrecognized type: {}'.format(typeStr))
+        exit()
+
 def get_param_from_masks(himask, lomask):
     return (9<<16) + (himask<<8) + lomask
 
@@ -116,17 +135,20 @@ def read_config(fname, params={}, default_param=0):
             # adjust the parameter accordingly.
             if ident.startswith('instruction'):
                 _, i_ident = ident.split()
-                func, _, _ = i_ident.split(':')
+                func, _, _, opcode, typ = i_ident.split(':')
                 if func in params:
                     param = params[func]
                 else:
                     param = default_param
 
-            if (param > 1):
-                himask, lomask = get_masks_from_param(param)
-                config.append({'insn': ident, 'relax': 1, 'himask': himask, 'lomask': lomask})
-            else:
-                config.append({'insn': ident, 'relax': param, 'himask': 0, 'lomask': 0})
+                # Add the config entry for the instruction
+                config.append({'insn': ident, 'relax': param, 'himask': 0, 'lomask': 0, 'opcode': opcode, 'type': typ})
+                # If we are reading a config file where the parameter are already set, set them
+                if (param > 1):
+                    himask, lomask = get_masks_from_param(param)
+                    config['relax'] = 1
+                    config['himask'] = himask
+                    config['lomask'] = lomask
 
     return config
 
@@ -195,7 +217,7 @@ def eval_compression_factor(config):
         # Only account for the instructions that we can relax
         if (conf['relax']):
             bits += conf['himask']+conf['lomask']
-            total += DATA_WIDTH
+            total += get_bitwidth_from_type(conf['type'])
     return float(bits)/total
 
 def test_config(config, dstpath=None):
@@ -267,10 +289,11 @@ def tune_himask_insn(base_config, idx):
     tmp_config = copy.deepcopy(base_config)
 
     # Initialize the mask and best mask variables
-    mask_val = MASK_MAX>>1
+    bitwidth = get_bitwidth_from_type(base_config[idx]['type'])
+    mask_val = bitwidth>>1
     best_mask = 0
     # Now to the autotune part - do a log exploration
-    for i in range(0, int(math.log(MASK_MAX, 2))):
+    for i in range(0, int(math.log(bitwidth, 2))):
         logging.info ("Increasing himask on instruction {} to {}".format(idx, mask_val))
         # Set the mask in the temporary config
         tmp_config[idx]['himask'] = mask_val
@@ -280,15 +303,15 @@ def tune_himask_insn(base_config, idx):
         if error==0:
             logging.debug ("New best mask!")
             best_mask = mask_val
-            mask_val += MASK_MAX>>(i+2)
+            mask_val += bitwidth>>(i+2)
         else:
-            mask_val -= MASK_MAX>>(i+2)
-    # Corner case: bitmask=31, test 32
-    if best_mask==MASK_MAX-1:
-        mask_val = MASK_MAX
+            mask_val -= bitwidth>>(i+2)
+    # Corner case - e.g.: bitmask=31, test 32
+    if best_mask==bitwidth-1:
+        mask_val = bitwidth
         logging.info ("Increasing himask on instruction {} to {}".format(idx, mask_val))
         # Set the mask in the temporary config
-        tmp_config[idx]['himask'] = MASK_MAX
+        tmp_config[idx]['himask'] = bitwidth
         # Test the config
         error = test_config(tmp_config)
         if error==0:
@@ -422,7 +445,7 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
             if conf['relax']==0:
                 insn_errors[idx] = float('inf')
                 logging.info ("Skipping current instruction {} - relaxation disallowed".format(idx))
-            elif (base_config[idx]['himask']+base_config[idx]['lomask']) == 32:
+            elif (base_config[idx]['himask']+base_config[idx]['lomask']) == get_bitwidth_from_type(base_config[idx]['type']):
                 insn_errors[idx] = float('inf')
                 logging.info ("Skipping current instruction {} - bitmask max reached".format(idx))
             elif idx in maxed_insn:
