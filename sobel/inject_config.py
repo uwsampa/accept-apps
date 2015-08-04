@@ -543,10 +543,10 @@ def tune_width(inject_config_fn, accept_config_fn, clusterworkers, target_error,
     # Initialize globals
     init_step_count()
 
-    # Let's tune the high mask bits (0 performance degradation)
+    # # Let's tune the high mask bits (0 performance degradation)
     tune_himask(config, clusterworkers)
 
-    # Now let's tune the low mask bits (performance degradation allowed)
+    # # Now let's tune the low mask bits (performance degradation allowed)
     tune_lomask(config, clusterworkers, target_error, passlimit)
 
     # Print the final conf object
@@ -554,13 +554,6 @@ def tune_width(inject_config_fn, accept_config_fn, clusterworkers, target_error,
 
     # Dump back to the fine (ACCEPT) configuration file.
     dump_relax_config(config, ACCEPT_CONFIG)
-
-    # Finally, transfer all files in the outputs dir
-    if (os.path.isdir(OUTPUT_DIR)):
-        shutil.move(ACCEPT_CONFIG, OUTPUT_DIR+'/'+ACCEPT_CONFIG)
-        shutil.move(INJECT_CONFIG, OUTPUT_DIR+'/'+INJECT_CONFIG)
-        shutil.move(LOG_FILE, OUTPUT_DIR+'/'+LOG_FILE)
-        shutil.move(ERROR_LOG_FILE, OUTPUT_DIR+'/'+ERROR_LOG_FILE)
 
 #################################################
 # Argument validation
@@ -604,6 +597,7 @@ def cli():
     logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s", datefmt='%m/%d/%Y %I:%M:%S %p')
     rootLogger = logging.getLogger()
 
+    open(args.logpath, 'a').close()
     fileHandler = logging.FileHandler(args.logpath)
     fileHandler.setFormatter(logFormatter)
     rootLogger.addHandler(fileHandler)
@@ -619,6 +613,13 @@ def cli():
 
     # Tuning
     tune_width(args.inject_config_fn, args.accept_config_fn, args.clusterworkers, args.target_error, args.passlimit)
+
+    # Finally, transfer all files in the outputs dir
+    if (os.path.isdir(OUTPUT_DIR)):
+        shutil.move(ACCEPT_CONFIG, OUTPUT_DIR+'/'+ACCEPT_CONFIG)
+        shutil.move(args.inject_config_fn, OUTPUT_DIR+'/'+args.inject_config_fn)
+        shutil.move(ERROR_LOG_FILE, OUTPUT_DIR+'/'+ERROR_LOG_FILE)
+        shutil.move(args.logpath, OUTPUT_DIR+'/'+args.logpath)
 
 if __name__ == '__main__':
     cli()
