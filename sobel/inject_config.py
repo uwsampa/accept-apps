@@ -175,7 +175,6 @@ def gen_default_config(inject_config_fn):
                     params[func] = param
 
     logging.info('Generating the fine config file: {}'.format(ACCEPT_CONFIG))
-    shell(shlex.split('make clean'), cwd=curdir)
     shell(shlex.split('make run_orig'), cwd=curdir)
 
     # Load ACCEPT config and adjust parameters.
@@ -614,10 +613,16 @@ def cli():
     # Tuning
     tune_width(args.inject_config_fn, args.accept_config_fn, args.clusterworkers, args.target_error, args.passlimit)
 
+    # Close the log handlers
+    handlers = rootLogger.handlers[:]
+    for handler in rootLogger.handlers[:]:
+        handler.close()
+        rootLogger.removeHandler(handler)
+
     # Finally, transfer all files in the outputs dir
     if (os.path.isdir(OUTPUT_DIR)):
+        shutil.copyfile(args.inject_config_fn, OUTPUT_DIR+'/'+args.inject_config_fn)
         shutil.move(ACCEPT_CONFIG, OUTPUT_DIR+'/'+ACCEPT_CONFIG)
-        shutil.move(args.inject_config_fn, OUTPUT_DIR+'/'+args.inject_config_fn)
         shutil.move(ERROR_LOG_FILE, OUTPUT_DIR+'/'+ERROR_LOG_FILE)
         shutil.move(args.logpath, OUTPUT_DIR+'/'+args.logpath)
 
