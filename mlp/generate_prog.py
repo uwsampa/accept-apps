@@ -67,6 +67,19 @@ activation_modes = [
 ]
 
 ############################################
+# Helper functions
+############################################
+def mean_squared_error(alist, blist):
+    assert(len(alist)==len(blist))
+    se = 0
+    outputsize = len(alist[0])
+    for i, outputs in enumerate(alist):
+        assert(len(alist[i])==len(blist[i])==outputsize)
+        for j, output in enumerate(outputs):
+            se += pow((alist[i][j]-blist[i][j]), 2)
+    return se/(len(alist)*outputsize)
+
+############################################
 # Define activation functions here
 ############################################
 def linear(x, s):
@@ -218,7 +231,7 @@ class ANN:
             for vector in matrix:
                 print vector
 
-    def evaluate(self, dat_file):
+    def evaluate(self, dat_file, test_size):
         ''' Evaluates the HW ANN on a input dataset
         '''
 
@@ -229,9 +242,14 @@ class ANN:
         with open(dat_file, 'r') as f:
             lines = f.readlines()
 
+             # Determine the test size if unset
+            if not test_size:
+                test_size = ((len(lines)-FILE_OFFSET)/(1+INPUT_LINES))-DATA_OFFSET
+                logging.debug('Test size set to:%s\n' + str(test_size))
+
             # File start and end values
             f_start = FILE_OFFSET+(INPUT_LINES+1)*DATA_OFFSET
-            f_end = f_start+(INPUT_LINES+1)
+            f_end = f_start+(INPUT_LINES+1)*test_size
 
             for i in range(f_start, f_end, (INPUT_LINES+1)):
                 # Process inputs
@@ -267,6 +285,11 @@ class ANN:
                 precise_data.append(precise_outputs)
                 logging.debug('Precise Outputs\n'+str(precise_outputs))
 
+            # Used to compute RMSE
+            mse = mean_squared_error(precise_data, approx_data)
+            rmse = sqrt(mse)
+            print('Info:\tRMSE on HW neural network is: %f' % rmse)
+
 
 def cli():
     parser = argparse.ArgumentParser(
@@ -284,6 +307,10 @@ def cli():
         '-c', dest='c_fn', action='store', type=str, required=False,
         default=None, help='output c file'
     )
+    parser.add_argument(
+        '-size', dest='test_size', action='store', type=str, required=False,
+        default=None, help='number of input sets to test'
+    )
     args = parser.parse_args()
 
     # Logger
@@ -292,7 +319,7 @@ def cli():
     # Parse the FANN file
     ann = ANN(args.nn_fn)
     # Evaluate the ANN
-    ann.evaluate(args.dat_fn)
+    ann.evaluate(args.dat_fn, args.test_size)
 
 if __name__ == '__main__':
     cli()
