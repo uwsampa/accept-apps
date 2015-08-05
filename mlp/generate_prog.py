@@ -92,7 +92,7 @@ def linear(x, s):
     return x
 
 def sigmoid(x, s):
-    '''Hyperbolic Tangent function (with input scaling by steepness s)
+    '''Hardware Hyperbolic Tangent function (with input scaling by steepness s)
     '''
     # scale x
     x = trunc(x*s)
@@ -121,17 +121,24 @@ def sigmoid(x, s):
     logging.debug ('\tOUTPUT %d' % y)
     return trunc(y)
 
+def precise_sigmoid(x, s):
+    '''Precise Hyperbolic Tangent function (with input scaling by steepness s)
+    '''
+    x = x*s/pow(2, I_DECIMAL+W_DECIMAL)
+    y = tanh(x)
+    return trunc(y*I_TO_FIX)
+
 def symmetric(x, s):
     '''Symmetric Sigmoid (with input scaling by steepness s)
     '''
     logging.debug('SYMM_SIG(%d):' % x)
-    return sigmoid(x, s)
+    return precise_sigmoid(x, s)
 
 def nonsymmetric(x, s):
     '''Non-symmetric Sigmoid (with input scaling by steepness s)
     '''
     logging.debug('SIGMOID(%d):' % x)
-    out_val = sigmoid(x, s)
+    out_val = precise_sigmoid(x, s)
     out_val = trunc(out_val >> 1)
     out_val += I_TO_FIX/2
     return out_val
