@@ -3,6 +3,10 @@ import re
 import os
 import argparse
 import logging
+import threading
+import collections
+import csv
+import cw.client
 from numpy import *
 from math import *
 
@@ -10,6 +14,7 @@ from math import *
 DEFAULT_NN_FN = "nnfiles/inversek2j.nn"
 DEFAULT_DAT_FN = "datfiles/inversek2j.data"
 DEFAULT_C_FN = "mlp.c"
+DEFAULT_CSV_FN = "experiment.csv"
 
 # Sigmoid specific parameters
 LUT_SIZE            = 1024
@@ -283,6 +288,103 @@ class ANN:
             rmse = sqrt(mse)
             print('Info:\tRMSE on HW neural network is: %f' % rmse)
 
+            return rmse
+
+def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=5, i_integer=1):
+
+    # Map job IDs to instruction index
+    jobs = {}
+    jobs_lock = threading.Lock()
+
+    # Map instructions to errors
+    config_rmse = collections.defaultdict(list)
+
+    def completion(jobid, output):
+        with jobs_lock:
+            idx = jobs.pop(jobid)
+        logging.info ("Evaluation of precision for width setting {} done!".format(idx))
+        config_rmse[idx] = output
+
+    if (clusterworkers):
+        # Kill the master/workers in case previous run failed
+        logging.info ("Stopping master/workers that are still running")
+        cw.slurm.stop()
+        # Start the workers & master
+        logging.info ("Starting {} worker(s)".format(clusterworkers))
+        cw.slurm.start(nworkers=clusterworkers)
+        client = cw.client.ClientThread(completion, cw.slurm.master_host())
+        client.start()
+
+    # Now on to the width exploration
+    for w_width in range(32, 8, -1):
+        for i_width in range(32, 8, -1):
+
+            # Parameter initialization
+            width_parameter = {
+                "w_width": w_width,
+                "w_decimal": w_width-w_integer,
+                "i_width": i_width,
+                "i_decimal": i_width-i_integer
+            }
+
+            # Unique identifier
+            idx = str(width_parameter["w_width"])
+            idx += ":"+str(width_parameter["w_decimal"])
+            idx += ":"+str(width_parameter["i_width"])
+            idx += ":"+str(width_parameter["i_decimal"])
+
+            # Parse the FANN file
+            ann = ANN(nn_fn, width_parameter)
+            # Evaluate the ANN
+            if (clusterworkers>0):
+                jobid = cw.randid()
+                with jobs_lock:
+                    jobs[jobid] = idx
+                client.submit(jobid, ann.evaluate, dat_fn, test_size)
+            else:
+                config_rmse[idx] = ann.evaluate(dat_fn, test_size)
+
+    # When done, stop master/workers
+    if (clusterworkers):
+        logging.info('All jobs submitted for ANN evaluation')
+        client.wait()
+        logging.info('All jobs finished for ANN evaluation')
+        cw.slurm.stop()
+
+    # CSV output file
+    csv_data = []
+    # Prepare the first csv row
+    csv_row = [""]
+    for i_width in range(32, 8, -1):
+        csv_row.append(str(i_integer)+"."+str(i_width-i_integer))
+    csv_data.append(csv_row)
+
+    # Now iterate over the different width parameterizations
+    for w_width in range(32, 8, -1):
+
+        csv_row = [str(w_integer)+"."+str(w_width-w_integer)]
+
+        for i_width in range(32, 8, -1):
+
+            # Unique identifier
+            idx = str(w_width)
+            idx += ":"+str(w_width-w_integer)
+            idx += ":"+str(i_width)
+            idx += ":"+str(i_width-i_integer)
+
+            csv_row.append(config_rmse[idx])
+
+            logging.info ("RMSE for width config {} is {}".format(idx, config_rmse[idx]))
+        csv_data.append(csv_row)
+
+    # Now dump the results to a csv file
+    with open(csv_fn, 'wb') as f:
+        wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+        for line in csv_data:
+            wr.writerow(line)
+
+
+
 
 def cli():
     parser = argparse.ArgumentParser(
@@ -297,40 +399,28 @@ def cli():
         default=DEFAULT_DAT_FN, help='input data file (input/output pairs)'
     )
     parser.add_argument(
-        '-c', dest='c_fn', action='store', type=str, required=False,
+        '-cfile', dest='c_fn', action='store', type=str, required=False,
         default=None, help='output c file'
     )
     parser.add_argument(
         '-size', dest='test_size', action='store', type=str, required=False,
         default=None, help='number of input sets to test'
     )
+    parser.add_argument(
+        '-c', dest='clusterworkers', action='store', type=int, required=False,
+        default=0, help='parallelize on cluster'
+    )
+    parser.add_argument(
+        '-csv', dest='csv_fn', action='store', type=str, required=False,
+        default=DEFAULT_CSV_FN, help='results csv filename'
+    )
     args = parser.parse_args()
 
     # Logger
     logging.basicConfig(filename='output.log',level=logging.DEBUG)
 
-    # Let's define the minimum integer width requirements:
-    w_integer = 5
-    i_integer = 1
-
-    # Now on to the width exploration
-    for w_width in range(32, 8, -1):
-        for i_width in range(32, 8, -1):
-
-            # Parameter initialization
-            width_parameter = {
-                "w_width": w_width,
-                "w_decimal": w_width-w_integer,
-                "i_width": i_width,
-                "i_decimal": i_width-i_integer
-            }
-
-            print width_parameter
-
-            # Parse the FANN file
-            ann = ANN(args.nn_fn, width_parameter)
-            # Evaluate the ANN
-            ann.evaluate(args.dat_fn, args.test_size)
+    # Test configs
+    tune_width(args.nn_fn, args.dat_fn, args.test_size, args.clusterworkers, args.csv_fn)
 
 if __name__ == '__main__':
     cli()
