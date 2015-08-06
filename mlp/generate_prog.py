@@ -309,18 +309,28 @@ def cli():
     # Logger
     logging.basicConfig(filename='output.log',level=logging.DEBUG)
 
-    # Parameter initialization
-    width_parameter = {
-        "w_width": 16,
-        "w_decimal": 8,
-        "i_width": 16,
-        "i_decimal": 8
-    }
+    # Let's define the minimum integer width requirements:
+    w_integer = 5
+    i_integer = 1
 
-    # Parse the FANN file
-    ann = ANN(args.nn_fn, width_parameter)
-    # Evaluate the ANN
-    ann.evaluate(args.dat_fn, args.test_size)
+    # Now on to the width exploration
+    for w_width in range(32, 8, -1):
+        for i_width in range(32, 8, -1):
+
+            # Parameter initialization
+            width_parameter = {
+                "w_width": w_width,
+                "w_decimal": w_width-w_integer,
+                "i_width": i_width,
+                "i_decimal": i_width-i_integer
+            }
+
+            print width_parameter
+
+            # Parse the FANN file
+            ann = ANN(args.nn_fn, width_parameter)
+            # Evaluate the ANN
+            ann.evaluate(args.dat_fn, args.test_size)
 
 if __name__ == '__main__':
     cli()
