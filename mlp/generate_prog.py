@@ -286,7 +286,7 @@ class ANN:
             # Used to compute RMSE
             mse = mean_squared_error(precise_data, approx_data)
             rmse = sqrt(mse)
-            print('Info:\tRMSE on HW neural network is: %f' % rmse)
+            # print('Info:\tRMSE on HW neural network is: %f' % rmse)
 
             return rmse
 
@@ -302,7 +302,7 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=5, i_
     def completion(jobid, output):
         with jobs_lock:
             idx = jobs.pop(jobid)
-        logging.info ("Evaluating error for width setting {} done!".format(idx))
+        logging.info ("RMSE for width config {} is {}".format(idx, output))
         config_rmse[idx] = output
 
     if (clusterworkers):
@@ -345,6 +345,7 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=5, i_
                 client.submit(jobid, ann.evaluate, dat_fn, test_size)
             else:
                 config_rmse[idx] = ann.evaluate(dat_fn, test_size)
+                logging.info ("RMSE for width config {} is {}".format(idx, config_rmse[idx]))
 
     # When done, stop master/workers
     if (clusterworkers):
@@ -409,6 +410,10 @@ def cli():
         default=None, help='number of input sets to test'
     )
     parser.add_argument(
+        '-d', dest='debug', action='store_true', required=False,
+        default=False, help='print out debug messages'
+    )
+    parser.add_argument(
         '-c', dest='clusterworkers', action='store', type=int, required=False,
         default=0, help='parallelize on cluster'
     )
@@ -418,8 +423,22 @@ def cli():
     )
     args = parser.parse_args()
 
-    # Logger
-    logging.basicConfig(filename='output.log',level=logging.DEBUG)
+    # Take care of log formatting
+    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s", datefmt='%m/%d/%Y %I:%M:%S %p')
+    rootLogger = logging.getLogger()
+
+    fileHandler = logging.FileHandler('ann_tuning.log')
+    fileHandler.setFormatter(logFormatter)
+    rootLogger.addHandler(fileHandler)
+
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logFormatter)
+    rootLogger.addHandler(consoleHandler)
+
+    if(args.debug):
+        rootLogger.setLevel(logging.DEBUG)
+    else:
+        rootLogger.setLevel(logging.INFO)
 
     # Test configs
     tune_width(args.nn_fn, args.dat_fn, args.test_size, args.clusterworkers, args.csv_fn)
