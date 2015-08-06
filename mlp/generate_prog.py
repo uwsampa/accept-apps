@@ -11,14 +11,6 @@ DEFAULT_NN_FN = "nnfiles/inversek2j.nn"
 DEFAULT_DAT_FN = "datfiles/inversek2j.data"
 DEFAULT_C_FN = "mlp.c"
 
-# Global parameters
-W_WIDTH = 16
-W_DECIMAL = 8
-W_TO_FIX = pow(2, W_DECIMAL)
-I_WIDTH = 16
-I_DECIMAL = 8
-I_TO_FIX = pow(2, I_DECIMAL)
-
 # Sigmoid specific parameters
 LUT_SIZE            = 1024
 LUT_BOUNDS          = 4
@@ -82,16 +74,17 @@ def mean_squared_error(alist, blist):
 ############################################
 # Define activation functions here
 ############################################
-def linear(x, s):
+
+def linear(x, s, params):
     '''Linear Sigmoid
     '''
     logging.debug('LINEAR(%d):' % x)
     x = trunc(x*s)
-    x = float(x)/W_TO_FIX
+    x = float(x)/pow(2, params["w_decimal"])
     logging.debug('\t OUTPUT %d:' % x)
     return x
 
-def sigmoid(x, s):
+def sigmoid(x, s, params):
     '''Hardware Hyperbolic Tangent function (with input scaling by steepness s)
     '''
     # scale x
@@ -99,48 +92,48 @@ def sigmoid(x, s):
     # negative flag
     is_neg = 1 if x<0 else 0
     # compute LUT index based on x
-    index = trunc(int(x) >> int(W_DECIMAL+I_DECIMAL+log(LUT_GRANULARITY,2)))
+    index = trunc(int(x) >> int(trunc(params["w_decimal"]+params["i_decimal"]+log(LUT_GRANULARITY,2))))
     logging.debug ('\tindex(x) = %d' % index)
     # return value
     y = 0
     # FIXME: in the HW design, this is never true...
     # if (index > 0-CUT_OFF and index <= CUT_OFF):
     #     logging.debug ('\tY=X')
-    #     y = x>>W_DECIMAL #FIXME: remove the +1 factor
+    #     y = x>>params["w_decimal"] #FIXME: remove the +1 factor
     if (not is_neg and index > LUT_SIZE):
         logging.debug ('\tY=1')
-        y = I_TO_FIX-1
+        y = pow(2, params["i_decimal"])-1
     elif (is_neg and index < 0-LUT_SIZE):
         logging.debug ('\tY=-1')
-        y = 0-I_TO_FIX
+        y = 0-pow(2, params["i_decimal"])
     else:
         index = index+0.5 if is_neg else index+0.5
         index = float((index)*LUT_GRANULARITY)
         logging.debug ('\tsig(%f)' % index)
-        y = tanh(index)*(I_TO_FIX)
+        y = tanh(index)*pow(2, params["i_decimal"])
     logging.debug ('\tOUTPUT %d' % y)
     return trunc(y)
 
-def precise_sigmoid(x, s):
+def precise_sigmoid(x, s, params):
     '''Precise Hyperbolic Tangent function (with input scaling by steepness s)
     '''
-    x = x*s/pow(2, I_DECIMAL+W_DECIMAL)
+    x = (x*s)/pow(2, params["i_decimal"]+params["w_decimal"])
     y = tanh(x)
-    return trunc(y*I_TO_FIX)
+    return trunc(y*pow(2, params["i_decimal"]))
 
-def symmetric(x, s):
+def symmetric(x, s, params):
     '''Symmetric Sigmoid (with input scaling by steepness s)
     '''
     logging.debug('SYMM_SIG(%d):' % x)
-    return precise_sigmoid(x, s)
+    return precise_sigmoid(x, s, params)
 
-def nonsymmetric(x, s):
+def nonsymmetric(x, s, params):
     '''Non-symmetric Sigmoid (with input scaling by steepness s)
     '''
     logging.debug('SIGMOID(%d):' % x)
-    out_val = precise_sigmoid(x, s)
+    out_val = precise_sigmoid(x, s, params)
     out_val = trunc(out_val >> 1)
-    out_val += I_TO_FIX/2
+    out_val += pow(2, params["i_decimal"])/2
     return out_val
 
 # Activation functions
@@ -158,7 +151,7 @@ class ANN:
     ''' A multi-layer perceptron class
     '''
 
-    def __init__(self, nn_file):
+    def __init__(self, nn_file, params):
         ''' Reads the ANN description from the .nn file
         '''
         # ANN description
@@ -168,6 +161,9 @@ class ANN:
 
         self.minweight = float("inf")
         self.maxweight = float("-inf")
+
+        # Datapath parameters
+        self.width_params = params
 
         # Read the nn file
         with open(nn_file, 'r') as f:
@@ -196,7 +192,7 @@ class ANN:
                         if weight!= '':
                             weight = re.split(r', ', weight)
                             n = int(weight[0])
-                            w = float_to_fix(float(weight[1]), W_WIDTH, W_DECIMAL)
+                            w = float_to_fix(float(weight[1]), self.width_params["w_width"], self.width_params["w_decimal"])
                             raw_weights[n].append([n,w])
                             # Update min and max weights
                             self.minweight = float(weight[1]) if float(weight[1]) < self.minweight else self.minweight
@@ -228,16 +224,6 @@ class ANN:
                 self.neurons.append(raw_neuron[n_index])
                 self.weights.append(w_matrix)
 
-        # Print out the parameters
-        print self.minweight
-        print self.maxweight
-        print self.layers
-        print self.neurons
-        for matrix in self.weights:
-            print ""
-            for vector in matrix:
-                print vector
-
     def evaluate(self, dat_file, test_size):
         ''' Evaluates the HW ANN on a input dataset
         '''
@@ -264,12 +250,12 @@ class ANN:
                 for j in range(INPUT_LINES):
                     inputs += [float(x) for x in lines[i+j].split()]
                 # Convert inputs to fixed-point
-                inputs = [float_to_fix(x, I_WIDTH, I_DECIMAL) for x in inputs]
+                inputs = [float_to_fix(x, self.width_params["i_width"], self.width_params["i_decimal"]) for x in inputs]
                 mat_A = array([inputs])
                 # Evaluate the neural network
                 for layer, w in enumerate(self.weights):
                     # Layer input vector
-                    mat_A = append(mat_A, [[I_TO_FIX]], 1)
+                    mat_A = append(mat_A, [[pow(2, self.width_params["i_decimal"])]], 1)
                     # Weight Matrix
                     mat_B = array(w)
                     logging.debug('A\n' + str(mat_A))
@@ -279,10 +265,10 @@ class ANN:
                     sig = vectorize(activation_function[self.neurons[layer][0]])
                     mat_A = dot(mat_A, mat_B)
                     logging.debug('AxB\n' + str(mat_A))
-                    mat_A = sig(mat_A, steepness)
+                    mat_A = sig(mat_A, steepness, self.width_params)
                     logging.debug('SIG(AXB)\n' + str(mat_A))
                 approx_outputs = mat_A[0].tolist()
-                approx_outputs = [float(x) / (I_TO_FIX) for x in approx_outputs]
+                approx_outputs = [float(x) / pow(2, self.width_params["i_decimal"]) for x in approx_outputs]
                 # Log the approximate output values for RMSE computation
                 approx_data.append(approx_outputs)
 
@@ -323,8 +309,16 @@ def cli():
     # Logger
     logging.basicConfig(filename='output.log',level=logging.DEBUG)
 
+    # Parameter initialization
+    width_parameter = {
+        "w_width": 16,
+        "w_decimal": 8,
+        "i_width": 16,
+        "i_decimal": 8
+    }
+
     # Parse the FANN file
-    ann = ANN(args.nn_fn)
+    ann = ANN(args.nn_fn, width_parameter)
     # Evaluate the ANN
     ann.evaluate(args.dat_fn, args.test_size)
 
