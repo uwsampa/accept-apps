@@ -302,7 +302,7 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=5, i_
     def completion(jobid, output):
         with jobs_lock:
             idx = jobs.pop(jobid)
-        logging.info ("Evaluation of precision for width setting {} done!".format(idx))
+        logging.info ("Evaluating error for width setting {} done!".format(idx))
         config_rmse[idx] = output
 
     if (clusterworkers):
@@ -332,6 +332,8 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=5, i_
             idx += ":"+str(width_parameter["w_decimal"])
             idx += ":"+str(width_parameter["i_width"])
             idx += ":"+str(width_parameter["i_decimal"])
+
+            logging.info("Evaluating error for width setting {}...".format(idx))
 
             # Parse the FANN file
             ann = ANN(nn_fn, width_parameter)
