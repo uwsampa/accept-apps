@@ -27,6 +27,12 @@ FILE_OFFSET         = 3         # Data file format (should not be changed)
 DATA_OFFSET         = 0         # Skips the first N input/output pairs
 INPUT_LINES         = 1         # Number of input lines per input set
 
+# Weight limits
+W_MAX = 32
+W_MIN = 8
+I_MAX = 32
+I_MIN = 8
+
 
 ############################################
 # Conversion functions
@@ -290,7 +296,7 @@ class ANN:
 
             return rmse
 
-def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=5, i_integer=1):
+def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=None, i_integer=1):
 
     # Map job IDs to instruction index
     jobs = {}
@@ -315,9 +321,21 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=5, i_
         client = cw.client.ClientThread(completion, cw.slurm.master_host())
         client.start()
 
+    # Determine the integer width
+    if not w_integer:
+        params = {
+                "w_width": 32,
+                "w_decimal": 32,
+                "i_width": 32,
+                "i_decimal": 32
+            }
+        ann = ANN(nn_fn, params)
+        w_integer = int(max(ceil(log2(abs(ann.minweight))),ceil(log2(abs(ann.maxweight))))+1)
+        print w_integer
+
     # Now on to the width exploration
-    for w_width in range(32, 8, -1):
-        for i_width in range(32, 8, -1):
+    for w_width in range(W_MAX, W_MIN-1, -1):
+        for i_width in range(I_MAX, I_MIN-1, -1):
 
             # Parameter initialization
             width_parameter = {
@@ -358,16 +376,16 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=5, i_
     csv_data = []
     # Prepare the first csv row
     csv_row = [""]
-    for i_width in range(32, 8, -1):
+    for i_width in range(I_MAX, I_MIN-1, -1):
         csv_row.append(str(i_integer)+"."+str(i_width-i_integer))
     csv_data.append(csv_row)
 
     # Now iterate over the different width parameterizations
-    for w_width in range(32, 8, -1):
+    for w_width in range(W_MAX, W_MIN-1, -1):
 
         csv_row = [str(w_integer)+"."+str(w_width-w_integer)]
 
-        for i_width in range(32, 8, -1):
+        for i_width in range(I_MAX, I_MIN-1, -1):
 
             # Unique identifier
             idx = str(w_width)
@@ -385,8 +403,6 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=5, i_
         wr = csv.writer(f, quoting=csv.QUOTE_ALL)
         for line in csv_data:
             wr.writerow(line)
-
-
 
 
 def cli():
