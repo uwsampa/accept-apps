@@ -296,7 +296,7 @@ class ANN:
 
             return rmse
 
-def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=None, i_integer=1):
+def tune_width(nn_fn, dat_fn, test_size, clusterworkers, run_on_grappa, csv_fn, w_integer=None, i_integer=1):
 
     # Map job IDs to instruction index
     jobs = {}
@@ -312,12 +312,14 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=None,
         config_rmse[idx] = output
 
     if (clusterworkers):
+        # Select partition
+        partition = "grappa" if run_on_grappa else "sampa"
         # Kill the master/workers in case previous run failed
         logging.info ("Stopping master/workers that are still running")
         cw.slurm.stop()
         # Start the workers & master
         logging.info ("Starting {} worker(s)".format(clusterworkers))
-        cw.slurm.start(nworkers=clusterworkers)
+        cw.slurm.start(nworkers=clusterworkers, worker_options=['--partition='+partition])
         client = cw.client.ClientThread(completion, cw.slurm.master_host())
         client.start()
 
@@ -440,6 +442,10 @@ def cli():
         '-csv', dest='csv_fn', action='store', type=str, required=False,
         default=DEFAULT_CSV_FN, help='results csv filename'
     )
+    parser.add_argument(
+        '-grappa', dest='grappa', action='store_true', required=False,
+        default=False, help='run on grappa partition'
+    )
     args = parser.parse_args()
 
     # Take care of log formatting
@@ -460,7 +466,7 @@ def cli():
         rootLogger.setLevel(logging.INFO)
 
     # Test configs
-    tune_width(args.nn_fn, args.dat_fn, args.test_size, args.clusterworkers, args.csv_fn)
+    tune_width(args.nn_fn, args.dat_fn, args.test_size, args.clusterworkers, args.grappa, args.csv_fn)
 
 if __name__ == '__main__':
     cli()
