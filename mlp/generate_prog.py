@@ -335,35 +335,36 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=None,
 
     # Now on to the width exploration
     for w_width in range(W_MAX, W_MIN-1, -1):
-        for i_width in range(I_MAX, I_MIN-1, -1):
+        for w_int_cropped in range(1, w_integer+1):
+            for i_width in range(I_MAX, I_MIN-1, -1):
 
-            # Parameter initialization
-            width_parameter = {
-                "w_width": w_width,
-                "w_decimal": w_width-w_integer,
-                "i_width": i_width,
-                "i_decimal": i_width-i_integer
-            }
+                # Parameter initialization
+                width_parameter = {
+                    "w_width": w_width,
+                    "w_decimal": w_width-w_int_cropped,
+                    "i_width": i_width,
+                    "i_decimal": i_width-i_integer
+                }
 
-            # Unique identifier
-            idx = str(width_parameter["w_width"])
-            idx += ":"+str(width_parameter["w_decimal"])
-            idx += ":"+str(width_parameter["i_width"])
-            idx += ":"+str(width_parameter["i_decimal"])
+                # Unique identifier
+                idx = str(width_parameter["w_width"])
+                idx += ":"+str(width_parameter["w_decimal"])
+                idx += ":"+str(width_parameter["i_width"])
+                idx += ":"+str(width_parameter["i_decimal"])
 
-            logging.info("Evaluating error for width setting {}...".format(idx))
+                logging.info("Evaluating error for width setting {}...".format(idx))
 
-            # Parse the FANN file
-            ann = ANN(nn_fn, width_parameter)
-            # Evaluate the ANN
-            if (clusterworkers>0):
-                jobid = cw.randid()
-                with jobs_lock:
-                    jobs[jobid] = idx
-                client.submit(jobid, ann.evaluate, dat_fn, test_size)
-            else:
-                config_rmse[idx] = ann.evaluate(dat_fn, test_size)
-                logging.info ("RMSE for width config {} is {}".format(idx, config_rmse[idx]))
+                # Parse the FANN file
+                ann = ANN(nn_fn, width_parameter)
+                # Evaluate the ANN
+                if (clusterworkers>0):
+                    jobid = cw.randid()
+                    with jobs_lock:
+                        jobs[jobid] = idx
+                    client.submit(jobid, ann.evaluate, dat_fn, test_size)
+                else:
+                    config_rmse[idx] = ann.evaluate(dat_fn, test_size)
+                    logging.info ("RMSE for width config {} is {}".format(idx, config_rmse[idx]))
 
     # When done, stop master/workers
     if (clusterworkers):
@@ -383,20 +384,22 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, csv_fn, w_integer=None,
     # Now iterate over the different width parameterizations
     for w_width in range(W_MAX, W_MIN-1, -1):
 
-        csv_row = [str(w_integer)+"."+str(w_width-w_integer)]
+        for w_int_cropped in range(1, w_integer+1):
 
-        for i_width in range(I_MAX, I_MIN-1, -1):
+            csv_row = [str(w_int_cropped)+"."+str(w_width-w_int_cropped)]
 
-            # Unique identifier
-            idx = str(w_width)
-            idx += ":"+str(w_width-w_integer)
-            idx += ":"+str(i_width)
-            idx += ":"+str(i_width-i_integer)
+            for i_width in range(I_MAX, I_MIN-1, -1):
 
-            csv_row.append(config_rmse[idx])
+                # Unique identifier
+                idx = str(w_width)
+                idx += ":"+str(w_width-w_int_cropped)
+                idx += ":"+str(i_width)
+                idx += ":"+str(i_width-i_integer)
 
-            logging.info ("RMSE for width config {} is {}".format(idx, config_rmse[idx]))
-        csv_data.append(csv_row)
+                csv_row.append(config_rmse[idx])
+
+                logging.info ("RMSE for width config {} is {}".format(idx, config_rmse[idx]))
+            csv_data.append(csv_row)
 
     # Now dump the results to a csv file
     with open(csv_fn, 'wb') as f:
