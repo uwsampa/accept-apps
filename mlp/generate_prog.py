@@ -340,8 +340,8 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, run_on_grappa, csv_fn, 
         print w_integer
 
     # Now on to the width exploration
-    for w_width in range(W_MAX, W_MIN-1, -1):
-        for w_int_cropped in range(1, w_integer+1):
+    for w_int_cropped in range(1, w_integer+1):
+        for w_width in range(W_MAX, W_MIN-1, -1):
             for i_width in range(I_MAX, I_MIN-1, -1):
 
                 # Parameter initialization
@@ -388,12 +388,9 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, run_on_grappa, csv_fn, 
     csv_data.append(csv_row)
 
     # Now iterate over the different width parameterizations
-    for w_width in range(W_MAX, W_MIN-1, -1):
-
-        for w_int_cropped in range(1, w_integer+1):
-
+    for w_int_cropped in range(1, w_integer+1):
+        for w_width in range(W_MAX, W_MIN-1, -1):
             csv_row = [str(w_int_cropped)+":"+str(w_width-w_int_cropped)]
-
             for i_width in range(I_MAX, I_MIN-1, -1):
 
                 # Unique identifier
@@ -403,8 +400,8 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, run_on_grappa, csv_fn, 
                 idx += ":"+str(i_width-i_integer)
 
                 csv_row.append(config_rmse[idx])
-
                 logging.info ("RMSE for width config {} is {}".format(idx, config_rmse[idx]))
+
             csv_data.append(csv_row)
 
     # Now dump the results to a csv file
