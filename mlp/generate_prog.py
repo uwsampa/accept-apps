@@ -384,7 +384,7 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, run_on_grappa, csv_fn, 
     # Prepare the first csv row
     csv_row = [""]
     for i_width in range(I_MAX, I_MIN-1, -1):
-        csv_row.append(str(i_integer)+":"+stir(i_width-i_integer))
+        csv_row.append(str(i_integer)+":"+str(i_width-i_integer))
     csv_data.append(csv_row)
 
     # Now iterate over the different width parameterizations
