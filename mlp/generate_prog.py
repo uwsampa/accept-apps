@@ -319,7 +319,11 @@ def tune_width(nn_fn, dat_fn, test_size, clusterworkers, run_on_grappa, csv_fn, 
         cw.slurm.stop()
         # Start the workers & master
         logging.info ("Starting {} worker(s)".format(clusterworkers))
-        cw.slurm.start(nworkers=clusterworkers, worker_options=['--partition='+partition])
+        cw.slurm.start(
+            nworkers=clusterworkers,
+            master_options=['--partition='+partition],
+            worker_options=['--partition='+partition]
+        )
         client = cw.client.ClientThread(completion, cw.slurm.master_host())
         client.start()
 
