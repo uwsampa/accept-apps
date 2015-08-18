@@ -4,10 +4,7 @@ TARGET := fluidanimate
 RUNARGS := 1 5 in_300K.fluid out.fluid  # simlarge
 TESTARGS := 8 10 in_500K.fluid out.fluid  # native
 
-LIBERROR_SRCS := liberror.cpp enerj.cpp flikker.cpp reducedprecfp.cpp
-
 SOURCES := pthreads.cpp cellpool.cpp parsec_barrier.cpp
-SOURCES += $(LIBERROR_SRCS)
 
 HEADERS := cellpool.hpp fluid.hpp parsec_barrier.hpp enerj.hpp
 LDFLAGS := -lpthread
