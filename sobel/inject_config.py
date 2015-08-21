@@ -319,7 +319,7 @@ def tune_himask_insn(base_config, idx):
     # Return the mask value, and type tuple
     return best_mask
 
-def tune_himask(base_config, clusterworkers):
+def tune_himask(base_config, clusterworkers, run_on_grappa):
     """Tunes the most significant bit masking at an instruction
     granularity without affecting application error.
     """
@@ -341,12 +341,18 @@ def tune_himask(base_config, clusterworkers):
         insn_himasks[idx] = output
 
     if (clusterworkers):
+        # Select partition
+        partition = "grappa" if run_on_grappa else "sampa"
         # Kill the master/workers in case previous run failed
         logging.info ("Stopping master/workers that are still running")
         cw.slurm.stop()
         # Start the workers & master
         logging.info ("Starting {} worker(s)".format(clusterworkers))
-        cw.slurm.start(nworkers=clusterworkers)
+        cw.slurm.start(
+            nworkers=clusterworkers,
+            master_options=['--partition='+partition, '-s'],
+            worker_options=['--partition='+partition, '-s']
+        )
         client = cw.client.ClientThread(completion, cw.slurm.master_host())
         client.start()
 
@@ -379,7 +385,7 @@ def tune_himask(base_config, clusterworkers):
     report_error_and_savings(base_config, 0.0)
 
 
-def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
+def tune_lomask(base_config, target_error, passlimit, clusterworkers, run_on_grappa, rate=1):
     """Tunes the least significant bits masking to meet the
     specified error requirements, given a passlimit.
     The tuning algorithm performs multiple passes over every
@@ -407,12 +413,18 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
         insn_errors[idx] = output
 
     if (clusterworkers):
+        # Select partition
+        partition = "grappa" if run_on_grappa else "sampa"
         # Kill the master/workers in case previous run failed
         logging.info ("Stopping master/workers that are still running")
         cw.slurm.stop()
         # Start the workers & master
         logging.info ("Starting {} worker(s)".format(clusterworkers))
-        cw.slurm.start(nworkers=clusterworkers)
+        cw.slurm.start(
+            nworkers=clusterworkers,
+            master_options=['--partition='+partition, '-s'],
+            worker_options=['--partition='+partition, '-s']
+        )
         client = cw.client.ClientThread(completion, cw.slurm.master_host())
         client.start()
 
@@ -528,7 +540,7 @@ def tune_lomask(base_config, clusterworkers, target_error, passlimit, rate=1):
 # Main Function
 #################################################
 
-def tune_width(inject_config_fn, accept_config_fn, clusterworkers, target_error, passlimit):
+def tune_width(inject_config_fn, accept_config_fn, target_error, passlimit, clusterworkers, run_on_grappa):
     """Performs instruction masking tuning
     """
     # Generate default configuration
@@ -543,10 +555,10 @@ def tune_width(inject_config_fn, accept_config_fn, clusterworkers, target_error,
     init_step_count()
 
     # # Let's tune the high mask bits (0 performance degradation)
-    tune_himask(config, clusterworkers)
+    tune_himask(config, clusterworkers, run_on_grappa)
 
     # # Now let's tune the low mask bits (performance degradation allowed)
-    tune_lomask(config, clusterworkers, target_error, passlimit)
+    tune_lomask(config, target_error, passlimit, clusterworkers, run_on_grappa)
 
     # Print the final conf object
     print_config(config)
@@ -583,6 +595,10 @@ def cli():
         default=0, help='parallelize on cluster'
     )
     parser.add_argument(
+        '-grappa', dest='grappa', action='store_true', required=False,
+        default=False, help='run on grappa partition'
+    )
+    parser.add_argument(
         '-d', dest='debug', action='store_true', required=False,
         default=False, help='print out debug messages'
     )
@@ -611,7 +627,7 @@ def cli():
         rootLogger.setLevel(logging.INFO)
 
     # Tuning
-    tune_width(args.inject_config_fn, args.accept_config_fn, args.clusterworkers, args.target_error, args.passlimit)
+    tune_width(args.inject_config_fn, args.accept_config_fn, args.target_error, args.passlimit, args.clusterworkers, args.grappa)
 
     # Close the log handlers
     handlers = rootLogger.handlers[:]
