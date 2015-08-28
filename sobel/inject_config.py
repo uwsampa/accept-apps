@@ -12,6 +12,7 @@ import logging
 import cw.client
 import threading
 import collections
+import csv
 
 # FILE NAMES
 ACCEPT_CONFIG = 'accept_config.txt'
@@ -19,6 +20,7 @@ INJECT_CONFIG = 'inject_config.txt'
 LOG_FILE = 'inject_config.log'
 ERROR_LOG_FILE = 'error.log'
 DYNSTATS_FILE = 'accept_bbstats.txt'
+CDF_FILE = 'cdfstats.txt'
 
 # DIR NAMES
 OUTPUT_DIR = 'outputs'
@@ -83,6 +85,8 @@ def create_overwrite_directory(dirpath):
 #################################################
 
 def get_bitwidth_from_type(typeStr):
+    """Returns the bit-width of a given LLVM type
+    """
     if (typeStr=="Half"):
         return 16
     elif(typeStr=="Float"):
@@ -104,9 +108,15 @@ def get_bitwidth_from_type(typeStr):
         exit()
 
 def get_param_from_masks(himask, lomask):
+    """Returns parameter from width settings
+    """
     return (9<<16) + (himask<<8) + lomask
 
 def get_masks_from_param(param):
+    """Returns mask width settings from parameter
+    """
+    if param==0:
+        return 0,0
     param -= (9<<16)
     himask = (param >> 8) & 0xFF;
     lomask = (param & 0xFF);
@@ -122,64 +132,116 @@ def parse_relax_config(f):
             param, ident = line.split(None, 1)
             yield ident, int(param)
 
-def read_config(fname, params={}, default_param=0):
+def read_config(fname):
     """Reads in a fine error injection descriptor.
     Returns a config object.
     """
     config = []
     with open(fname) as f:
         for ident, param in parse_relax_config(f):
-            # Turn everything off except selected functions.
-            param = 0
-
             # If this is in a function indicated in the parameters file,
             # adjust the parameter accordingly.
             if ident.startswith('instruction'):
                 _, i_ident = ident.split()
-                func, _, _, opcode, typ = i_ident.split(':')
-                if func in params:
-                    param = params[func]
-                else:
-                    param = default_param
+                func, bb, line, opcode, typ = i_ident.split(':')
+                himask, lomask = get_masks_from_param(param)
 
                 # Add the config entry for the instruction
-                config.append({'insn': ident, 'relax': param, 'himask': 0, 'lomask': 0, 'opcode': opcode, 'type': typ})
-                # If we are reading a config file where the parameter are already set, set them
-                if (param > 1):
-                    himask, lomask = get_masks_from_param(param)
-                    config['relax'] = 1
-                    config['himask'] = himask
-                    config['lomask'] = lomask
+                config.append({
+                    'insn': ident,
+                    'relax': param,
+                    'himask': himask,
+                    'lomask': lomask,
+                    'bb': int(bb),
+                    'line': int(line),
+                    'opcode': opcode,
+                    'type': typ})
 
     return config
 
-def gen_default_config(inject_config_fn):
+def read_dyn_stats(fname=DYNSTATS_FILE):
+    """Read and the dynamic BB count stats into a list
+    """
+    bb_info = {}
+    with open(fname) as f:
+        for l in f:
+            line = l.strip()
+            bb_idx = line.split('\t')[0]
+            bb_num = line.split('\t')[1]
+            if (bb_idx.isdigit() and bb_num.isdigit()):
+                bb_info[int(bb_idx)] = int(bb_num)
+    return bb_info
+
+def analyze(config, stats, BITWIDHTMAX=32, csv_fn=CDF_FILE):
+    """Analyze final bit-width settings obtained by the autotuner
+    and produce aggregate statistics
+    """
+    baseline_mem = [0]*(BITWIDHTMAX+1)
+    precise_mem = [0]*(BITWIDHTMAX+1)
+    approx_mem = [0]*(BITWIDHTMAX+1)
+    baseline_exe = [0]*(BITWIDHTMAX+1)
+    precise_exe = [0]*(BITWIDHTMAX+1)
+    approx_exe = [0]*(BITWIDHTMAX+1)
+    for conf in config:
+        baseline_width = get_bitwidth_from_type(conf['type'])
+        precise_width = get_bitwidth_from_type(conf['type'])-conf['himask']
+        approx_width = get_bitwidth_from_type(conf['type'])-conf['himask']-conf['lomask']
+        execs = stats[conf['bb']]
+        if conf['opcode']=='store' or conf['opcode']=='load':
+            baseline_mem[baseline_width]+=execs
+            precise_mem[precise_width]+=execs
+            approx_mem[approx_width]+=execs
+        else:
+            baseline_exe[baseline_width]+=execs
+            precise_exe[precise_width]+=execs
+            approx_exe[approx_width]+=execs
+
+    # Now produce the CDF
+    mem_total = sum(baseline_mem)
+    exe_total = sum(baseline_exe)
+    baseline_mem_cdf = [0]*(BITWIDHTMAX+1)
+    precise_mem_cdf = [0]*(BITWIDHTMAX+1)
+    approx_mem_cdf = [0]*(BITWIDHTMAX+1)
+    baseline_exe_cdf = [0]*(BITWIDHTMAX+1)
+    precise_exe_cdf = [0]*(BITWIDHTMAX+1)
+    approx_exe_cdf = [0]*(BITWIDHTMAX+1)
+
+    # CSV file that gets outputted
+    cdf_stats = [["bitw", "baseline_mem", "precise_mem", "approx_mem", "baseline_exe", "precise_exe", "approx_exe"]]
+    for i in range(0, (BITWIDHTMAX+1)):
+        if i==0:
+            baseline_mem_cdf[0] = float(baseline_mem[0])/mem_total
+            precise_mem_cdf[0] = float(precise_mem[0])/mem_total
+            approx_mem_cdf[0] = float(approx_mem[0])/mem_total
+            baseline_exe_cdf[0] = float(baseline_exe[0])/exe_total
+            precise_exe_cdf[0] = float(precise_exe[0])/exe_total
+            approx_exe_cdf[0] = float(approx_exe[0])/exe_total
+        else:
+            baseline_mem_cdf[i] = baseline_mem_cdf[i-1]+float(baseline_mem[i])/mem_total
+            precise_mem_cdf[i] = precise_mem_cdf[i-1]+float(precise_mem[i])/mem_total
+            approx_mem_cdf[i] = approx_mem_cdf[i-1]+float(approx_mem[i])/mem_total
+            baseline_exe_cdf[i] = baseline_exe_cdf[i-1]+float(baseline_exe[i])/exe_total
+            precise_exe_cdf[i] = precise_exe_cdf[i-1]+float(precise_exe[i])/exe_total
+            approx_exe_cdf[i] = approx_exe_cdf[i-1]+float(approx_exe[i])/exe_total
+        cdf_stats.append([i, baseline_mem_cdf[i], precise_mem_cdf[i], approx_mem_cdf[i],
+            baseline_exe_cdf[i], precise_exe_cdf[i], approx_exe_cdf[i]])
+
+    with open(csv_fn, 'w') as fp:
+        csv.writer(fp, delimiter='\t').writerows(cdf_stats)
+
+
+def gen_default_config():
     """Reads in the coarse error injection descriptor,
     generates the default config by running make run_orig.
     Returns a config object.
     """
     curdir = os.getcwd()
 
-    # Load the coarse configuration
-    logging.info('Reading in the coarse config file: {}'.format(inject_config_fn))
-    params = {}
-    default_param = 0
-    with open(inject_config_fn) as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                func, param = line.split()
-                param = int(param)
-                if func == 'default':
-                    default_param = param
-                else:
-                    params[func] = param
-
     logging.info('Generating the fine config file: {}'.format(ACCEPT_CONFIG))
     shell(shlex.split('make run_orig'), cwd=curdir)
 
     # Load ACCEPT config and adjust parameters.
-    config = read_config(ACCEPT_CONFIG, params, default_param)
+    config = read_config(ACCEPT_CONFIG)
 
     return config
 
@@ -190,9 +252,7 @@ def dump_relax_config(config, fname):
     logging.debug("-----------FILE DUMP BEGIN-----------")
     with open(fname, 'w') as f:
         for conf in config:
-            mode = 0
-            if conf['relax']==1:
-                mode = get_param_from_masks(conf['himask'], conf['lomask'])
+            mode = get_param_from_masks(conf['himask'], conf['lomask'])
             f.write(str(mode)+ ' ' + conf['insn'] + '\n')
             logging.debug(str(mode)+ ' ' + conf['insn'])
     logging.debug("----------- FILE DUMP END -----------")
@@ -204,20 +264,18 @@ def dump_relax_config(config, fname):
 def print_config(config):
     """Prints out the configuration.
     """
-    logging.debug("-----------CONFIG DUMP BEGIN-----------")
+    logging.info("-----------CONFIG DUMP BEGIN-----------")
     for conf in config:
-        logging.debug(conf)
-    logging.debug("----------- CONFIG DUMP END -----------")
+        logging.info(conf)
+    logging.info("----------- CONFIG DUMP END -----------")
 
 def eval_compression_factor(config):
     """Evaluate number of bits saved from compression.
     """
     bits, total = 0, 0
     for conf in config:
-        # Only account for the instructions that we can relax
-        if (conf['relax']):
-            bits += conf['himask']+conf['lomask']
-            total += get_bitwidth_from_type(conf['type'])
+        bits += conf['himask']+conf['lomask']
+        total += get_bitwidth_from_type(conf['type'])
     return float(bits)/total
 
 def test_config(config, dstpath=None):
@@ -359,18 +417,13 @@ def tune_himask(base_config, clusterworkers, run_on_grappa):
 
     for idx, conf in enumerate(base_config):
         logging.info ("Tuning instruction: {}".format(conf['insn']))
-        # If the instruction should not be tuned, return 0
-        if conf['relax']==0:
-            insn_himasks[idx] = 0
-            logging.info ("Skipping current instruction {} - relaxation disallowed".format(idx))
+        if (clusterworkers>0):
+            jobid = cw.randid()
+            with jobs_lock:
+                jobs[jobid] = idx
+            client.submit(jobid, tune_himask_insn, base_config, idx)
         else:
-            if (clusterworkers>0):
-                jobid = cw.randid()
-                with jobs_lock:
-                    jobs[jobid] = idx
-                client.submit(jobid, tune_himask_insn, base_config, idx)
-            else:
-                insn_himasks[idx] = tune_himask_insn(base_config, idx)
+            insn_himasks[idx] = tune_himask_insn(base_config, idx)
 
     if (clusterworkers):
         logging.info('All jobs submitted for himaks tuning')
@@ -454,10 +507,7 @@ def tune_lomask(base_config, target_error, passlimit, clusterworkers, run_on_gra
         # Now iterate over all instructions
         for idx, conf in enumerate(base_config):
             logging.info ("Increasing lomask on instruction {} to {}".format(idx, conf['insn']))
-            if conf['relax']==0:
-                insn_errors[idx] = float('inf')
-                logging.info ("Skipping current instruction {} - relaxation disallowed".format(idx))
-            elif (base_config[idx]['himask']+base_config[idx]['lomask']) == get_bitwidth_from_type(base_config[idx]['type']):
+            if (base_config[idx]['himask']+base_config[idx]['lomask']) == get_bitwidth_from_type(base_config[idx]['type']):
                 insn_errors[idx] = float('inf')
                 logging.info ("Skipping current instruction {} - bitmask max reached".format(idx))
             elif idx in maxed_insn:
@@ -537,28 +587,31 @@ def tune_lomask(base_config, target_error, passlimit, clusterworkers, run_on_gra
     # Transfer files over
     shutil.move(outputsdir, curdir+'/'+OUTPUT_DIR)
 
+
 #################################################
 # Main Function
 #################################################
 
-def tune_width(inject_config_fn, accept_config_fn, target_error, passlimit, clusterworkers, run_on_grappa):
+def tune_width(accept_config_fn, target_error, passlimit, clusterworkers, run_on_grappa):
     """Performs instruction masking tuning
     """
     # Generate default configuration
     if (accept_config_fn):
         config = read_config(accept_config_fn)
-        print_config(config)
+        stats = read_dyn_stats()
+        analyze(config, stats)
+        # print_config(config)
         exit()
     else:
-        config = gen_default_config(inject_config_fn)
+        config = gen_default_config()
 
     # Initialize globals
     init_step_count()
 
-    # # Let's tune the high mask bits (0 performance degradation)
+    # Let's tune the high mask bits (0 performance degradation)
     tune_himask(config, clusterworkers, run_on_grappa)
 
-    # # Now let's tune the low mask bits (performance degradation allowed)
+    # Now let's tune the low mask bits (performance degradation allowed)
     tune_lomask(config, target_error, passlimit, clusterworkers, run_on_grappa)
 
     # Print the final conf object
@@ -576,11 +629,7 @@ def cli():
         description='Bit-width tuning using masking'
     )
     parser.add_argument(
-        '-f', dest='inject_config_fn', action='store', type=str, required=False,
-        default=INJECT_CONFIG, help='error injection configuration file'
-    )
-    parser.add_argument(
-        '-r', dest='accept_config_fn', action='store', type=str, required=False,
+        '-conf', dest='accept_config_fn', action='store', type=str, required=False,
         default=None, help='accept_config_file'
     )
     parser.add_argument(
@@ -593,7 +642,7 @@ def cli():
     )
     parser.add_argument(
         '-c', dest='clusterworkers', action='store', type=int, required=False,
-        default=0, help='parallelize on cluster'
+        default=0, help='max number of machines to allocate on the cluster'
     )
     parser.add_argument(
         '-grappa', dest='grappa', action='store_true', required=False,
@@ -628,7 +677,7 @@ def cli():
         rootLogger.setLevel(logging.INFO)
 
     # Tuning
-    tune_width(args.inject_config_fn, args.accept_config_fn, args.target_error, args.passlimit, args.clusterworkers, args.grappa)
+    tune_width(args.accept_config_fn, args.target_error, args.passlimit, args.clusterworkers, args.grappa)
 
     # Close the log handlers
     handlers = rootLogger.handlers[:]
