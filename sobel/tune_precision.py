@@ -16,8 +16,7 @@ import csv
 
 # FILE NAMES
 ACCEPT_CONFIG = 'accept_config.txt'
-INJECT_CONFIG = 'inject_config.txt'
-LOG_FILE = 'inject_config.log'
+LOG_FILE = 'tune_precision.log'
 ERROR_LOG_FILE = 'error.log'
 DYNSTATS_FILE = 'accept_bbstats.txt'
 CDF_FILE = 'cdfstats.txt'
@@ -687,7 +686,6 @@ def cli():
 
     # Finally, transfer all files in the outputs dir
     if (os.path.isdir(OUTPUT_DIR)):
-        shutil.copyfile(args.inject_config_fn, OUTPUT_DIR+'/'+args.inject_config_fn)
         shutil.move(ACCEPT_CONFIG, OUTPUT_DIR+'/'+ACCEPT_CONFIG)
         shutil.move(ERROR_LOG_FILE, OUTPUT_DIR+'/'+ERROR_LOG_FILE)
         shutil.move(DYNSTATS_FILE, OUTPUT_DIR+'/'+DYNSTATS_FILE)
