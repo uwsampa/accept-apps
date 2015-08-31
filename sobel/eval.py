@@ -4,6 +4,7 @@ import PIL.Image
 import itertools
 
 IMGDIR = 'saved_outputs'
+EXT = ".pgm"
 
 def load():
     return 'file:out.pgm'
