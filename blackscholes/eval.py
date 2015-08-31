@@ -1,3 +1,5 @@
+EXT = '.txt'
+
 def load():
     return 'file:output.txt'
 
