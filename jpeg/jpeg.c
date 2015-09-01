@@ -24,8 +24,12 @@ int main (int argc, const char* argv[]) {
 
 	if (argc > 1) {
 		strcpy(inputFileName, argv[1]);
-		strcpy(outputFileName, argv[1]);
-        strcat(outputFileName, ".jpg");
+		if (argc > 2) {
+			strcpy(outputFileName, argv[2]);
+		} else {
+			strcpy(outputFileName, argv[1]);
+			strcat(outputFileName, ".jpg");
+		}
 	} else {
 		strcpy(inputFileName, "./data/baboon-220px.rgb");
 		strcpy(outputFileName, "./data/baboon-220px.rgb.jpg");

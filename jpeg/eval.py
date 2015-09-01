@@ -5,6 +5,7 @@ import PIL.Image
 import itertools
 
 IMGDIR = 'saved_outputs'
+EXT = '.jpg'
 
 def load():
     return 'file:lena.rgb.jpg'
