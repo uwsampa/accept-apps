@@ -1,5 +1,7 @@
 from subprocess import check_output
 
+EXT = ".mat"
+
 def load():
     output = check_output(["octave", "-q", "assess.m"])
     # print("loaded err = " + output)

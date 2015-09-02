@@ -1,9 +1,8 @@
 TARGET := histogram_equalization
 CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
-LDFLAGS := -lm -lrt
+LDFLAGS := -lm
 
-CLEANMETOO += histeq_output.0.mat
+CLEANMETOO += histeq_output.0.mat *.out *.log
 
-ACCEPT_DIR ?= /sampa/share/accept/accept
-
+ACCEPT_DIR ?= ../../accept
 include $(ACCEPT_DIR)/accept.mk
