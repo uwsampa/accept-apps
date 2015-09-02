@@ -1,5 +1,5 @@
 TARGET := histogram_equalization
-CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
+CFLAGS := -Iinc -DINPUT_SIZE=AUTOTUNER
 LDFLAGS := -lm
 
 CLEANMETOO += histeq_output.0.mat *.out *.log
