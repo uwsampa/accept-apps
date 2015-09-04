@@ -2,7 +2,7 @@ from subprocess import check_output
 import os
 
 EXT = ".mat"
-INPUT_FN = "random_input"+EXT
+INPUT_FN = "input_small"+EXT
 
 def load():
     output = check_output(["octave", "-q", "assess.m"])
