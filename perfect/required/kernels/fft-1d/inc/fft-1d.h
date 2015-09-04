@@ -76,6 +76,7 @@
 #include <enerc.h>
 
 int write_array_to_octave (float * data, unsigned int len, char * filename, char * name);
+int read_array_from_octave (float * data, unsigned int len, char * filename);
 int fft (APPROX float * data, unsigned int N, unsigned int logn, int sign);
 
 #endif /* _TAV_1D_FFT_ */

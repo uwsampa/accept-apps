@@ -76,12 +76,15 @@
 
 #if INPUT_SIZE == INPUT_SIZE_SMALL
 #define LOGN (8)
+#define FILENAME "input_small.mat"
 
 #elif INPUT_SIZE == INPUT_SIZE_MEDIUM
 #define LOGN (12)
+#define FILENAME "input_medium.mat"
 
 #elif INPUT_SIZE == INPUT_SIZE_LARGE
 #define LOGN (15)
+#define FILENAME "input_large.mat"
 
 #else
 #error "Unhandled value for INPUT_SIZE"
@@ -104,17 +107,32 @@ int main (int argc, char * argv[])
   a = malloc (2 * N * sizeof(float));
 
   /* random initialization */
-  tic ();
-  for (i = 0; i < N; i++) {
-    a[2*i  ] = (float) rand () / (float) RAND_MAX;
-    a[2*i+1] = (float) rand () / (float) RAND_MAX;
-  }
-  PRINT_STAT_DOUBLE ("time_generate_random_data", toc ());
+  #ifdef AUTOTUNER
+    if (!a) {
+      fprintf(stderr, "ERROR: Allocation failed.\n");
+      exit(-1);
+    }
+    tic ();
+    read_array_from_octave (ENDORSE(a), N*2, FILENAME);
+    PRINT_STAT_DOUBLE ("time_load_data", toc ());
 
-  /* Write the generated input file to disk */
-  write_array_to_octave (ENDORSE(a), N, "random_input.mat", "input");
+    /* Write the generated input file to disk */
+    write_array_to_octave (ENDORSE(a), N, FILENAME, "input");
 
-  PRINT_STAT_STRING ("input_file", "random_input.mat");
+    PRINT_STAT_STRING ("input_file", FILENAME);
+  #else
+    tic ();
+    for (i = 0; i < N; i++) {
+      a[2*i  ] = (float) rand () / (float) RAND_MAX;
+      a[2*i+1] = (float) rand () / (float) RAND_MAX;
+    }
+    PRINT_STAT_DOUBLE ("time_generate_random_data", toc ());
+
+    /* Write the generated input file to disk */
+    write_array_to_octave (ENDORSE(a), N, "random_input.mat", "input");
+
+    PRINT_STAT_STRING ("input_file", "random_input.mat");
+  #endif
 
   /* Perform the FFT */
   tic ();
@@ -122,11 +140,15 @@ int main (int argc, char * argv[])
   fft (a, N, LOGN, -1);
   accept_roi_end();
   PRINT_STAT_DOUBLE ("time_fft_1d", toc ());
- 
-  /* Write the results out to disk */
-  write_array_to_octave (ENDORSE(a), N, "fft_output.mat", "output");
 
-  PRINT_STAT_STRING ("output_file", "fft_output.mat");
+  /* Write the results out to disk */
+  #ifdef AUTOTUNER
+    write_array_to_octave (ENDORSE(a), N, "out.mat", "output");
+    PRINT_STAT_STRING ("output_file", "out.mat");
+  #else
+    write_array_to_octave (ENDORSE(a), N, "fft_output.mat", "output");
+    PRINT_STAT_STRING ("output_file", "fft_output.mat");
+  #endif
 
   STATS_END ();
 

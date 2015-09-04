@@ -1,16 +1,12 @@
 TARGET := fft-1d
-CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
-LDFLAGS := -lm -lrt
+CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_SMALL -DAUTOTUNER
+LDFLAGS := -lm
 
-CLEANMETOO := *.bc inject_config.txt random_input.mat fft_output.mat
+ifneq ($(shell uname -s),Darwin)
+	LDFLAGS += -lrt
+endif
 
-#cc -o fft-1d 
-#   -Iinc -I../../../lib -DINPUT_SIZE=INPUT_SIZE_LARGE
-#   -std=c89 -pedantic -ansi -Wall -g -O3
-#   src/main-fft-1d.o src/fft-fft-1d.o src/octave-fft-1d.o
-#   ../../../lib/libtiming.a ../../../lib/libxmem.a
-#   -lm -lrt
+CLEANMETOO := *.bc inject_config.txt random_input.mat fft_output.mat out.mat *.out *.log
 
-ACCEPT_DIR ?= /sampa/share/accept/accept
-
+ACCEPT_DIR ?= ../../accept
 include $(ACCEPT_DIR)/accept.mk
