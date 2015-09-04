@@ -102,13 +102,7 @@
 #define BATCH_SIZE (1)
 #endif
 
-#if INPUT_SIZE == AUTOTUNER
-#define M 640  /* columns */
-#define N 480  /* rows */
-#define FILENAME "input_small.mat"
-#define SIZE "small"
-
-#elif INPUT_SIZE == INPUT_SIZE_SMALL
+#if INPUT_SIZE == INPUT_SIZE_SMALL
 #define M 640  /* columns */
 #define N 480  /* rows */
 #define FILENAME "input_small.mat"
@@ -185,14 +179,18 @@ int main (int argc, char * argv[])
   for (i = 0; i < BATCH_SIZE; i++) // ACCEPT_FORBID
   {
     char buffer [30];
-    #if INPUT_SIZE == AUTOTUNER
+    #ifdef AUTOTUNER
       sprintf (buffer, "out.mat");
     #else
       sprintf (buffer, "histeq_output.%d.mat", i);
     #endif
     write_array_to_octave (ENDORSE(&output[i * M * N]), N, M, buffer, "output_" SIZE);
   }
-  PRINT_STAT_STRING ("output_file", "histeq_output." SIZE ".#.mat");
+  #ifdef AUTOTUNER
+    PRINT_STAT_STRING ("output_file", "out.mat");
+  #else
+    PRINT_STAT_STRING ("output_file", "histeq_output." SIZE ".#.mat");
+  #endif
 
   STATS_END ();
 
