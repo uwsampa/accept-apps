@@ -14,9 +14,11 @@ def score(orig, relaxed):
     # print 'Orig: %s' % orig
     orig_image = PIL.Image.open(orig)
     # print 'Relaxed: %s' % relaxed
-    relaxed_image = PIL.Image.open(relaxed)
-    error = 0
-    total = 0
+    try:
+        relaxed_image = PIL.Image.open(relaxed)
+    except IOError:
+        # Broken JPEG
+        return 1.0
 
     try:
         orig_data = orig_image.getdata()
@@ -24,6 +26,8 @@ def score(orig, relaxed):
     except ValueError:
         return 1.0
 
+    error = 0
+    total = 0
     for ppixel, apixel in itertools.izip(orig_data, relaxed_data):
         # root-mean-square error per pixel
         error += ((ppixel-apixel)/256)**2
