@@ -23,7 +23,8 @@ def score(orig, relaxed):
     try:
         orig_data = orig_image.getdata()
         relaxed_data = relaxed_image.getdata()
-    except ValueError:
+    # Catch all exceptions
+    except:
         return 1.0
 
     error = 0
