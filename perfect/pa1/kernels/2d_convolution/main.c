@@ -195,10 +195,18 @@ int main (int argc, char * argv[])
   for (i = 0; i < BATCH_SIZE; i++) // ACCEPT_FORBID
   {
     char buffer [30];
-    sprintf (buffer, "2dconv_output.%d.mat", i);
+    #ifdef AUTOTUNER
+      sprintf (buffer, "out.mat");
+    #else
+      sprintf (buffer, "2dconv_output.%d.mat", i);
+    #endif
     write_array_to_octave (ENDORSE(&output[i * M * N]), N, M, buffer, "output_" SIZE);
   }
-  PRINT_STAT_STRING ("output_file", "2dconv_output." SIZE ".#.mat");
+  #ifdef AUTOTUNER
+    PRINT_STAT_STRING ("output_file", "out.mat");
+  #else
+    PRINT_STAT_STRING ("output_file", "2dconv_output." SIZE ".#.mat");
+  #endif
 
   STATS_END ();
 
