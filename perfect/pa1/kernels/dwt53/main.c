@@ -168,15 +168,23 @@ int main (int argc, char * argv[])
   }
   accept_roi_end();
   PRINT_STAT_DOUBLE ("time_dwt53", toc ());
- 
+
   /* Write the results out to disk */
   for (i = 0; i < BATCH_SIZE; i++) // ACCEPT_FORBID
   {
     char buffer [30];
-    sprintf (buffer, "dwt53_output.%d.mat", i);
+    #ifdef AUTOTUNER
+      sprintf (buffer, "out.mat");
+    #else
+      sprintf (buffer, "dwt53_output.%d.mat", i);
+    #endif
     write_array_to_octave (ENDORSE(&frame[i * M * N]), N, M, buffer, "output_" SIZE);
   }
-  PRINT_STAT_STRING ("output_file", "dwt53_output." SIZE ".#.mat");
+  #ifdef AUTOTUNER
+    PRINT_STAT_STRING ("output_file", "out.mat");
+  #else
+    PRINT_STAT_STRING ("output_file", "dwt53_output." SIZE ".#.mat");
+  #endif
 
   STATS_END ();
 
