@@ -3,7 +3,6 @@ batch_size = 1;
 err = 0.0;
 combined_err = 0.0;
 
-
 arg_list = argv();
 
 if (length(arg_list)==2)
@@ -41,6 +40,7 @@ else
       err_total = sum(sum(diff));
       err = (err_total / (255.0 * 255.0)) / (rows(output_reference) * columns(output_reference));
     else
+      ## disp("unknown")
       err = 1.0;
     endif
 

@@ -174,7 +174,7 @@ int main (int argc, char * argv[])
   }
   accept_roi_end();
   PRINT_STAT_DOUBLE ("time_histogram_equalization", toc ());
- 
+
   /* Write the results out to disk */
   for (i = 0; i < BATCH_SIZE; i++) // ACCEPT_FORBID
   {
