@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     }
 
     input_directory = argv[1];
-    
+
     data = XMALLOC(sizeof(complex) * num_data_elements);
     image = XMALLOC(sizeof(complex) * num_image_elements);
     platpos = XMALLOC(sizeof(position) * N_PULSES);
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
         R0,
         dR,
         dxdy,
-        z0); 
+        z0);
     accept_roi_end();
     printf("Kernel complete.\n");
 
@@ -200,10 +200,15 @@ int main(int argc, char **argv)
             (complex *) image,
             num_image_elements);
         printf("\nImage correctness SNR: %.2f\n", snr);
-	FILE *fp = fopen("snr.txt", "wb");
-	assert(fp != NULL);
-	fprintf(fp, "%.2f\n", snr);
-	fclose(fp);
+
+    #ifdef AUTOTUNER
+        FILE *fp = fopen("out.txt", "wb");
+    #else
+        FILE *fp = fopen("snr.txt", "wb");
+    #endif //AUTOTUNER
+    assert(fp != NULL);
+    fprintf(fp, "%.2f\n", snr);
+    fclose(fp);
     }
 #endif
 
