@@ -22,4 +22,4 @@ def score(orig, relaxed):
         err = abs(orig_snr  - relaxed_snr) / orig_snr
         return err
     else:
-        return 100.0
+        return 1.0
