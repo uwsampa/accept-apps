@@ -1,11 +1,14 @@
 TARGET := pfa_interp1
-CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
-LDFLAGS := -lm -lrt
+CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_SMALL -DAUTOTUNER
+LDFLAGS := -lm
 
-CLEANMETOO += snr.txt large_kernel1_output.bin
+ifneq ($(shell uname -s),Darwin)
+	LDFLAGS += -lrt
+endif
 
-RUNARGS := inout
+CLEANMETOO += snr.txt small_kernel1_output.bin out.txt *.out *.log
 
-ACCEPT_DIR ?= /sampa/share/accept/accept
+RUNARGS := .
 
+ACCEPT_DIR ?= ../../accept
 include $(ACCEPT_DIR)/accept.mk
