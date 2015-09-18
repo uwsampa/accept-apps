@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -76,13 +76,16 @@
 #include "fft-2d.h"
 
 #if INPUT_SIZE == INPUT_SIZE_SMALL
-#define LOGN (10)
+#define LOGN (8)
+#define FILENAME "input_small.mat"
 
 #elif INPUT_SIZE == INPUT_SIZE_MEDIUM
 #define LOGN (12)
+#define FILENAME "input_medium.mat"
 
 #elif INPUT_SIZE == INPUT_SIZE_LARGE
 #define LOGN (13)
+#define FILENAME "input_large.mat"
 
 #else
 #error "Unhandled value for INPUT_SIZE"
@@ -110,22 +113,28 @@ int main (int argc, char * argv[])
   t = malloc (2 * N * sizeof(float));  /* used for columns */
 
   /* random initialization */
-  tic ();
-  for (i = 0; i < M * N; i++) {
-    a[2*i  ] = (float) rand () / (float) RAND_MAX;
-    a[2*i+1] = (float) rand () / (float) RAND_MAX;
-  }
-  PRINT_STAT_DOUBLE ("time_generate_random_data", toc ());
+  #ifdef AUTOTUNER
+    tic ();
+    read_array_from_octave (ENDORSE(a), N*M*2, FILENAME);
+    PRINT_STAT_DOUBLE ("time_load_data", toc ());
+  #else
+    tic ();
+    for (i = 0; i < M * N; i++) {
+      a[2*i  ] = (float) rand () / (float) RAND_MAX;
+      a[2*i+1] = (float) rand () / (float) RAND_MAX;
+    }
+    PRINT_STAT_DOUBLE ("time_generate_random_data", toc ());
 
-  /* Write the generated input file to disk */
-  write_array_to_octave (ENDORSE(a), M, N, "random_input.mat", "input");
-  PRINT_STAT_STRING ("input_file", "random_input.mat");
+    /* Write the generated input file to disk */
+    write_array_to_octave (ENDORSE(a), M, N, "random_input.mat", "input");
+    PRINT_STAT_STRING ("input_file", "random_input.mat");
+  #endif
 
   /* Perform the FFT */
   tic ();
 
   accept_roi_begin();
-  
+
   /* 1D FFT on each row */
   for (i = 0; i < N; i++) {
     fft (&a[2*i*M], M, LOGM, -1);
@@ -143,16 +152,21 @@ int main (int argc, char * argv[])
     for (j = 0; j < N; j++) {
       a[2*(M*j+i)  ] = t[2*j  ];
       a[2*(M*j+i)+1] = t[2*j+1];
-    } 
+    }
   }
 
   accept_roi_end();
 
   PRINT_STAT_DOUBLE ("time_fft-2d", toc ());
- 
+
   /* Write the results out to disk */
-  write_array_to_octave (ENDORSE(a), M, N, "fft_output.mat", "output");
-  PRINT_STAT_STRING ("output_file", "fft_output.mat");
+  #ifdef AUTOTUNER
+    write_array_to_octave (ENDORSE(a), M, N, "out.mat", "output");
+    PRINT_STAT_STRING ("output_file", "out.mat");
+  #else
+    write_array_to_octave (ENDORSE(a), M, N, "fft_output.mat", "output");
+    PRINT_STAT_STRING ("output_file", "fft_output.mat");
+  #endif
 
   STATS_END ();
 
