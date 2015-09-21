@@ -3,7 +3,7 @@ import os
 
 EXT = ".mat"
 
-GOLDEN_FN = "golden"+EXT
+GOLDEN_FN = "small_golden"+EXT
 
 def load():
     output = check_output(["octave", "-q", "assess.m"])

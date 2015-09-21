@@ -1,7 +1,7 @@
 
 arg_list = argv();
 
-if (length(arg_list)==1)
+if (length(arg_list)==2)
   golden_fn = arg_list{1};
   relax_fn = arg_list{2};
 
