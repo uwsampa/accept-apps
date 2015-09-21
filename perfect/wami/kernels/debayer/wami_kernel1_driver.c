@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -153,7 +153,7 @@ int main(int argc, char **argv)
     read_image_file(
         (char *) gold_debayer,
         golden_output_filename,
-        input_directory,    
+        input_directory,
         sizeof(rgb_pixel) * num_debayer_pixels);
 
     /*
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
         {
             for (c = 0; c < WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD; ++c)
             {
-	        if (ENDORSE(debayer[r][c].r != gold_debayer[r][c].r))
+            if (ENDORSE(debayer[r][c].r != gold_debayer[r][c].r))
                 {
                     printf("Validation error: red pixel mismatch at row=%d, col=%d : "
                         "test value = %u, golden value = %u\n\n", r, c,
@@ -205,30 +205,35 @@ int main(int argc, char **argv)
 
         // new error metric
         int r, c;
-	double err;
+        double err;
         for (r = 0; r < WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD; ++r)
         {
             for (c = 0; c < WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD; ++c)
             {
-	        double pixel_error = 0.0;
-		pixel_error += ENDORSE(((double) abs(debayer[r][c].r - gold_debayer[r][c].r)) / ((double) 65535));
-		pixel_error += ENDORSE(((double) abs(debayer[r][c].g - gold_debayer[r][c].g)) / ((double) 65535));
-		pixel_error += ENDORSE(((double) abs(debayer[r][c].b - gold_debayer[r][c].b)) / ((double) 65535));
+                double pixel_error = 0.0;
+                pixel_error += ENDORSE(((double) abs(debayer[r][c].r - gold_debayer[r][c].r)) / ((double) 65535));
+                pixel_error += ENDORSE(((double) abs(debayer[r][c].g - gold_debayer[r][c].g)) / ((double) 65535));
+                pixel_error += ENDORSE(((double) abs(debayer[r][c].b - gold_debayer[r][c].b)) / ((double) 65535));
 
-		err += (pixel_error / ((double) 3)) 
-		  / ((double) ((WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD) * (WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD)));
+                err += (pixel_error / ((double) 3))
+                / ((double) ((WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD) * (WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD)));
             }
         }
 
-	FILE *fp = fopen("err.txt", "wb");
-	assert(fp != NULL);
-	fprintf(fp, "%.16f\n", err);
-	fclose(fp);
+
+        #ifdef AUTOTUNER
+            FILE *fp = fopen("out.txt", "wb");
+        #else
+            FILE *fp = fopen("err.txt", "wb");
+        #endif //AUTOTUNER
+        assert(fp != NULL);
+        fprintf(fp, "%.16f\n", err);
+        fclose(fp);
     }
 #endif
 
 #ifdef WRITE_OUTPUT_TO_DISK
-    printf("Writing output to %s/%s.\n", output_directory, output_filename);
+    printf("\nWriting output to %s/%s.\n", output_directory, output_filename);
     {
         const u16 output_channels = 3;
         write_image_file(

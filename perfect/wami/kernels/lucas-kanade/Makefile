@@ -1,9 +1,12 @@
 TARGET := lucas-kanade
-CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_LARGE
-LDFLAGS := -lm -lrt
+CFLAGS := -Iinc -DINPUT_SIZE=INPUT_SIZE_SMALL -DAUTOTUNER
+LDFLAGS := -lm
 
-CLEANMETOO += output.mat
+ifneq ($(shell uname -s),Darwin)
+	LDFLAGS += -lrt
+endif
 
-ACCEPT_DIR ?= /sampa/share/accept/accept
+CLEANMETOO += output.mat out.mat *.out *.log
 
+ACCEPT_DIR ?= ../../accept
 include $(ACCEPT_DIR)/accept.mk

@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
                 }
             }
             misclassification_rate = (100.0*num_misclassified)/num_foreground;
-	    err += (((double) num_misclassified) / ((double) num_foreground)) / ((double) WAMI_GMM_NUM_FRAMES);
+            err += (((double) num_misclassified) / ((double) num_foreground)) / ((double) WAMI_GMM_NUM_FRAMES);
             printf("\tMisclassified pixels: %d\n", num_misclassified);
             printf("\tGolden foreground pixels (after erosion): %d\n", num_foreground);
             printf("\tMisclassification rate relative to foreground: %f%%\n",
@@ -224,11 +224,15 @@ int main(int argc, char **argv)
                 validation_warning = 1;
             }
         }
-	
-	FILE *fp = fopen("err.txt", "wb");
-	assert(fp != NULL);
-	fprintf(fp, "%.16f\n", err);
-	fclose(fp);
+
+        #ifdef AUTOTUNER
+            FILE *fp = fopen("out.txt", "wb");
+        #else
+            FILE *fp = fopen("err.txt", "wb");
+        #endif //AUTOTUNER
+        assert(fp != NULL);
+        fprintf(fp, "%.16f\n", err);
+        fclose(fp);
 
         if (validation_warning)
         {
@@ -240,7 +244,7 @@ int main(int argc, char **argv)
         }
     }
 #endif
-    
+
 #ifdef WRITE_OUTPUT_TO_DISK
     printf("Writing output to %s.\n", output_filename);
     {
@@ -339,7 +343,7 @@ static void read_gmm_input_data(
             fprintf(stderr, "Error: Unable to read input image %d from %s.\n",
                 i, dir_and_filename);
             exit(EXIT_FAILURE);
-        } 
+        }
     }
 
     fclose(fp);

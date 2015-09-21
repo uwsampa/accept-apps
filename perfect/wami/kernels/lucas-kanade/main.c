@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -80,22 +80,22 @@
 #if INPUT_SIZE == INPUT_SIZE_SMALL
 #define M 512  /* columns */
 #define N 512  /* rows */
-#define GRADX "inout/small_dx.mat"
-#define GRADY "inout/small_dy.mat"
+#define GRADX "small_dx.mat"
+#define GRADY "small_dy.mat"
 #define SIZE "small"
 
 #elif INPUT_SIZE == INPUT_SIZE_MEDIUM
 #define M 1024  /* columns */
 #define N 1024  /* rows */
-#define GRADX "inout/medium_dx.mat"
-#define GRADY "inout/medium_dy.mat"
+#define GRADX "medium_dx.mat"
+#define GRADY "medium_dy.mat"
 #define SIZE "medium"
 
 #elif INPUT_SIZE == INPUT_SIZE_LARGE
 #define M 2048  /* columns */
 #define N 2048  /* rows */
-#define GRADX "inout/large_dx.mat"
-#define GRADY "inout/large_dy.mat"
+#define GRADX "large_dx.mat"
+#define GRADY "large_dy.mat"
 #define SIZE "large"
 
 #else
@@ -171,7 +171,7 @@ int main (int argc, char * argv[])
   warp_image (gradX, M, N, W_xp, gradX_warped);
   warp_image (gradY, M, N, W_xp, gradY_warped);
   PRINT_STAT_DOUBLE ("time_warp", toc ());
-  
+
   /* Compute the steepest descent images Gradient * Jacobian */
   tic ();
   steepest_descent (gradX_warped, gradY_warped, M, N, I_steepest);
@@ -184,8 +184,11 @@ int main (int argc, char * argv[])
   accept_roi_end();
 
   PRINT_STAT_DOUBLE ("time_hessian", toc ());
-  write_fltarray_to_octave (ENDORSE(H), 6, 6, "output.mat", "output_" SIZE);
-
+  #ifdef AUTOTUNER
+    write_fltarray_to_octave (ENDORSE(H), 6, 6, "out.mat", "output");
+  #else
+    write_fltarray_to_octave (ENDORSE(H), 6, 6, "output.mat", "output_" SIZE);
+  #endif //AUTOTUNER
   STATS_END ();
 
   free (gradX);
