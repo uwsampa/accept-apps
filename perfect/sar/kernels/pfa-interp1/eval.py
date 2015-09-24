@@ -12,9 +12,9 @@ def load():
 
 def score(orig, relaxed):
     if (os.path.isfile(relaxed)):
-        orig_snr = float(check_output(["cat", orig]))
+        # orig_snr = float(check_output(["cat", orig]))
         relaxed_snr = float(check_output(["cat", relaxed]))
-        err = abs(orig_snr  - relaxed_snr) / orig_snr
-        return err
+        # err = abs(orig_snr  - relaxed_snr) / orig_snr
+        return relaxed_snr
     else:
         return 1.0
