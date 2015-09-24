@@ -1,7 +1,7 @@
 from subprocess import check_output
 import os
 
-EXT = ".mat"
+EXT = ".txt"
 
 def load():
     output = check_output(["cat", "err.txt"])
