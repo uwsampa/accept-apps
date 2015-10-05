@@ -8,12 +8,11 @@ if (length(arg_list)==2)
   load(relax_fn);
 
   if (norm(golden-output_small)==0)
-    snr = 1E9
+    fprintf('1.0e+9\n');
   else
     snr = 20 * log10( norm(golden) / norm(golden-output_small) );
+    fprintf(stdout, '%.2f\n', snr);
   endif
-
-  fprintf(stdout, '%.2f\n', snr);
 else
   fprintf('1.0\n');
 endif
