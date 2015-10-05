@@ -1,11 +1,5 @@
 from subprocess import check_output
 import os
-import scipy.io
-import math
-import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib import cm as cm
-import pywt
 
 EXT = ".mat"
 
