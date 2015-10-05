@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -75,17 +75,17 @@
 ALL SOURCE CODE PRESENT IN THIS FILE IS UNCLASSIFIED AND IS
 BEING PROVIDED IN SUPPORT OF THE DARPA PERFECT PROGRAM.
 
-THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY, EXPRESSED, IMPLIED, 
+THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY, EXPRESSED, IMPLIED,
 OR OTHERWISE INFERRED. USE AND SUITABILITY FOR ANY PARTICULAR
-APPLICATION IS SOLELY THE RESPONSIBILITY OF THE IMPLEMENTER. 
+APPLICATION IS SOLELY THE RESPONSIBILITY OF THE IMPLEMENTER.
 NO CLAIM OF SUITABILITY FOR ANY APPLICATION IS MADE.
 USE OF THIS CODE FOR ANY APPLICATION RELEASES THE AUTHOR
 AND THE US GOVT OF ANY AND ALL LIABILITY.
 
 THE POINT OF CONTACT FOR QUESTIONS REGARDING THIS SOFTWARE IS:
 
-  US ARMY RDECOM CERDEC NVESD, RDER-NVS-SI (JOHN HODAPP, 
-  john.hodapp@us.army.mil), 10221 BURBECK RD, FORT BELVOIR, 
+  US ARMY RDECOM CERDEC NVESD, RDER-NVS-SI (JOHN HODAPP,
+  john.hodapp@us.army.mil), 10221 BURBECK RD, FORT BELVOIR,
   VA 22060-5806
 
 THIS HEADER SHALL REMAIN PART OF ALL SOURCE CODE FILES.
@@ -112,7 +112,7 @@ dwt53 (APPROX algPixel_t *data, int nrows, int ncols)
     return -1;
   }
 
-  /* First do all rows; This function will transpose the data 
+  /* First do all rows; This function will transpose the data
    * as it performs its final shuffling
    */
 
@@ -167,11 +167,11 @@ dwt53_row_transpose (APPROX algPixel_t *data, APPROX algPixel_t *data2, int nrow
 #ifdef USE_SHIFT
     data[cur] += data[cur + 1] >> 1;
 #else
-    data[cur] += (algPixel_t)(0.5 * data[cur + 1]);      
+    data[cur] += (algPixel_t)(0.5 * data[cur + 1]);
 #endif
 
     /* Now rearrange the data putting the low
-     * frequency components at the front and the 
+     * frequency components at the front and the
      * high frequency components at the back,
      * transposing the data at the same time
      */
@@ -182,6 +182,78 @@ dwt53_row_transpose (APPROX algPixel_t *data, APPROX algPixel_t *data2, int nrow
       data2[(j + ncols / 2)* nrows + i] = data[i * ncols + 2 * j + 1];
     }
   }
+
+  return 0;
+}
+
+
+int dwt53_inverse(algPixel_t *data, int nrows, int ncols)
+{
+  int err = 0;
+    algPixel_t *data2 = (algPixel_t *)calloc(nrows * ncols, sizeof(algPixel_t));
+  if (!data2)
+  {
+    perror("Could not allocate temp space for dwt53_inverse op");
+    return -1;
+  }
+
+  err = dwt53_row_transpose_inverse(data, data2, ncols, nrows);
+  err = dwt53_row_transpose_inverse(data2, data, nrows, ncols);
+
+  free(data2);
+
+    return err;
+}
+
+
+int dwt53_row_transpose_inverse(algPixel_t *data, algPixel_t *data2, int nrows, int ncols)
+{
+  int i, j, cur;
+  for (i = 0; i < nrows; i++)
+    {
+    // Rearrange the data putting the low frequency components at the front
+        // and the high frequency components at the back, transposing the data
+    // at the same time
+        for (j = 0; j < ncols / 2; j++)
+        {
+      data2[i * ncols + 2 * j] = data[j * nrows + i];
+      data2[i * ncols + 2 * j + 1] = data[(j + ncols / 2) * nrows + i];
+        }
+
+    // Update the even pixels using the odd pixels
+        // to preserve the mean value of the pixels
+        for (j = 2; j < ncols; j += 2)
+        {
+            cur = i * ncols + j;
+#ifdef USE_SHIFT
+      data2[cur] -= ((data2[cur - 1] + data2[cur + 1]) >> 2);
+#else
+      data2[cur] -= (algPixel_t)(0.25 * (data2[cur - 1] + data2[cur + 1]));
+#endif
+        }
+        //The first even pixel only has its right neighboring odd pixel
+        cur = i * ncols + 0;
+#ifdef USE_SHIFT
+        data2[cur] -= (data2[cur + 1] >> 1);
+#else
+      data2[cur] -= (algPixel_t)(0.5 * data2[cur + 1]);
+#endif
+
+        // Predict the odd pixels using linear
+        // interpolation of the even pixels
+        for (j = 1; j < ncols - 1; j += 2)
+        {
+            cur = i * ncols + j;
+#ifdef USE_SHIFT
+            data2[cur] += ((data2[cur - 1] + data2[cur + 1]) >> 1);
+#else
+      data2[cur] += (algPixel_t)(0.5 * (data2[cur - 1] + data2[cur + 1]));
+#endif
+        }
+        // The last odd pixel only has its left neighboring even pixel
+        cur = i * ncols + ncols - 1;
+        data2[cur] += data2[cur - 1];
+    }
 
   return 0;
 }

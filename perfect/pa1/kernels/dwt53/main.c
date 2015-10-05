@@ -129,6 +129,7 @@
 int main (int argc, char * argv[])
 {
   APPROX int * frame;
+  int * reference;
   int i;
 
   srand (time (NULL));
@@ -140,6 +141,7 @@ int main (int argc, char * argv[])
   PRINT_STAT_INT ("num_frames", BATCH_SIZE);
 
   frame = calloc (M * N * BATCH_SIZE, sizeof(algPixel_t));
+  reference = calloc (M * N * BATCH_SIZE, sizeof(algPixel_t));
 
   if (!frame) {
     fprintf(stderr, "ERROR: Allocation failed.\n");
@@ -169,6 +171,17 @@ int main (int argc, char * argv[])
   accept_roi_end();
   PRINT_STAT_DOUBLE ("time_dwt53", toc ());
 
+  /* Perform the inverse transform to evaluate SNR */
+  tic ();
+  accept_roi_end();
+  for (i = 0; i < BATCH_SIZE; i++) // ACCEPT_FORBID
+  {
+    memcpy (&reference[i * M * N], ENDORSE(&frame[i * M * N]), M * N * sizeof(algPixel_t));
+    dwt53_inverse(&reference[i * M * N], N, M);
+  }
+  accept_roi_end();
+  PRINT_STAT_DOUBLE ("time_dwt53_inverse", toc ());
+
   /* Write the results out to disk */
   for (i = 0; i < BATCH_SIZE; i++) // ACCEPT_FORBID
   {
@@ -178,7 +191,7 @@ int main (int argc, char * argv[])
     #else
       sprintf (buffer, "dwt53_output.%d.mat", i);
     #endif
-    write_array_to_octave (ENDORSE(&frame[i * M * N]), N, M, buffer, "output_" SIZE);
+    write_array_to_octave (&reference[i * M * N], N, M, buffer, "output_" SIZE);
   }
   #ifdef AUTOTUNER
     PRINT_STAT_STRING ("output_file", "out.mat");

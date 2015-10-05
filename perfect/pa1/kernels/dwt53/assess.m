@@ -1,54 +1,29 @@
-batch_size = 1;
-
-err = 0.0;
-combined_err = 0.0;
 
 arg_list = argv();
 
 if (length(arg_list)==2)
-  orig_fn = arg_list{1};
+  golden_fn = arg_list{1};
   relax_fn = arg_list{2};
 
-  load(orig_fn)
-  load(relax_fn)
-  diff = abs(output_small - output_reference);
-  err_total = sum(sum(diff));
-  err = (err_total / (255.0)) / (rows(output_reference) * columns(output_reference));
+  load(golden_fn);
+  load(relax_fn);
 
-  fprintf(stdout, '%.16f\n', err);
+  snr = 20 * log10( norm(input) / norm(input-output_small) );
 
+  fprintf(stdout, '%.2f\n', snr);
 else
+    load output.mat;
 
-  for i = 0:(batch_size - 1)
-    load(["dwt53_output." (int2str(i)) ".mat"])
     if (exist("output_small", "var"))
-      ## disp("small")
-      load dwt53_output.small.mat
-      diff = abs(output_small - output_reference);
-      err_total = sum(sum(diff));
-      err = (err_total / 255.0) / (rows(output_reference) * columns(output_reference));
+      load inout/small_golden.mat;
+      snr = 20 * log10( norm(input) / norm(input-output_small) );
     elseif (exist("output_medium", "var"))
-      ## disp("medium")
-      load dwt53_output.medium.mat
-      diff = abs(output_medium - output_reference);
-      err_total = sum(sum(diff));
-      err = (err_total / 255.0) / (rows(output_reference) * columns(output_reference));
-    elseif (exist("output_large", "var"))
-      ## disp("large")
-      load dwt53_output.large.mat
-      diff = abs(output_large - output_reference);
-      err_total = sum(sum(diff));
-      err = (err_total / 255.0) / (rows(output_reference) * columns(output_reference));
+      load inout/medium_golden.mat;
+      snr = 20 * log10( norm(input) / norm(input-output_medium) );
     else
-      ## disp("unknown")
-      err = 1.0;
+      load inout/large_golden.mat;
+      snr = 20 * log10( norm(input) / norm(input-output_large) );
     endif
 
-    combined_err = combined_err + err;
-
-  endfor
-
-  fprintf(stdout, '%.16f\n', combined_err / batch_size);
-
+    fprintf(stdout, '%.2f\n', snr);
 endif
-
