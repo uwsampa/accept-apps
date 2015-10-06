@@ -8,10 +8,8 @@ def load():
     # print("loaded err = " + output)
     return output
 
-# assess.m computes the average pixel difference between the output
-# and the provided reference output, averaged over all trials in the batch
-# (default 30 trials, you'll have to modify both the c files and the
-# octave script to agree on a different value).
+# assess.m is an octave script that computes a signal to noise ratio in dB
+# by comparing a reference 2d_conv kernel output to an approximate output.
 
 
 def score(orig, relaxed):
