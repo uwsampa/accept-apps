@@ -1,6 +1,3 @@
-from subprocess import check_output
-import numpy as np
-import os
 import sys
 sys.path.append('../../../utils/')
 import perfectlib

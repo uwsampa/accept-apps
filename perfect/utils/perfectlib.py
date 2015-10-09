@@ -4,6 +4,7 @@ import math
 import argparse
 import struct
 import numpy as np
+from numpy import linalg as la
 from matplotlib import cm, pyplot as plt
 
 def load_mat(filename):
@@ -12,7 +13,7 @@ def load_mat(filename):
         for line in f:
             line = line.strip().split(" ")
             if line[0]!='%':
-                line = [int(x) for x in line]
+                line = [float(x) for x in line]
                 mat.append(line)
     return np.array(mat)
 
@@ -69,6 +70,24 @@ def load_bin(filename, luma=False, metadata=False):
 
     return np.array(mat)
 
+def computeSNR(golden, relaxed, mode):
+    if (os.path.isfile(relaxed)):
+        if mode=="mat":
+            goldenData = load_mat(golden)
+            relaxedData = load_mat(relaxed)
+            if (goldenData==relaxedData).all():
+                return 1E9 # arbitrarily large PSNR to indicate identical values
+            else:
+                # Here we compute the SNR based on the PERFECT doc
+                num = ((goldenData) ** 2).sum(axis=None)
+                denom = ((goldenData - relaxedData) ** 2).sum(axis=None)
+                snr = 10 * np.log10( num/denom );
+                return snr
+        else:
+            return 1.0
+    else:
+        return 1.0
+
 def computePSNR(golden, relaxed, mode):
     if (os.path.isfile(relaxed)):
         if mode=="RGBbin":
@@ -79,7 +98,7 @@ def computePSNR(golden, relaxed, mode):
             else:
                 # For details on how to compute PSNR in multimedia applications
                 # https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
-                mseVal = ((goldenData - relaxedData) ** 2).mean(axis=ax)
+                mseVal = ((goldenData - relaxedData) ** 2).mean(axis=None)
                 maxVal = np.amax(goldenData)
                 psnr = 20 * np.log10(maxVal) - 10 * np.log10(mseVal);
                 return psnr

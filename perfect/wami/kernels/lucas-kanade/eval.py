@@ -1,25 +1,15 @@
-from subprocess import check_output
-import os
+import sys
+sys.path.append('../../../utils/')
+import perfectlib
 
 EXT = ".mat"
 
-GOLDEN_FN = "small_golden"+EXT
+# Evaluate the SNR between the golden and approximate Hessian matrices
+# The precise execution produces a snr of about 122, and the PERFECT
+# documentation suggests an acceptable SNR is in the range of about 100 dB.
 
-def load():
-    output = check_output(["octave", "-q", "assess.m"])
-    return output
+def score(golden, relaxed):
+    return perfectlib.computeSNR(golden, relaxed, "mat")
 
-# assess.m is an octave script that computes a signal to noise ratio in dB
-# by comparing to the "ideal" output produced by octave's fft function.
-
-# The precise execution produces a snr of about 125, and the PERFECT
-# documentation suggests an acceptable snr is in the range of about 100 dB.
-
-def score(orig, relaxed):
-    if (os.path.isfile(relaxed)):
-        # orig_snr = float(check_output(["octave", "-q", "assess.m", GOLDEN_FN, orig]))
-        relaxed_snr = float(check_output(["octave", "-q", "assess.m", GOLDEN_FN, relaxed]))
-        # err = abs(orig_snr  - relaxed_snr) / orig_snr
-        return relaxed_snr
-    else:
-        return 1.0
+if __name__ == '__main__':
+    print score('orig'+EXT, 'out'+EXT)
