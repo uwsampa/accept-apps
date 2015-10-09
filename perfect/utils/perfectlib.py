@@ -16,8 +16,7 @@ def load_mat(filename):
                 mat.append(line)
     return np.array(mat)
 
-
-def load_bin(filename):
+def load_bin(filename, luma=False, metadata=False):
     pixels = []
     params = []
     f = open(filename, "rb")
@@ -34,11 +33,12 @@ def load_bin(filename):
     finally:
         f.close()
 
-    print("Image width = {}".format(params[0]))
-    print("Image height = {}".format(params[1]))
-    print("Channels = {}".format(params[2]))
-    print("Depth = {}".format(params[3]))
-    print("Pixel count = {}".format(len(pixels)))
+    if metadata:
+        print("Image width = {}".format(params[0]))
+        print("Image height = {}".format(params[1]))
+        print("Channels = {}".format(params[2]))
+        print("Depth = {}".format(params[3]))
+        print("Pixel count = {}".format(len(pixels)))
 
     channels = params[2]
 
@@ -49,22 +49,46 @@ def load_bin(filename):
     mat = []
     for y in range(0, params[1]):
         row = pixels[y*channels*params[0]:(y+1)*channels*params[0]]
-        if channels > 1:
+        if channels==1:
+            mat.append(row)
+        elif channels == 3:
             rgb_row = []
             for x in range(0, params[0]):
-                rgb_pixel = []
-                for c in range(channels):
-                    rgb_pixel.append(row[x*channels+c])
-                rgb_row.append(rgb_pixel)
+                if luma:
+                    r = row[x*channels+0]
+                    g = row[x*channels+1]
+                    b = row[x*channels+2]
+                    luminance = 0.2126*r+ 0.7152*g + 0.0722*b
+                    rgb_row.append(luminance)
+                else:
+                    rgb_pixel = []
+                    for c in range(channels):
+                        rgb_pixel.append(row[x*channels+c])
+                    rgb_row.append(rgb_pixel)
             mat.append(rgb_row)
-        else:
-            mat.append(row)
 
     return np.array(mat)
 
+def computePSNR(golden, relaxed, mode):
+    if (os.path.isfile(relaxed)):
+        if mode=="RGBbin":
+            goldenData = load_bin(golden, luma=True)
+            relaxedData = load_bin(relaxed, luma=True)
+            if (goldenData==relaxedData).all():
+                return 1E9 # arbitrarily large PSNR to indicate identical values
+            else:
+                # For details on how to compute PSNR in multimedia applications
+                # https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
+                mseVal = ((goldenData - relaxedData) ** 2).mean(axis=ax)
+                maxVal = np.amax(goldenData)
+                psnr = 20 * np.log10(maxVal) - 10 * np.log10(mseVal);
+                return psnr
+        else:
+            return 1.0
+    else:
+        return 1.0
 
-
-def process(fn):
+def display(fn):
     if fn.endswith('.mat'):
         img_array = load_mat(fn)
         plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
@@ -79,10 +103,6 @@ def process(fn):
             plt.imshow(img_array)
         plt.show()
 
-
-
-
-
 def cli():
     parser = argparse.ArgumentParser(
         description='Displays image'
@@ -93,7 +113,7 @@ def cli():
     )
     args = parser.parse_args()
 
-    process(args.path)
+    display(args.path)
 
 if __name__ == '__main__':
     cli()
