@@ -77,6 +77,10 @@
 
 #include "timer.h"
 
+#ifdef AUTOTUNER
+    static const char *autotuner_output_filename = "out.bin";
+#endif
+
 #if INPUT_SIZE == INPUT_SIZE_SMALL
     static const char *output_filename = "small_kernel1_output.bin";
     static const char *golden_output_filename = "small_golden_kernel1_output.bin";
@@ -93,7 +97,8 @@
     #error "Unhandled value for INPUT_SIZE"
 #endif
 
-#define ENABLE_CORRECTNESS_CHECKING
+// Let's turn this off for now since it does not tolerate approximate outputs
+// #define ENABLE_CORRECTNESS_CHECKING
 #define WRITE_OUTPUT_TO_DISK
 
 static const char *output_directory = ".";
@@ -162,7 +167,6 @@ int main(int argc, char **argv)
      * a success message.
      */
     {
-        /*
         // original error metric
         int r, c, success = 1;
         for (r = 0; success && r < WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD; ++r)
@@ -201,49 +205,57 @@ int main(int argc, char **argv)
         {
             printf("\nValidation checks passed -- the test output matches the golden output.\n\n");
         }
-        */
 
-        // new error metric
-        int r, c;
-        double err;
-        for (r = 0; r < WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD; ++r)
-        {
-            for (c = 0; c < WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD; ++c)
-            {
-                double pixel_error = 0.0;
-                pixel_error += ENDORSE(((double) abs(debayer[r][c].r - gold_debayer[r][c].r)) / ((double) 65535));
-                pixel_error += ENDORSE(((double) abs(debayer[r][c].g - gold_debayer[r][c].g)) / ((double) 65535));
-                pixel_error += ENDORSE(((double) abs(debayer[r][c].b - gold_debayer[r][c].b)) / ((double) 65535));
+        // // new error metric
+        // int r, c;
+        // double err;
+        // for (r = 0; r < WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD; ++r)
+        // {
+        //     for (c = 0; c < WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD; ++c)
+        //     {
+        //         double pixel_error = 0.0;
+        //         pixel_error += ENDORSE(((double) abs(debayer[r][c].r - gold_debayer[r][c].r)) / ((double) 65535));
+        //         pixel_error += ENDORSE(((double) abs(debayer[r][c].g - gold_debayer[r][c].g)) / ((double) 65535));
+        //         pixel_error += ENDORSE(((double) abs(debayer[r][c].b - gold_debayer[r][c].b)) / ((double) 65535));
 
-                err += (pixel_error / ((double) 3))
-                / ((double) ((WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD) * (WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD)));
-            }
-        }
+        //         err += (pixel_error / ((double) 3))
+        //         / ((double) ((WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD) * (WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD)));
+        //     }
+        // }
 
-
-        #ifdef AUTOTUNER
-            FILE *fp = fopen("out.txt", "wb");
-        #else
-            FILE *fp = fopen("err.txt", "wb");
-        #endif //AUTOTUNER
-        assert(fp != NULL);
-        fprintf(fp, "%.16f\n", err);
-        fclose(fp);
+        // FILE *fp = fopen("err.txt", "wb");
+        // assert(fp != NULL);
+        // fprintf(fp, "%.16f\n", err);
+        // fclose(fp);
     }
 #endif
 
 #ifdef WRITE_OUTPUT_TO_DISK
-    printf("\nWriting output to %s/%s.\n", output_directory, output_filename);
-    {
-        const u16 output_channels = 3;
-        write_image_file(
-            (char *) debayer,
-            output_filename,
-            output_directory,
-            WAMI_DEBAYER_IMG_NUM_COLS - 2*PAD,
-            WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD,
-            output_channels);
-    }
+    #ifdef AUTOTUNER
+        printf("\nWriting output to %s/%s.\n", output_directory, autotuner_output_filename);
+        {
+            const u16 output_channels = 3;
+            write_image_file(
+                (char *) debayer,
+                autotuner_output_filename,
+                output_directory,
+                WAMI_DEBAYER_IMG_NUM_COLS - 2*PAD,
+                WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD,
+                output_channels);
+        }
+    #else
+        printf("\nWriting output to %s/%s.\n", output_directory, output_filename);
+        {
+            const u16 output_channels = 3;
+            write_image_file(
+                (char *) debayer,
+                output_filename,
+                output_directory,
+                WAMI_DEBAYER_IMG_NUM_COLS - 2*PAD,
+                WAMI_DEBAYER_IMG_NUM_ROWS - 2*PAD,
+                output_channels);
+        }
+    #endif //AUTOTUNER
 #endif
 
     FREE_AND_NULL(bayer);
