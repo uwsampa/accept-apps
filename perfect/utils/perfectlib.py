@@ -12,7 +12,7 @@ def load_mat(filename):
     with open(filename) as f:
         for line in f:
             line = line.strip().split(" ")
-            if line[0]!='%':
+            if line[0]!='%' and line!=['']:
                 line = [float(x) for x in line]
                 mat.append(line)
     return np.array(mat)
@@ -44,8 +44,9 @@ def load_bin(filename, luma=False, metadata=False):
     channels = params[2]
 
     # Normalize
+    minVal = min(pixels)
     maxVal = max(pixels)
-    pixels = [float(x)/maxVal for x in pixels]
+    pixels = [(x-minVal)/(maxVal-minVal) for x in pixels]
 
     mat = []
     for y in range(0, params[1]):
@@ -56,6 +57,7 @@ def load_bin(filename, luma=False, metadata=False):
             rgb_row = []
             for x in range(0, params[0]):
                 if luma:
+                    # using RGB to lumincance covnersion for ITU-R BT.709 / sRGB
                     r = row[x*channels+0]
                     g = row[x*channels+1]
                     b = row[x*channels+2]
