@@ -79,6 +79,10 @@
 
 #include "timer.h"
 
+#ifdef AUTOTUNER
+    static const char *autotuner_output_filename = "out.bin";
+#endif
+
 #if INPUT_SIZE == INPUT_SIZE_SMALL
     static const char *input_filename = "small_kernel3_input.bin";
     static const char *golden_output_filename = "small_golden_kernel3_output.bin";
@@ -246,14 +250,25 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef WRITE_OUTPUT_TO_DISK
-    printf("Writing output to %s.\n", output_filename);
-    {
-        FILE *fp = fopen(output_filename, "wb");
-        assert(fp != NULL);
-        assert(fwrite(foreground, sizeof(u8), num_pixels * WAMI_GMM_NUM_FRAMES, fp) ==
-            num_pixels * WAMI_GMM_NUM_FRAMES);
-        fclose(fp);
-    }
+    #ifdef AUTOTUNER
+        printf("Writing output to %s.\n", autotuner_output_filename);
+        {
+            FILE *fp = fopen(autotuner_output_filename, "wb");
+            assert(fp != NULL);
+            assert(fwrite(foreground, sizeof(u8), num_pixels * WAMI_GMM_NUM_FRAMES, fp) ==
+                num_pixels * WAMI_GMM_NUM_FRAMES);
+            fclose(fp);
+        }
+    #else
+        printf("Writing output to %s.\n", output_filename);
+        {
+            FILE *fp = fopen(output_filename, "wb");
+            assert(fp != NULL);
+            assert(fwrite(foreground, sizeof(u8), num_pixels * WAMI_GMM_NUM_FRAMES, fp) ==
+                num_pixels * WAMI_GMM_NUM_FRAMES);
+            fclose(fp);
+        }
+    #endif
 #endif
 
     FREE_AND_NULL(mu);
