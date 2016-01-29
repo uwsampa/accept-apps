@@ -1,5 +1,5 @@
-sys.path.append('../../../utils/')
 import sys
+sys.path.append('../../../utils/')
 import perfectlib
 
 EXT = ".mat"
