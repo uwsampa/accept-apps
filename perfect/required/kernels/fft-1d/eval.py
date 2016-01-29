@@ -1,25 +1,15 @@
-from subprocess import check_output
-import os
+sys.path.append('../../../utils/')
+import sys
+import perfectlib
 
 EXT = ".mat"
 INPUT_FN = "input_small"+EXT
 
-def load():
-    output = check_output(["octave", "-q", "assess.m"])
-    # print("loaded snr = " + output)
-    return output
-
-# assess.m is an octave script that computes a signal to noise ratio in dB
-# by comparing to the "ideal" output produced by octave's fft function.
-
-# The precise execution produces a snr of about 125, and the PERFECT
-# documentation suggests an acceptable snr is in the range of about 100 dB.
-
 def score(orig, relaxed):
     if (os.path.isfile(relaxed)):
-        # orig_snr = float(check_output(["octave", "-q", "assess.m", INPUT_FN, orig]))
-        relaxed_snr = float(check_output(["octave", "-q", "assess.m", INPUT_FN, relaxed]))
-        # err = abs(orig_snr  - relaxed_snr) / orig_snr
-        return relaxed_snr
+        return perfectlib.computeSNR(orig, relaxed, "fft")
     else:
         return 1.0
+
+if __name__ == '__main__':
+    print score('orig'+EXT, 'out'+EXT)

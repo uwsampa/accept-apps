@@ -11,9 +11,20 @@ def load_mat(filename):
     mat = []
     with open(filename) as f:
         for line in f:
-            line = line.strip().split(" ")
-            if line[0]!='%' and line!=['']:
-                line = [float(x) for x in line]
+            if line.strip()!='':
+                line = line.strip().split(" ")
+                if line[0]!='%':
+                    line = [float(x) for x in line]
+    return np.array(mat)
+
+def load_fft(filename):
+    mat = []
+    with open(filename) as f:
+        for line in f:
+            if line.strip()!='' and line[0]!='#':
+                line = line.strip()[1:-1].split(") (")
+                line = [x.split(', ') for x in line]
+                line = [float(x[0])+1j*float(x[1]) for x in line]
                 mat.append(line)
     return np.array(mat)
 
@@ -46,7 +57,7 @@ def load_bin(filename, luma=False, metadata=False):
     # Normalize
     minVal = min(pixels)
     maxVal = max(pixels)
-    pixels = [(x-minVal)/(maxVal-minVal) for x in pixels]
+    # pixels = [(x-minVal)/(maxVal-minVal) for x in pixels]
 
     mat = []
     for y in range(0, params[1]):
@@ -57,16 +68,14 @@ def load_bin(filename, luma=False, metadata=False):
             rgb_row = []
             for x in range(0, params[0]):
                 if luma:
-                    # using RGB to lumincance covnersion for ITU-R BT.709 / sRGB
+                    # using RGB to lumincance conversion for ITU-R BT.709 / sRGB
                     r = row[x*channels+0]
                     g = row[x*channels+1]
                     b = row[x*channels+2]
-                    luminance = 0.2126*r+ 0.7152*g + 0.0722*b
+                    luminance = 0.2126*r + 0.7152*g + 0.0722*b
                     rgb_row.append(luminance)
                 else:
-                    rgb_pixel = []
-                    for c in range(channels):
-                        rgb_pixel.append(row[x*channels+c])
+                    rgb_pixel = (row[x*channels+0],row[x*channels+1],row[x*channels+2])
                     rgb_row.append(rgb_pixel)
             mat.append(rgb_row)
 
@@ -74,17 +83,31 @@ def load_bin(filename, luma=False, metadata=False):
 
 def computeSNR(golden, relaxed, mode):
     if (os.path.isfile(relaxed)):
-        if mode=="mat":
-            goldenData = load_mat(golden)
-            relaxedData = load_mat(relaxed)
+        if mode=="mat" or mode=="fft":
+            if mode=="mat":
+                goldenData = load_mat(golden)
+                relaxedData = load_mat(relaxed)
+            elif mode=="fft":
+                # This code is left commented in case we'd like
+                # to recompute the fft function
+                # inputData = load_fft(golden)
+                # if inputData.shape[1] == 1:
+                #     goldenData = np.fft.fft(inputData)
+                # else:
+                #     goldenData = np.fft.fft2(inputData)
+                goldenData = load_fft(golden)
+                relaxedData = load_fft(relaxed)
             if (goldenData==relaxedData).all():
-                return 1E9 # arbitrarily large PSNR to indicate identical values
+                return 1E9 # arbitrarily large SNR to indicate identical values
             else:
                 # Here we compute the SNR based on the PERFECT doc
                 num = ((goldenData) ** 2).sum(axis=None)
                 denom = ((goldenData - relaxedData) ** 2).sum(axis=None)
                 snr = 10 * np.log10( num/denom );
-                return snr
+                if mode=="mat":
+                    return snr
+                elif mode=="fft":
+                    return snr.real
         else:
             return 1.0
     else:
@@ -115,8 +138,7 @@ def display(fn):
         plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
         plt.show()
     elif fn.endswith('.bin'):
-        img_array = load_bin(fn)
-        print img_array[0]
+        img_array = load_bin(fn, luma=True)
         channels = 1 if len(img_array.shape)==2 else img_array.shape[2]
         if channels==1:
             plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
