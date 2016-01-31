@@ -77,10 +77,12 @@
 #include "sar_utils.h"
 #include "sar_interp2.h"
 
-#define ENABLE_CORRECTNESS_CHECKING
-
 #if INPUT_SIZE == INPUT_SIZE_SMALL
+#ifdef AUTOTUNER
+    static const char *output_filename = "out.bin";
+#else
     static const char *output_filename = "small_kernel2_output.bin";
+#endif
     static const char *golden_output_filename = "small_golden_kernel2_output.bin";
     static const char *input_filename = "small_kernel2_input.bin";
 #elif INPUT_SIZE == INPUT_SIZE_MEDIUM

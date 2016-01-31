@@ -76,10 +76,12 @@
 #include "sar_backprojection.h"
 #include "sar_utils.h"
 
-#define ENABLE_CORRECTNESS_CHECKING
-
 #if INPUT_SIZE == INPUT_SIZE_SMALL
+#ifdef AUTOTUNER
+    static const char *output_filename = "out.bin";
+#else
     static const char *output_filename = "small_kernel3_output.bin";
+#endif
     static const char *golden_output_filename = "small_golden_kernel3_output.bin";
     static const char *input_filename = "small_kernel3_input.bin";
 #elif INPUT_SIZE == INPUT_SIZE_MEDIUM
@@ -201,11 +203,7 @@ int main(int argc, char **argv)
             num_image_elements);
         printf("\nImage correctness SNR: %.2f\n", snr);
 
-    #ifdef AUTOTUNER
-        FILE *fp = fopen("out.txt", "wb");
-    #else
-        FILE *fp = fopen("snr.txt", "wb");
-    #endif //AUTOTUNER
+    FILE *fp = fopen("snr.txt", "wb");
     assert(fp != NULL);
     fprintf(fp, "%.2f\n", snr);
     fclose(fp);
@@ -290,6 +288,66 @@ void read_bp_data_file(
     {
         fprintf(stderr, "Error: Unable to read phase history data from %s.\n",
             input_filename);
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(fp);
+}
+
+void write_bp_data_file(
+    complex (*upsampled_data)[N_RANGE_UPSAMPLED],
+    const char *filename,
+    const char *directory,
+    position *platpos,
+    double *fc,
+    double *R0,
+    double *dR)
+{
+    int success = 1;
+    size_t nwritten = 0;
+    FILE *fp = NULL;
+    char dir_and_filename[MAX_DIR_AND_FILENAME_LEN];
+    const size_t num_data_elements = N_RANGE_UPSAMPLED*N_PULSES;
+
+    assert(upsampled_data != NULL);
+    assert(filename != NULL);
+    assert(directory != NULL);
+    assert(platpos != NULL);
+    assert(fc != NULL);
+    assert(R0 != NULL);
+    assert(dR != NULL);
+
+    concat_dir_and_filename(
+        dir_and_filename,
+        directory,
+        filename);
+
+    fp = fopen(dir_and_filename, "wb");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "Error: Unable to open input file %s for reading.\n",
+            dir_and_filename);
+        exit(EXIT_FAILURE);
+    }
+
+    success &= (fwrite(fc, sizeof(double), 1, fp) == 1);
+    success &= (fwrite(R0, sizeof(double), 1, fp) == 1);
+    success &= (fwrite(dR, sizeof(double), 1, fp) == 1);
+    success &= (fwrite(platpos, sizeof(position), N_PULSES, fp) == N_PULSES);
+    if (! success)
+    {
+        fprintf(stderr, "Error: header write failure on %s. ", dir_and_filename);
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    nwritten = fwrite(upsampled_data, sizeof(complex), num_data_elements, fp);
+    if (nwritten != num_data_elements)
+    {
+        fprintf(stderr, "Error: write failure on %s. "
+            "Expected to write %lu elements, but only wrote %lu.\n",
+            dir_and_filename, num_data_elements, nwritten);
+        fclose(fp);
         exit(EXIT_FAILURE);
     }
 

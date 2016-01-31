@@ -79,10 +79,12 @@
 
 #include "timer.h"
 
-#define ENABLE_CORRECTNESS_CHECKING
-
 #if INPUT_SIZE == INPUT_SIZE_SMALL
+#ifdef AUTOTUNER
+    static const char *output_filename = "out.bin";
+#else
     static const char *output_filename = "small_kernel1_output.bin";
+#endif
     static const char *golden_output_filename = "small_golden_kernel1_output.bin";
     static const char *input_filename = "small_kernel1_input.bin";
 #elif INPUT_SIZE == INPUT_SIZE_MEDIUM
