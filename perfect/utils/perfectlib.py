@@ -7,6 +7,11 @@ import numpy as np
 from numpy import linalg as la
 from matplotlib import cm, pyplot as plt
 
+# Arbitrarily large SNR to indicate identical values
+SNR_MAX = 200.0
+# Arbitrarily small SNR to indicate different values
+SNR_MIN = 1.0
+
 def load_mat(filename):
     mat = []
     with open(filename) as f:
@@ -27,6 +32,25 @@ def load_fft(filename):
                 line = [float(x[0])+1j*float(x[1]) for x in line]
                 mat.append(line)
     return np.array(mat)
+
+def load_stap_bin(filename):
+    data = []
+    f = open(filename, "rb")
+    try:
+        word = [0, 0]
+        word[0] = f.read(4)
+        word[1] = f.read(4)
+        while word[0] != "" or word[1] != "":
+            (re,) = struct.unpack('f', word[0])
+            (im,) = struct.unpack('f', word[1])
+            elem = re + 1j * im
+            data.append(elem)
+            word[0] = f.read(4)
+            word[1] = f.read(4)
+    finally:
+        f.close()
+
+    return np.array(data)
 
 def load_bin(filename, luma=False, metadata=False):
     pixels = []
@@ -83,35 +107,73 @@ def load_bin(filename, luma=False, metadata=False):
 
 def computeSNR(golden, relaxed, mode):
     if (os.path.isfile(relaxed)):
-        if mode=="mat" or mode=="fft":
-            if mode=="mat":
-                goldenData = load_mat(golden)
-                relaxedData = load_mat(relaxed)
-            elif mode=="fft":
-                # This code is left commented in case we'd like
-                # to recompute the fft function
-                # inputData = load_fft(golden)
-                # if inputData.shape[1] == 1:
-                #     goldenData = np.fft.fft(inputData)
-                # else:
-                #     goldenData = np.fft.fft2(inputData)
-                goldenData = load_fft(golden)
-                relaxedData = load_fft(relaxed)
+        if mode=="stap":
+            goldenData = load_stap_bin(golden)
+            relaxedData = load_stap_bin(relaxed)
             if (goldenData==relaxedData).all():
-                return 1E9 # arbitrarily large SNR to indicate identical values
+                return SNR_MAX
+            else:
+                # SNR computation template for STAP kernels
+                # taken from stap/kernels/ser/lib/stap_utils.c
+                # from calculate_snr() definition
+                den = 0
+                num = 0
+                for i in range(len(goldenData)):
+                    den += (goldenData[i].real - relaxedData[i].real) * \
+                           (goldenData[i].real - relaxedData[i].real)
+                    den += (goldenData[i].imag - relaxedData[i].imag) * \
+                           (goldenData[i].imag - relaxedData[i].imag)
+                    num += goldenData[i].real * goldenData[i].real + \
+                           goldenData[i].imag * goldenData[i].imag
+                snr = 10 * np.log10( num/den );
+                return snr
+        elif mode=="fft":
+            # Here we recompute a golden FFT from input data
+            relaxedData = load_fft(relaxed)
+            inputData = load_fft(golden)
+            if inputData.shape[0] == 1:
+                goldenData = np.fft.fft(inputData)
+            else:
+                goldenData = np.fft.fft2(inputData)
+            relaxedData = load_fft(relaxed)
+            if (goldenData==relaxedData).all():
+                return SNR_MAX
+            else:
+                # SNR computation template for STAP kernels
+                # taken from stap/kernels/ser/lib/stap_utils.c
+                # from calculate_snr() definition
+                # in order to compute SNR of imaginary matrices.
+                # Works identically for 1-D function to octave
+                # implementation in required/ser/fft-1d/assess.m
+                # but produces slightly different result for 2-D
+                # function as detailed in required/ser/fft-2d/assess.m
+                den = 0
+                num = 0
+                for i in range(len(goldenData)):
+                    for j in range(len(goldenData[i])):
+                        den += (goldenData[i][j].real - relaxedData[i][j].real) * \
+                               (goldenData[i][j].real - relaxedData[i][j].real)
+                        den += (goldenData[i][j].imag - relaxedData[i][j].imag) * \
+                               (goldenData[i][j].imag - relaxedData[i][j].imag)
+                        num += goldenData[i][j].real * goldenData[i][j].real + \
+                               goldenData[i][j].imag * goldenData[i][j].imag
+                snr = 10 * np.log10( num/den );
+                return snr
+        elif mode=="mat":
+            goldenData = load_mat(golden)
+            relaxedData = load_mat(relaxed)
+            if (goldenData==relaxedData).all():
+                return SNR_MAX
             else:
                 # Here we compute the SNR based on the PERFECT doc
                 num = ((goldenData) ** 2).sum(axis=None)
-                denom = ((goldenData - relaxedData) ** 2).sum(axis=None)
-                snr = 10 * np.log10( num/denom );
-                if mode=="mat":
-                    return snr
-                elif mode=="fft":
-                    return snr.real
+                den = ((goldenData - relaxedData) ** 2).sum(axis=None)
+                snr = 10 * np.log10( num/den );
+                return snr
         else:
-            return 1.0
+            return SNR_MIN
     else:
-        return 1.0
+        return SNR_MIN
 
 def computePSNR(golden, relaxed, mode):
     if (os.path.isfile(relaxed)):
@@ -119,7 +181,7 @@ def computePSNR(golden, relaxed, mode):
             goldenData = load_bin(golden, luma=True)
             relaxedData = load_bin(relaxed, luma=True)
             if (goldenData==relaxedData).all():
-                return 1E9 # arbitrarily large PSNR to indicate identical values
+                return SNR_MAX
             else:
                 # For details on how to compute PSNR in multimedia applications
                 # https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
@@ -128,9 +190,9 @@ def computePSNR(golden, relaxed, mode):
                 psnr = 20 * np.log10(maxVal) - 10 * np.log10(mseVal);
                 return psnr
         else:
-            return 1.0
+            return SNR_MIN
     else:
-        return 1.0
+        return SNR_MIN
 
 def display(fn):
     if fn.endswith('.mat'):

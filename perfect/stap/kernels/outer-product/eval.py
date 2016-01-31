@@ -1,20 +1,16 @@
-from subprocess import check_output
 import os
+import sys
+sys.path.append('../../../utils/')
+import perfectlib
 
-EXT = ".txt"
-
-def load():
-    output = check_output(["cat", "snr.txt"])
-    return output
-
-# The driver computes the snr as part of its own checking process,
-# so we just have it write that to a file and then read it back.
+EXT = ".bin"
+GOLDEN_FN = 'small_kernel1_output'+EXT
 
 def score(orig, relaxed):
     if (os.path.isfile(relaxed)):
-        # orig_snr = float(check_output(["cat", orig]))
-        relaxed_snr = float(check_output(["cat", relaxed]))
-        # err = abs(orig_snr  - relaxed_snr) / orig_snr
-        return relaxed_snr
+        return perfectlib.computeSNR(orig, relaxed, "stap")
     else:
         return 1.0
+
+if __name__ == '__main__':
+    print score(GOLDEN_FN, 'out'+EXT)

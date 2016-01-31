@@ -78,7 +78,7 @@
 
 #include "timer.h"
 
-#define ENABLE_CORRECTNESS_CHECKING
+#define WRITE_OUTPUT_TO_DISK
 
 #if INPUT_SIZE == INPUT_SIZE_SMALL
     static const char *input_filename = "small_input.bin";
@@ -91,6 +91,10 @@
     static const char *kernel1_output_filename = "large_kernel1_output.bin";
 #else
     #error "Unhandled value for INPUT_SIZE"
+#endif
+
+#ifdef WRITE_OUTPUT_TO_DISK
+    static const char* output_filename = "out.bin";
 #endif
 
 int main(int argc, char **argv)
@@ -157,16 +161,23 @@ int main(int argc, char **argv)
             (complex *) covariances,
             num_covariance_elements);
         printf("\tSNR after STAP kernel 1 : %.2f dB\n", snr);
-    #ifdef AUTOTUNER
-        FILE *fp = fopen("out.txt", "wb");
-    #else
-        FILE *fp = fopen("snr.txt", "wb");
-    #endif //AUTOTUNER
+    FILE *fp = fopen("snr.txt", "wb");
     assert(fp != NULL);
     fprintf(fp, "%.2f\n", snr);
     fclose(fp);
     }
     FREE_AND_NULL(gold_covariances);
+#endif
+
+#ifdef WRITE_OUTPUT_TO_DISK
+    printf("\nWriting output to %s/%s.\n", input_directory, kernel1_output_filename);
+    {
+        write_complex_data_file(
+            covariances,
+            output_filename,
+            input_directory,
+            num_covariance_elements);
+    }
 #endif
 
     FREE_AND_NULL(datacube);

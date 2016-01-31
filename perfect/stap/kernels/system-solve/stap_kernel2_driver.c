@@ -76,7 +76,7 @@
 #include "stap_utils.h"
 #include "stap_system_solver.h"
 
-#define ENABLE_CORRECTNESS_CHECKING
+#define WRITE_OUTPUT_TO_DISK
 
 #if INPUT_SIZE == INPUT_SIZE_SMALL
     static const char *kernel1_output_filename = "small_kernel1_output.bin";
@@ -92,6 +92,10 @@
     static const char *steering_vector_filename = "large_steering_vectors.bin";
 #else
     #error "Unhandled value for INPUT_SIZE"
+#endif
+
+#ifdef WRITE_OUTPUT_TO_DISK
+    static const char* output_filename = "out.bin";
 #endif
 
 int main(int argc, char **argv)
@@ -173,16 +177,23 @@ int main(int argc, char **argv)
             (complex *) adaptive_weights,
             num_adaptive_weight_elements);
         printf("\tSNR after STAP kernel 2 : %.2f dB\n", snr);
-    #ifdef AUTOTUNER
-        FILE *fp = fopen("out.txt", "wb");
-    #else
-        FILE *fp = fopen("snr.txt", "wb");
-    #endif //AUTOTUNER
+    FILE *fp = fopen("snr.txt", "wb");
     assert(fp != NULL);
     fprintf(fp, "%.2f\n", snr);
     fclose(fp);
     }
     FREE_AND_NULL(gold_weights);
+#endif
+
+#ifdef WRITE_OUTPUT_TO_DISK
+    printf("\nWriting output to %s/%s.\n", input_directory, kernel2_output_filename);
+    {
+        write_complex_data_file(
+            adaptive_weights,
+            output_filename,
+            input_directory,
+            num_adaptive_weight_elements);
+    }
 #endif
 
     FREE_AND_NULL(covariances);

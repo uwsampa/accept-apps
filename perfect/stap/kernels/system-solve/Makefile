@@ -6,7 +6,7 @@ ifneq ($(shell uname -s),Darwin)
 	LDFLAGS += -lrt
 endif
 
-CLEANMETOO += snr.txt out.txt *.out *.log
+CLEANMETOO += snr.txt out.bin *.out *.log *.pyc
 
 RUNARGS := .
 
