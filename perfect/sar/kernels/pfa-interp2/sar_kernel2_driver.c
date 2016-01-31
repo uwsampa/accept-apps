@@ -201,14 +201,11 @@ int main(int argc, char **argv)
             (complex *) resampled,
             num_resampled_elements);
         printf("\nImage correctness SNR = %.2f\n", snr);
-    #ifdef AUTOTUNER
-        FILE *fp = fopen("out.txt", "wb");
-    #else
+
         FILE *fp = fopen("snr.txt", "wb");
-    #endif //AUTOTUNER
-    assert(fp != NULL);
-    fprintf(fp, "%.2f\n", snr);
-    fclose(fp);
+        assert(fp != NULL);
+        fprintf(fp, "%.2f\n", snr);
+        fclose(fp);
     }
 #endif
 
