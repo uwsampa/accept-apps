@@ -20,6 +20,7 @@ def load_mat(filename):
                 line = line.strip().split(" ")
                 if line[0]!='%':
                     line = [float(x) for x in line]
+                    mat.append(line)
     return np.array(mat)
 
 def load_fft(filename):
@@ -33,7 +34,7 @@ def load_fft(filename):
                 mat.append(line)
     return np.array(mat)
 
-def load_stap_bin(filename):
+def load_fp_bin(filename):
     data = []
     f = open(filename, "rb")
     try:
@@ -52,7 +53,7 @@ def load_stap_bin(filename):
 
     return np.array(data)
 
-def load_bin(filename, luma=False, metadata=False):
+def load_img_bin(filename, luma=False, metadata=False):
     pixels = []
     params = []
     f = open(filename, "rb")
@@ -107,9 +108,9 @@ def load_bin(filename, luma=False, metadata=False):
 
 def computeSNR(golden, relaxed, mode):
     if (os.path.isfile(relaxed)):
-        if mode=="stap":
-            goldenData = load_stap_bin(golden)
-            relaxedData = load_stap_bin(relaxed)
+        if mode=="stap" or mode=="sar":
+            goldenData = load_fp_bin(golden)
+            relaxedData = load_fp_bin(relaxed)
             if (goldenData==relaxedData).all():
                 return SNR_MAX
             else:
@@ -119,10 +120,8 @@ def computeSNR(golden, relaxed, mode):
                 den = 0
                 num = 0
                 for i in range(len(goldenData)):
-                    den += (goldenData[i].real - relaxedData[i].real) * \
-                           (goldenData[i].real - relaxedData[i].real)
-                    den += (goldenData[i].imag - relaxedData[i].imag) * \
-                           (goldenData[i].imag - relaxedData[i].imag)
+                    den += (goldenData[i].real - relaxedData[i].real) ** 2
+                    den += (goldenData[i].imag - relaxedData[i].imag) ** 2
                     num += goldenData[i].real * goldenData[i].real + \
                            goldenData[i].imag * goldenData[i].imag
                 snr = 10 * np.log10( num/den );
@@ -151,10 +150,8 @@ def computeSNR(golden, relaxed, mode):
                 num = 0
                 for i in range(len(goldenData)):
                     for j in range(len(goldenData[i])):
-                        den += (goldenData[i][j].real - relaxedData[i][j].real) * \
-                               (goldenData[i][j].real - relaxedData[i][j].real)
-                        den += (goldenData[i][j].imag - relaxedData[i][j].imag) * \
-                               (goldenData[i][j].imag - relaxedData[i][j].imag)
+                        den += (goldenData[i][j].real - relaxedData[i][j].real) ** 2
+                        den += (goldenData[i][j].imag - relaxedData[i][j].imag) ** 2
                         num += goldenData[i][j].real * goldenData[i][j].real + \
                                goldenData[i][j].imag * goldenData[i][j].imag
                 snr = 10 * np.log10( num/den );
@@ -178,8 +175,8 @@ def computeSNR(golden, relaxed, mode):
 def computePSNR(golden, relaxed, mode):
     if (os.path.isfile(relaxed)):
         if mode=="RGBbin":
-            goldenData = load_bin(golden, luma=True)
-            relaxedData = load_bin(relaxed, luma=True)
+            goldenData = load_img_bin(golden, luma=True)
+            relaxedData = load_img_bin(relaxed, luma=True)
             if (goldenData==relaxedData).all():
                 return SNR_MAX
             else:
@@ -200,7 +197,7 @@ def display(fn):
         plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
         plt.show()
     elif fn.endswith('.bin'):
-        img_array = load_bin(fn, luma=True)
+        img_array = load_img_bin(fn, luma=True)
         channels = 1 if len(img_array.shape)==2 else img_array.shape[2]
         if channels==1:
             plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)

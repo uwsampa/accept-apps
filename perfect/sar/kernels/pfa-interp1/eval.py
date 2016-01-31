@@ -7,7 +7,7 @@ EXT = ".bin"
 
 def score(orig, relaxed):
     if (os.path.isfile(relaxed)):
-        return perfectlib.computeSNR(orig, relaxed, "stap")
+        return perfectlib.computeSNR(orig, relaxed, "sar")
     else:
         return 1.0
 
