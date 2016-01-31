@@ -76,7 +76,11 @@
 
 #if INPUT_SIZE == INPUT_SIZE_SMALL
 #define LOGN (8)
-#define FILENAME "input_small.mat"
+#ifdef AUTOTUNER
+  #define FILENAME "orig.mat"
+#else
+  #define FILENAME "input_small.mat"
+#endif
 
 #elif INPUT_SIZE == INPUT_SIZE_MEDIUM
 #define LOGN (12)
