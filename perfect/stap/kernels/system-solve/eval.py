@@ -4,7 +4,6 @@ sys.path.append('../../../utils/')
 import perfectlib
 
 EXT = ".bin"
-GOLDEN_FN = 'small_kernel2_output'+EXT
 
 def score(orig, relaxed):
     if (os.path.isfile(relaxed)):
@@ -13,4 +12,4 @@ def score(orig, relaxed):
         return 1.0
 
 if __name__ == '__main__':
-    print score(GOLDEN_FN, 'out'+EXT)
+    print score('orig'+EXT, 'out'+EXT)

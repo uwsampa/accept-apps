@@ -83,7 +83,11 @@
 #if INPUT_SIZE == INPUT_SIZE_SMALL
     static const char *input_filename = "small_input.bin";
     static const char *kernel2_output_filename = "small_kernel2_output.bin";
+#ifdef AUTOTUNER
+    static const char *kernel3_output_filename = "orig.bin";
+#else
     static const char *kernel3_output_filename = "small_kernel3_output.bin";
+#endif
     static const char *steering_vector_filename = "small_steering_vectors.bin";
 #elif INPUT_SIZE == INPUT_SIZE_MEDIUM
     static const char *input_filename = "medium_input.bin";
