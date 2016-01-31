@@ -1,3 +1,4 @@
+import os
 import sys
 sys.path.append('../../../utils/')
 import perfectlib
@@ -12,4 +13,4 @@ def score(orig, relaxed):
         return 1.0
 
 if __name__ == '__main__':
-    print score('orig'+EXT, 'out'+EXT)
+    print score(INPUT_FN, 'out'+EXT)
