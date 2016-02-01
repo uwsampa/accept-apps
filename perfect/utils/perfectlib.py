@@ -12,6 +12,38 @@ SNR_MAX = 200.0
 # Arbitrarily small SNR to indicate different values
 SNR_MIN = 1.0
 
+# WAMI params (for INPUT_SIZE_SMALL)
+# Taken from wami/kernels/ser/change-detection/lib/wami_params.h
+WAMI_GMM_IMG_NUM_ROWS = 512
+WAMI_GMM_IMG_NUM_COLS = 512
+WAMI_GMM_NUM_FRAMES = 5
+
+# WAMI morpho erode, as defined in
+# wami/kernels/ser/change-detection/wami_morpho.c
+# Used for quality evaluation.
+def wami_morpho_erode(frame):
+    eroded = [[0]*WAMI_GMM_IMG_NUM_COLS for r in range(WAMI_GMM_IMG_NUM_ROWS)]
+    for row in range(WAMI_GMM_IMG_NUM_ROWS):
+        for col in range(WAMI_GMM_IMG_NUM_COLS):
+            row_m_1 = row-1 if (row>0) else 0
+            col_m_1 = col-1 if (col>0) else 0
+            row_p_1 = row+1 if (row<WAMI_GMM_IMG_NUM_ROWS-1) else WAMI_GMM_IMG_NUM_ROWS-1
+            col_p_1 = col+1 if (col<WAMI_GMM_IMG_NUM_COLS-1) else WAMI_GMM_IMG_NUM_COLS-1
+            if (frame[row][col] == 0 or
+                frame[row_m_1][col_m_1] == 0 or
+                frame[row_m_1][col] == 0 or
+                frame[row_m_1][col_p_1] == 0 or
+                frame[row][col_m_1] == 0 or
+                frame[row][col] == 0 or
+                frame[row][col_p_1] == 0 or
+                frame[row_p_1][col_m_1] == 0 or
+                frame[row_p_1][col] == 0 or
+                frame[row_p_1][col_p_1] == 0):
+                eroded[row][col] = 0
+            else:
+                eroded[row][col] = 1
+    return eroded
+
 def load_mat(filename):
     mat = []
     with open(filename) as f:
@@ -53,7 +85,27 @@ def load_fp_bin(filename):
 
     return np.array(data)
 
-def load_img_bin(filename, luma=False, metadata=False):
+def load_wami_img(filename):
+    data = []
+    f = open(filename, "rb")
+    try:
+        char = f.read(1)
+        while char != "":
+            data.append(ord(struct.unpack('c', char)[0]))
+            char = f.read(1)
+    finally:
+        f.close()
+
+    imgs = []
+    numPixels = WAMI_GMM_IMG_NUM_ROWS*WAMI_GMM_IMG_NUM_COLS
+    for frame in range(WAMI_GMM_NUM_FRAMES):
+        frameBuf = []
+        for row in range(WAMI_GMM_IMG_NUM_ROWS):
+            frameBuf.append(data[frame*numPixels+row*WAMI_GMM_IMG_NUM_COLS:frame*numPixels+(row+1)*WAMI_GMM_IMG_NUM_COLS])
+        imgs.append(frameBuf)
+    return np.array(imgs)
+
+def load_img_bin(filename, normalize=False, luma=False, metadata=False):
     pixels = []
     params = []
     f = open(filename, "rb")
@@ -77,34 +129,33 @@ def load_img_bin(filename, luma=False, metadata=False):
         print("Depth = {}".format(params[3]))
         print("Pixel count = {}".format(len(pixels)))
 
+    width = params[0]
+    height = params[1]
     channels = params[2]
 
-    # Normalize
-    minVal = min(pixels)
-    maxVal = max(pixels)
-    # pixels = [(x-minVal)/(maxVal-minVal) for x in pixels]
+    if normalize:
+        # Normalize
+        maxVal = max(pixels)
+        pixels = [float(x)/maxVal*255 for x in pixels]
 
-    mat = []
-    for y in range(0, params[1]):
-        row = pixels[y*channels*params[0]:(y+1)*channels*params[0]]
-        if channels==1:
-            mat.append(row)
-        elif channels == 3:
-            rgb_row = []
-            for x in range(0, params[0]):
-                if luma:
-                    # using RGB to lumincance conversion for ITU-R BT.709 / sRGB
-                    r = row[x*channels+0]
-                    g = row[x*channels+1]
-                    b = row[x*channels+2]
-                    luminance = 0.2126*r + 0.7152*g + 0.0722*b
-                    rgb_row.append(luminance)
-                else:
-                    rgb_pixel = (row[x*channels+0],row[x*channels+1],row[x*channels+2])
-                    rgb_row.append(rgb_pixel)
-            mat.append(rgb_row)
+    if luma:
+        rgbArray = np.zeros((height,width), 'uint8')
+    else:
+        rgbArray = np.zeros((height,width,channels), 'uint8')
+    for y in range(height):
+        for x in range(width):
+            if luma:
+                # using RGB to lumincance conversion for ITU-R BT.709 / sRGB
+                r = pixels[y*width*channels+x*channels+0]
+                g = pixels[y*width*channels+x*channels+1]
+                b = pixels[y*width*channels+x*channels+2]
+                luminance = 0.2126*r + 0.7152*g + 0.0722*b
+                rgbArray[y][x] = luminance
+            else:
+                for c in range(channels):
+                    rgbArray[y][x][c] = pixels[y*width*channels+x*channels+c]
 
-    return np.array(mat)
+    return rgbArray
 
 def computeSNR(golden, relaxed, mode):
     if (os.path.isfile(relaxed)):
@@ -124,7 +175,32 @@ def computeSNR(golden, relaxed, mode):
                     den += (goldenData[i].imag - relaxedData[i].imag) ** 2
                     num += goldenData[i].real * goldenData[i].real + \
                            goldenData[i].imag * goldenData[i].imag
-                snr = 10 * np.log10( num/den );
+                snr = 10 * np.log10( num/den )
+                return snr
+        elif mode=="wami":
+            # change-detection correcness check
+            # as implemented in
+            # wami/kernels/ser/change-detection/src/wami_kernel3_driver.c
+            numMisclassified = 0
+            numForeground = 0
+            goldenData = load_wami_img(golden)
+            relaxedData = load_wami_img(relaxed)
+            for goldenFrame, relaxedFrame in zip(goldenData, relaxedData):
+                goldedEroded = wami_morpho_erode(goldenFrame)
+                relaxedEroded = wami_morpho_erode(relaxedFrame)
+                for row in range(WAMI_GMM_IMG_NUM_ROWS):
+                    for col in range(WAMI_GMM_IMG_NUM_COLS):
+                        if goldedEroded[row][col] != relaxedEroded[row][col]:
+                            numMisclassified += 1
+                        if goldedEroded[row][col] != 0:
+                            numForeground += 1
+            # SNR conversion
+            den = numMisclassified
+            num = numForeground
+            if den==0:
+                return SNR_MAX
+            else:
+                snr = 20 * np.log10( num/den )
                 return snr
         elif mode=="fft":
             # Here we recompute a golden FFT from input data
@@ -154,7 +230,7 @@ def computeSNR(golden, relaxed, mode):
                         den += (goldenData[i][j].imag - relaxedData[i][j].imag) ** 2
                         num += goldenData[i][j].real * goldenData[i][j].real + \
                                goldenData[i][j].imag * goldenData[i][j].imag
-                snr = 10 * np.log10( num/den );
+                snr = 10 * np.log10( num/den )
                 return snr
         elif mode=="mat":
             goldenData = load_mat(golden)
@@ -165,7 +241,18 @@ def computeSNR(golden, relaxed, mode):
                 # Here we compute the SNR based on the PERFECT doc
                 num = ((goldenData) ** 2).sum(axis=None)
                 den = ((goldenData - relaxedData) ** 2).sum(axis=None)
-                snr = 10 * np.log10( num/den );
+                snr = 10 * np.log10( num/den )
+                return snr
+        elif mode=="bin":
+            goldenData = load_img_bin(golden)
+            relaxedData = load_img_bin(relaxed)
+            if (goldenData==relaxedData).all():
+                return SNR_MAX
+            else:
+                # Here we compute the SNR based on the PERFECT doc
+                num = ((goldenData) ** 2).sum(axis=None)
+                den = ((goldenData - relaxedData) ** 2).sum(axis=None)
+                snr = 10 * np.log10( float(num)/den )
                 return snr
         else:
             return SNR_MIN
@@ -184,7 +271,7 @@ def computePSNR(golden, relaxed, mode):
                 # https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
                 mseVal = ((goldenData - relaxedData) ** 2).mean(axis=None)
                 maxVal = np.amax(goldenData)
-                psnr = 20 * np.log10(maxVal) - 10 * np.log10(mseVal);
+                psnr = 20 * np.log10(maxVal) - 10 * np.log10(mseVal)
                 return psnr
         else:
             return SNR_MIN
@@ -197,13 +284,31 @@ def display(fn):
         plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
         plt.show()
     elif fn.endswith('.bin'):
-        img_array = load_img_bin(fn, luma=True)
-        channels = 1 if len(img_array.shape)==2 else img_array.shape[2]
-        if channels==1:
-            plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
-        else:
-            plt.imshow(img_array)
-        plt.show()
+        try:
+            img_array = load_img_bin(fn, normalize=True)
+            print img_array[0]
+            channels = 1 if len(img_array.shape)==2 else img_array.shape[2]
+            if channels==1:
+                plt.imshow(img_array, cmap = cm.Greys_r)
+            else:
+                plt.imshow(img_array)
+            plt.show()
+        except:
+            img_array = load_wami_img(fn)
+
+            ax1 = plt.subplot(231)
+            ax2 = plt.subplot(232)
+            ax3 = plt.subplot(233)
+            ax4 = plt.subplot(234)
+            ax5 = plt.subplot(235)
+
+            ax1.imshow(img_array[0], interpolation='nearest', cmap = cm.Greys_r)
+            ax2.imshow(img_array[1], interpolation='nearest', cmap = cm.Greys_r)
+            ax3.imshow(img_array[2], interpolation='nearest', cmap = cm.Greys_r)
+            ax4.imshow(img_array[3], interpolation='nearest', cmap = cm.Greys_r)
+            ax5.imshow(img_array[4], interpolation='nearest', cmap = cm.Greys_r)
+
+            plt.show()
 
 def cli():
     parser = argparse.ArgumentParser(
