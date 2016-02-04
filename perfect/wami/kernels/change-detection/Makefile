@@ -6,7 +6,7 @@ ifneq ($(shell uname -s),Darwin)
 	LDFLAGS += -lrt
 endif
 
-CLEANMETOO += err.txt out.txt small_kernel3_output.bin *.out *.log
+CLEANMETOO += err.txt out.txt small_kernel3_output.bin out.bin *.out *.log *.pyc
 
 RUNARGS := .
 
