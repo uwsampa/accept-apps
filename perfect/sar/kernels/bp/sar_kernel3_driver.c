@@ -203,10 +203,10 @@ int main(int argc, char **argv)
             num_image_elements);
         printf("\nImage correctness SNR: %.2f\n", snr);
 
-    FILE *fp = fopen("snr.txt", "wb");
-    assert(fp != NULL);
-    fprintf(fp, "%.2f\n", snr);
-    fclose(fp);
+        FILE *fp = fopen("snr.txt", "wb");
+        assert(fp != NULL);
+        fprintf(fp, "%.2f\n", snr);
+        fclose(fp);
     }
 #endif
 
