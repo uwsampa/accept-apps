@@ -1,3 +1,4 @@
+from __future__ import division
 from subprocess import check_output
 import os
 import math
@@ -252,7 +253,7 @@ def computeSNR(golden, relaxed, mode):
                 # Here we compute the SNR based on the PERFECT doc
                 num = ((goldenData) ** 2).sum(axis=None)
                 den = ((goldenData - relaxedData) ** 2).sum(axis=None)
-                snr = 10 * np.log10( float(num)/den )
+                snr = 10 * np.log10( num/den )
                 return snr
         else:
             return SNR_MIN
