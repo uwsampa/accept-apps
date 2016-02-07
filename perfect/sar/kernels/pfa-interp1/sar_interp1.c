@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -73,13 +73,13 @@
 
 #include "sar_interp1.h"
 
-static int find_nearest_range_coord(
+static __attribute__((always_inline)) int find_nearest_range_coord(
     double target_coord,
     double input_coord_start,
     double input_coord_spacing,
     double input_coord_spacing_inv);
 
-static float sinc(float x)
+static __attribute__((always_inline)) float sinc(float x)
 {
     if (x == 0)
     {
@@ -138,42 +138,42 @@ void sar_interp1(
                 resampled[p][r].im = 0.0f;
                 continue;
             }
-	    
-	    /* find_nearest_range_coord should never return a value >= N_RANGE */
-	    // assert(nearest < N_RANGE); // ACCEPT_PERMIT
-	    
-	    /*
-	     * out_coord is bounded in [nearest, nearest+1], so we check
-	     * which of the two input coordinates is closest.
-	     */
-	    if (fabs(out_coord - (input_start + (nearest+1)*input_spacing)) <
-		fabs(out_coord - (input_start + (nearest)*input_spacing)))
-	    {
-		nearest = nearest + 1;
-	    }
-	    
-	    rmin = nearest - PFA_N_TSINC_POINTS_PER_SIDE;
-	    if (rmin < 0) { rmin = 0; }
-	    rmax = nearest + PFA_N_TSINC_POINTS_PER_SIDE;
-	    if (rmax >= N_RANGE) { rmax = N_RANGE-1; }
-	    
-	    window_offset = 0;
-	    if (nearest - PFA_N_TSINC_POINTS_PER_SIDE < 0)
-	    {
-		window_offset = PFA_N_TSINC_POINTS_PER_SIDE - nearest;
-	    }
-	    
-	    accum.re = accum.im = 0.0f;
-	    for (k = rmin; k <= rmax; ++k)
-	    {
-		win_val = window[window_offset+(k-rmin)];
-		sinc_arg = (out_coord - (input_start+k*input_spacing)) * input_spacing_inv;
-		sinc_val = sinc(sinc_arg);
-		accum.re += sinc_val * win_val * data[p][k].re;
-		accum.im += sinc_val * win_val * data[p][k].im;
-	    }
-	    resampled[p][r].re = scale_factor * accum.re;
-	    resampled[p][r].im = scale_factor * accum.im;
+
+            /* find_nearest_range_coord should never return a value >= N_RANGE */
+            // assert(nearest < N_RANGE); // ACCEPT_PERMIT
+
+            /*
+             * out_coord is bounded in [nearest, nearest+1], so we check
+             * which of the two input coordinates is closest.
+             */
+            if (fabs(out_coord - (input_start + (nearest+1)*input_spacing)) <
+            fabs(out_coord - (input_start + (nearest)*input_spacing)))
+            {
+                nearest = nearest + 1;
+            }
+
+            rmin = nearest - PFA_N_TSINC_POINTS_PER_SIDE;
+            if (rmin < 0) { rmin = 0; }
+            rmax = nearest + PFA_N_TSINC_POINTS_PER_SIDE;
+            if (rmax >= N_RANGE) { rmax = N_RANGE-1; }
+
+            window_offset = 0;
+            if (nearest - PFA_N_TSINC_POINTS_PER_SIDE < 0)
+            {
+                window_offset = PFA_N_TSINC_POINTS_PER_SIDE - nearest;
+            }
+
+            accum.re = accum.im = 0.0f;
+            for (k = rmin; k <= rmax; ++k)
+            {
+                win_val = window[window_offset+(k-rmin)];
+                sinc_arg = (out_coord - (input_start+k*input_spacing)) * input_spacing_inv;
+                sinc_val = sinc(sinc_arg);
+                accum.re += sinc_val * win_val * data[p][k].re;
+                accum.im += sinc_val * win_val * data[p][k].im;
+            }
+            resampled[p][r].re = scale_factor * accum.re;
+            resampled[p][r].im = scale_factor * accum.im;
         }
     }
 }
@@ -184,12 +184,12 @@ void sar_interp1(
  * naive in the sense that it does not work for all inputs and
  * does not honor rounding modes specified by, e.g., fesetround().
  */
-static int naive_round(double x)
+static __attribute__((always_inline)) int naive_round(double x)
 {
     return (int) (x + 0.5);
 }
 
-int find_nearest_range_coord(
+__attribute__((always_inline)) int find_nearest_range_coord(
     double target_coord,
     double input_coord_start,
     double input_coord_spacing,

@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -75,17 +75,17 @@
   ALL SOURCE CODE PRESENT IN THIS FILE IS UNCLASSIFIED AND IS
   BEING PROVIDED IN SUPPORT OF THE DARPA PERFECT PROGRAM.
 
-  THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY, EXPRESSED, IMPLIED, 
+  THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY, EXPRESSED, IMPLIED,
   OR OTHERWISE INFERRED. USE AND SUITABILITY FOR ANY PARTICULAR
-  APPLICATION IS SOLELY THE RESPONSIBILITY OF THE IMPLEMENTER. 
+  APPLICATION IS SOLELY THE RESPONSIBILITY OF THE IMPLEMENTER.
   NO CLAIM OF SUITABILITY FOR ANY APPLICATION IS MADE.
   USE OF THIS CODE FOR ANY APPLICATION RELEASES THE AUTHOR
   AND THE US GOVT OF ANY AND ALL LIABILITY.
 
   THE POINT OF CONTACT FOR QUESTIONS REGARDING THIS SOFTWARE IS:
 
-  US ARMY RDECOM CERDEC NVESD, RDER-NVS-SI (JOHN HODAPP, 
-  john.hodapp@us.army.mil), 10221 BURBECK RD, FORT BELVOIR, 
+  US ARMY RDECOM CERDEC NVESD, RDER-NVS-SI (JOHN HODAPP,
+  john.hodapp@us.army.mil), 10221 BURBECK RD, FORT BELVOIR,
   VA 22060-5806
 
   THIS HEADER SHALL REMAIN PART OF ALL SOURCE CODE FILES.
@@ -124,9 +124,9 @@ conv2d (APPROX algPixel_t *in, APPROX algPixel_t *out, int nRows, int nCols, APP
   for (row = 0; row < nRows; row++)
   {
     {
-      memcpy((void *)(tmpBuf + (row + rowOffset) * (nCols + nFilterCols) + colOffset), 
-	  (void *)(in + row * nCols), 
-	  nCols * sizeof(algPixel_t));
+      memcpy((void *)(tmpBuf + (row + rowOffset) * (nCols + nFilterCols) + colOffset),
+      (void *)(in + row * nCols),
+      nCols * sizeof(algPixel_t));
     }
   }
 
@@ -138,15 +138,15 @@ conv2d (APPROX algPixel_t *in, APPROX algPixel_t *out, int nRows, int nCols, APP
       m = 0;
       for (i = row - rowOffset; i <= row + rowOffset; i++)
       {
-	n = 0;
-	for (j = col - colOffset; j <= col + colOffset; j++)
-	{
-	  pxlPos = i * (nCols + nFilterCols) + j;
-	  fltPos = m * nFilterCols + n;
-	  sum += ((fltPixel_t) tmpBuf[pxlPos] * filter[fltPos]);
-	  n++;
-	}
-	m++;
+        n = 0;
+        for (j = col - colOffset; j <= col + colOffset; j++)
+        {
+          pxlPos = i * (nCols + nFilterCols) + j;
+          fltPos = m * nFilterCols + n;
+          sum += ((fltPixel_t) tmpBuf[pxlPos] * filter[fltPos]);
+          n++;
+        }
+        m++;
       }
       out[(row - rowBegIndex) * nCols + (col - colBegIndex)] = (algPixel_t) (sum / normFactor);
     }

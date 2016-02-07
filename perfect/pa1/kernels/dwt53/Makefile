@@ -6,7 +6,7 @@ ifneq ($(shell uname -s),Darwin)
 	LDFLAGS += -lrt
 endif
 
-CLEANMETOO += dwt53_output.0.mat out.mat *.out *.log *.pyc
+CLEANMETOO += $(TARGET).orig.ll dwt53_output.0.mat out.mat *.out *.log *.pyc
 
 ACCEPT_DIR ?= ../../accept
 include $(ACCEPT_DIR)/accept.mk

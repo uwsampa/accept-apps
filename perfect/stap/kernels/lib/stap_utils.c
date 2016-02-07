@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -77,17 +77,17 @@
 
 // cconj and cmult are impure because of hidden memcpy calls,
 // due to the definition of complex numbers as structs.
-// I don't see a better way around this than just telling 
+// I don't see a better way around this than just telling
 // ACCEPT that it's ok.
 
-complex cconj(complex x)
+__attribute__((always_inline)) complex cconj(complex x)
 {
     complex xconj = x; // ACCEPT_PERMIT
     xconj.im *= -1.0f;
     return xconj; // ACCEPT_PERMIT
 }
 
-complex cmult(complex lhs, complex rhs)
+__attribute__((always_inline)) complex cmult(complex lhs, complex rhs)
 {
     complex prod;
     prod.re = lhs.re * rhs.re - lhs.im * rhs.im;
@@ -115,7 +115,7 @@ double calculate_snr(
 
     if (den == 0)
     {
-        /* 
+        /*
          * The test and reference sets are identical. Just
          * return a large number (in dB) rather than +infinity.
          */
@@ -139,7 +139,7 @@ void *xmalloc(size_t size, const char *file, int line)
     return x;
 }
 
-void extract_snapshot(
+__attribute__((always_inline)) void extract_snapshot(
     complex snapshot[TDOF * N_CHAN],
     complex (* const datacube)[N_DOP][N_RANGE],
     int dop_index,

@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -69,25 +69,25 @@
 #include <enerc.h>
 #include "fft-1d.h"
 
-APPROX static unsigned int
+APPROX static __attribute__((always_inline)) unsigned int
 _rev (unsigned int v)
 {
-  APPROX unsigned int r = v; 
-  APPROX int s = sizeof(v) * CHAR_BIT - 1; 
+  APPROX unsigned int r = v;
+  APPROX int s = sizeof(v) * CHAR_BIT - 1;
 
   for (v >>= 1; v; v >>= 1)
-  {   
+  {
     r <<= 1;
     r |= v & 1;
     s--;
   }
-  r <<= s; 
+  r <<= s;
 
   return r;
 }
 
 
-static APPROX float *
+static APPROX __attribute__((always_inline)) float *
 bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
 {
   unsigned int i;
@@ -115,7 +115,7 @@ bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
 }
 
 
-int
+int __attribute__((always_inline))
 fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
 {
   unsigned int transform_length;
@@ -140,20 +140,20 @@ fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
 
     for (a = 0; a < transform_length; a++) {
       for (b = 0; b < N; b += 2 * transform_length) {
-	i = b + a;
-	j = b + a + transform_length;
+        i = b + a;
+        j = b + a + transform_length;
 
-	z_real = data[2*j  ];
-	z_imag = data[2*j+1];
+        z_real = data[2*j  ];
+        z_imag = data[2*j+1];
 
-	t_real = w_real * z_real - w_imag * z_imag;
-	t_imag = w_real * z_imag + w_imag * z_real;
+        t_real = w_real * z_real - w_imag * z_imag;
+        t_imag = w_real * z_imag + w_imag * z_real;
 
-	/* write the result */
-	data[2*j  ]  = data[2*i  ] - t_real;
-	data[2*j+1]  = data[2*i+1] - t_imag;
-	data[2*i  ] += t_real;
-	data[2*i+1] += t_imag;
+        /* write the result */
+        data[2*j  ]  = data[2*i  ] - t_real;
+        data[2*j+1]  = data[2*i+1] - t_imag;
+        data[2*i  ] += t_real;
+        data[2*i+1] += t_imag;
       }
 
       /* adjust w */

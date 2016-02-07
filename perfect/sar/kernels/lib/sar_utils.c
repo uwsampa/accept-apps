@@ -2,8 +2,8 @@
 
 /**BeginCopyright************************************************************
  *
- * $HeadURL: https://pastec.gtri.gatech.edu/svn/svn-dpc/INNC/projects/PERFECT-TAV-ES/suite/required/fft-2d/src/fft.c $
- * $Id: fft.c 8546 2014-04-02 21:36:22Z tallent $
+ * $HeadURL: https://pastec.gtri.gatech.edu/svn/svn-dpc/INNC/projects/PERFECT-TAV-ES/suite/sar/kernels/lib/sar_utils.c $
+ * $Id: sar_utils.c 8546 2014-04-02 21:36:22Z tallent $
  *
  *---------------------------------------------------------------------------
  * Part of PERFECT Benchmark Suite (hpc.pnnl.gov/projects/PERFECT/)
@@ -66,110 +66,133 @@
  *
  **EndCopyright*************************************************************/
 
-#define _XOPEN_SOURCE 500
+#include "sar_utils.h"
 #include <stdio.h>
-#include <stdlib.h>
+#include <math.h>
+#include <assert.h>
+#include <string.h>
 #include <enerc.h>
-#include "fft-2d.h"
 
-APPROX static __attribute__((always_inline)) unsigned int
-_rev (unsigned int v)
+__attribute__((always_inline)) complex cconj(complex x)
 {
-  APPROX unsigned int r = v;
-  APPROX int s = sizeof(v) * CHAR_BIT - 1;
-
-  for (v >>= 1; v; v >>= 1)
-  {
-    r <<= 1;
-    r |= v & 1;
-    s--;
-  }
-  r <<= s;
-
-  return r;
+    complex xconj = x;
+    xconj.im *= -1.0f;
+    return xconj;
 }
 
-
-APPROX static __attribute__((always_inline)) float *
-bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
+__attribute__((always_inline)) complex cmult(complex lhs, complex rhs)
 {
-  unsigned int i;
-  APPROX unsigned int s, shift;
-  s = sizeof(i) * CHAR_BIT - 1;
-  shift = s - bits + 1;
-
-  for (i = 0; i < N; i++) {
-    APPROX unsigned int r;
-    APPROX float t_real, t_imag;
-    r = _rev (i);
-    r >>= shift;
-
-    if (ENDORSE(i < r)) {
-      t_real = w[2 * i];
-      t_imag = w[2 * i + 1];
-      w[2 * i] = w[2 * r];
-      w[2 * i + 1] = w[2 * r + 1];
-      w[2 * r] = t_real;
-      w[2 * r + 1] = t_imag;
-    }
-  }
-
-  return w;
+    complex prod;
+    prod.re = lhs.re * rhs.re - lhs.im * rhs.im;
+    prod.im = lhs.re * rhs.im + lhs.im * rhs.re;
+    return prod;
 }
 
-
-int __attribute__((always_inline))
-fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
+double calculate_snr(
+    const complex *reference,
+    const complex *test,
+    size_t num_elements)
 {
-  unsigned int transform_length;
-  unsigned int a, b, i, j, bit;
-  APPROX float theta, t_real, t_imag, w_real, w_imag, s, t, s2, z_real, z_imag;
+    double num = 0.0, den = 0.0;
+    size_t i;
 
-  transform_length = 1;
-
-  /* bit reversal */
-  bit_reverse (data, N, logn);
-
-  /* calculation */
-  for (bit = 0; bit < logn; bit++) {
-    w_real = 1.0;
-    w_imag = 0.0;
-
-    theta = 1.0 * sign * M_PI / (float) transform_length;
-
-    s = sin (ENDORSE(theta));
-    t = sin (ENDORSE(0.5 * theta));
-    s2 = 2.0 * t * t;
-
-    for (a = 0; a < transform_length; a++) {
-      for (b = 0; b < N; b += 2 * transform_length) {
-        i = b + a;
-        j = b + a + transform_length;
-
-        z_real = data[2*j  ];
-        z_imag = data[2*j+1];
-
-        t_real = w_real * z_real - w_imag * z_imag;
-        t_imag = w_real * z_imag + w_imag * z_real;
-
-        /* write the result */
-        data[2*j  ]  = data[2*i  ] - t_real;
-        data[2*j+1]  = data[2*i+1] - t_imag;
-        data[2*i  ] += t_real;
-        data[2*i+1] += t_imag;
-      }
-
-      /* adjust w */
-      t_real = w_real - (s * w_imag + s2 * w_real);
-      t_imag = w_imag + (s * w_real - s2 * w_imag);
-      w_real = t_real;
-      w_imag = t_imag;
-
+    for (i = 0; i < num_elements; ++i)
+    {
+        den += (ENDORSE(reference[i].re) - ENDORSE(test[i].re)) *
+               (ENDORSE(reference[i].re) - ENDORSE(test[i].re));
+        den += (ENDORSE(reference[i].im) - ENDORSE(test[i].im)) *
+               (ENDORSE(reference[i].im) - ENDORSE(test[i].im));
+        num += ENDORSE(reference[i].re) * ENDORSE(reference[i].re) +
+               ENDORSE(reference[i].im) * ENDORSE(reference[i].im);
     }
 
-    transform_length *= 2;
-  }
-
-  return 0;
+    if (den == 0)
+    {
+        /*
+         * The test and reference sets are identical. Just
+         * return a large number (in dB) rather than +infinity.
+         */
+        return 140.0;
+    }
+    else
+    {
+        return 10.0*log10(num/den);
+    }
 }
 
+void *xmalloc(size_t size, const char *file, int line)
+{
+    void *x = malloc(size);
+    if (x == NULL)
+    {
+        fprintf(stderr, "Error: memory allocation of size %lu at %s:%d.\n",
+            size, file, line);
+        exit(EXIT_FAILURE);
+    }
+    return x;
+}
+
+void concat_dir_and_filename(
+    char dir_and_filename[MAX_DIR_AND_FILENAME_LEN],
+    const char *directory,
+    const char *filename)
+{
+    assert(dir_and_filename != NULL);
+    assert(directory != NULL);
+    assert(filename != NULL);
+
+    /* C89 lacks snprintf */
+    if (strlen(directory) + strlen(filename) + 2 > MAX_DIR_AND_FILENAME_LEN)
+    {
+        fprintf(stderr, "Error: input directory (%s) too long.\n",
+            directory);
+        exit(EXIT_FAILURE);
+    }
+    dir_and_filename[0] = '\0';
+    strncpy(dir_and_filename, directory, MAX_DIR_AND_FILENAME_LEN-1);
+    dir_and_filename[MAX_DIR_AND_FILENAME_LEN-1] = '\0';
+    strncat(dir_and_filename, "/",
+        MAX_DIR_AND_FILENAME_LEN - strlen(dir_and_filename) - 1);
+    strncat(dir_and_filename, filename,
+        MAX_DIR_AND_FILENAME_LEN - strlen(dir_and_filename) - 1);
+}
+
+void read_data_file(
+    char *data,
+    const char *filename,
+    const char *directory,
+    size_t num_bytes)
+{
+    size_t nread = 0;
+    FILE *fp = NULL;
+    char dir_and_filename[1024];
+
+    assert(data != NULL);
+    assert(filename != NULL);
+    assert(directory != NULL);
+
+    concat_dir_and_filename(
+        dir_and_filename,
+        directory,
+        filename);
+
+    fp = fopen(dir_and_filename, "rb");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "Error: Unable to open input file %s for reading.\n",
+            dir_and_filename);
+        exit(EXIT_FAILURE);
+    }
+
+    nread = fread(data, sizeof(char), num_bytes, fp);
+    if (nread != num_bytes)
+    {
+        fprintf(stderr, "Error: read failure on %s. "
+            "Expected %lu bytes, but only read %lu.\n",
+            dir_and_filename, num_bytes, nread);
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(fp);
+}

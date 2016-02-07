@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -121,7 +121,7 @@ void sar_interp2(
             input_spacing_avg += fabs(input_coords[r][p+1] - input_coords[r][p]);
         }
         input_spacing_avg /= (N_PULSES-1);
-        input_spacing_avg_inv = 1.0f / input_spacing_avg; 
+        input_spacing_avg_inv = 1.0f / input_spacing_avg;
         scale_factor = fabs(output_coords[1] - output_coords[0]) * input_spacing_avg_inv;
 
         for (p = 0; p < PFA_NOUT_AZIMUTH; ++p)
@@ -165,7 +165,7 @@ void sar_interp2(
                 sinc_arg = (out_coord - input_coords[r][k]) * input_spacing_avg_inv;
                 sinc_val = sinc(sinc_arg);
                 accum.re += sinc_val * window[window_offset+(k-pmin)] * data[k][r].re;
-                accum.im += sinc_val * window[window_offset+(k-pmin)] * data[k][r].im; 
+                accum.im += sinc_val * window[window_offset+(k-pmin)] * data[k][r].im;
             }
            resampled[p][r].re = scale_factor * accum.re;
            resampled[p][r].im = scale_factor * accum.im;
@@ -173,7 +173,7 @@ void sar_interp2(
     }
 }
 
-int find_nearest_azimuth_coord(
+__attribute__((always_inline)) int find_nearest_azimuth_coord(
     double target_coord,
     const double *input_coords)
 {

@@ -6,7 +6,7 @@ ifneq ($(shell uname -s),Darwin)
 	LDFLAGS += -lrt
 endif
 
-CLEANMETOO += snr.txt small_kernel3_output.bin out.bin *.out *.log *.pyc
+CLEANMETOO += $(TARGET).orig.ll snr.txt small_kernel3_output.bin out.bin *.out *.log *.pyc
 
 RUNARGS := .
 

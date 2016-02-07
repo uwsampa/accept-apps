@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -74,17 +74,17 @@
   ALL SOURCE CODE PRESENT IN THIS FILE IS UNCLASSIFIED AND IS
   BEING PROVIDED IN SUPPORT OF THE DARPA PERFECT PROGRAM.
 
-  THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY, EXPRESSED, IMPLIED, 
+  THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY, EXPRESSED, IMPLIED,
   OR OTHERWISE INFERRED. USE AND SUITABILITY FOR ANY PARTICULAR
-  APPLICATION IS SOLELY THE RESPONSIBILITY OF THE IMPLEMENTER. 
+  APPLICATION IS SOLELY THE RESPONSIBILITY OF THE IMPLEMENTER.
   NO CLAIM OF SUITABILITY FOR ANY APPLICATION IS MADE.
   USE OF THIS CODE FOR ANY APPLICATION RELEASES THE AUTHOR
   AND THE US GOVT OF ANY AND ALL LIABILITY.
 
   THE POINT OF CONTACT FOR QUESTIONS REGARDING THIS SOFTWARE IS:
 
-  US ARMY RDECOM CERDEC NVESD, RDER-NVS-SI (JOHN HODAPP, 
-  john.hodapp@us.army.mil), 10221 BURBECK RD, FORT BELVOIR, 
+  US ARMY RDECOM CERDEC NVESD, RDER-NVS-SI (JOHN HODAPP,
+  john.hodapp@us.army.mil), 10221 BURBECK RD, FORT BELVOIR,
   VA 22060-5806
 
   THIS HEADER SHALL REMAIN PART OF ALL SOURCE CODE FILES.
@@ -132,9 +132,9 @@ int main (int argc, char * argv[])
   APPROX int * output;
   int i;
 
-  int nFilterRowsFD = 9; 
+  int nFilterRowsFD = 9;
   int nFilterColsFD = 9;
-	  
+
   APPROX fltPixel_t FD[] =  {
 			 1,   3,   4,   5,   6,   5,  4,    3,  1,
 			 3,   9,  12,  15,  18,  15,  12,   9,  3,

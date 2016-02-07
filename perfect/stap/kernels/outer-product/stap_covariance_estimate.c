@@ -106,10 +106,10 @@ void stap_compute_covariance_estimate(
             const int first_cell = block*TRAINING_BLOCK_SIZE;
             const int last_cell = (block+1)*TRAINING_BLOCK_SIZE-1;
             int i;
-	    APPROX int j;
-	    // For some reason the stores to j are preventing perforation of
-	    // some of the loops, even though all are in loop headers.
-	    // Is it the j = i+1 initializations?
+            APPROX int j;
+            // For some reason the stores to j are preventing perforation of
+            // some of the loops, even though all are in loop headers.
+            // Is it the j = i+1 initializations?
 
             for (cell = first_cell; cell <= last_cell; ++cell)
             {
@@ -135,9 +135,9 @@ void stap_compute_covariance_estimate(
              */
             for (i = 0; i < N_CHAN*TDOF; ++i)
             {
-	        for (j = i+1; ENDORSE(j < N_CHAN*TDOF); ++j)
+               for (j = i+1; ENDORSE(j < N_CHAN*TDOF); ++j)
                 {
-		    const complex x = covariance[dop][block][j][i]; // ACCEPT_PERMIT
+                    const complex x = covariance[dop][block][j][i]; // ACCEPT_PERMIT
                     covariance[dop][block][i][j].re = x.re;
                     covariance[dop][block][i][j].im = -1.0f * x.im;
                 }
@@ -149,7 +149,7 @@ void stap_compute_covariance_estimate(
              */
             for (i = 0; i < N_CHAN*TDOF; ++i)
             {
-	        for (j = 0; ENDORSE(j < N_CHAN*TDOF); ++j)
+                for (j = 0; ENDORSE(j < N_CHAN*TDOF); ++j)
                 {
                     covariance[dop][block][i][j].re *= (1.0f/TRAINING_BLOCK_SIZE);
                     covariance[dop][block][i][j].im *= (1.0f/TRAINING_BLOCK_SIZE);
@@ -159,7 +159,7 @@ void stap_compute_covariance_estimate(
     }
 }
 
-void accumulate_outer_product_lower(
+__attribute__((always_inline)) void accumulate_outer_product_lower(
     complex covariance[N_DOP][N_BLOCKS][N_CHAN*TDOF][N_CHAN*TDOF],
     const complex snapshot[N_CHAN*TDOF],
     int dop,

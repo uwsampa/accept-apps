@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -127,8 +127,8 @@ steepest_descent (APPROX fltPixel_t *gradX_warped, APPROX fltPixel_t *gradY_warp
       Jacobian_y[5] = 1.0;
 
       for (k = 0; k < 6; k++) {
-	j_index = (6 * y * nCols) + (nCols * k) + x;
-	I_steepest[j_index] = (Jacobian_x[k] * gradX_warped[index]) + (Jacobian_y[k] * gradY_warped[index]);
+        j_index = (6 * y * nCols) + (nCols * k) + x;
+        I_steepest[j_index] = (Jacobian_x[k] * gradX_warped[index]) + (Jacobian_y[k] * gradY_warped[index]);
       }
     }
   }
@@ -143,13 +143,13 @@ hessian (APPROX fltPixel_t *I_steepest, int nCols, int nRows, int np, APPROX flo
   for (y = 0; y < nRows; y++) {
     for (i = 0; i < np; i++) {
       for (j = 0; j < np; j++) {
-	APPROX float total = 0.0;
-	for (x = 0; x < nCols; x++) {
-	  int index1 = (6 * y * nCols) + (nCols * i) + x;
-	  int index2 = (6 * y * nCols) + (nCols * j) + x;
-	  total += I_steepest[index1] * I_steepest[index2];
-	}
-	H[6*i + j] += total;
+        APPROX float total = 0.0;
+        for (x = 0; x < nCols; x++) {
+          int index1 = (6 * y * nCols) + (nCols * i) + x;
+          int index2 = (6 * y * nCols) + (nCols * j) + x;
+          total += I_steepest[index1] * I_steepest[index2];
+        }
+        H[6*i + j] += total;
       }
     }
   }

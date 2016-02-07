@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -70,7 +70,7 @@
 
 #define PIXEL_MAX 65535
 
-APPROX static u16 compute_and_clamp_pixel(
+APPROX static __attribute__((always_inline)) u16 compute_and_clamp_pixel(
     APPROX u16 pos,
     APPROX u16 neg)
 {
@@ -93,7 +93,7 @@ APPROX static u16 compute_and_clamp_pixel(
  * is using weights in units of 1/16ths so that the one-half portions
  * are retained.
  */
-APPROX static u16 compute_and_clamp_pixel_fractional_neg(
+APPROX static __attribute__((always_inline)) u16 compute_and_clamp_pixel_fractional_neg(
     APPROX u16 pos,
     APPROX u16 neg)
 {
@@ -119,7 +119,7 @@ APPROX static u16 compute_and_clamp_pixel_fractional_neg(
     }
 }
 
-APPROX static u16 interp_G_at_RRR_or_G_at_BBB(
+APPROX static __attribute__((always_inline)) u16 interp_G_at_RRR_or_G_at_BBB(
     u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS],
     APPROX u32 row,
     APPROX u32 col)
@@ -148,7 +148,7 @@ APPROX static u16 interp_G_at_RRR_or_G_at_BBB(
     return compute_and_clamp_pixel(pos, neg);
 }
 
-APPROX static u16 interp_R_at_GRB_or_B_at_GBR(
+APPROX static __attribute__((always_inline)) u16 interp_R_at_GRB_or_B_at_GBR(
     u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS],
     APPROX u32 row,
     APPROX u32 col)
@@ -175,8 +175,8 @@ APPROX static u16 interp_R_at_GRB_or_B_at_GBR(
 
     return compute_and_clamp_pixel(pos, neg);
 }
-    
-APPROX static u16 interp_R_at_GBR_or_B_at_GRB(
+
+APPROX static __attribute__((always_inline)) u16 interp_R_at_GBR_or_B_at_GRB(
     u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS],
     APPROX u32 row,
     APPROX u32 col)
@@ -204,7 +204,7 @@ APPROX static u16 interp_R_at_GBR_or_B_at_GRB(
     return compute_and_clamp_pixel(pos, neg);
 }
 
-APPROX static u16 interp_R_at_BBB_or_B_at_RRR(
+APPROX static __attribute__((always_inline)) u16 interp_R_at_BBB_or_B_at_RRR(
     u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS],
     APPROX u32 row,
     APPROX u32 col)
@@ -230,7 +230,7 @@ APPROX static u16 interp_R_at_BBB_or_B_at_RRR(
 
     return compute_and_clamp_pixel_fractional_neg(pos, neg);
 }
-    
+
 void wami_debayer(
     rgb_pixel debayered[WAMI_DEBAYER_IMG_NUM_ROWS-2*PAD][WAMI_DEBAYER_IMG_NUM_COLS-2*PAD],
     u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS])
@@ -329,7 +329,7 @@ void wami_debayer(
                 bayer, row, col);
         }
     }
- 
+
     /* Interpolate blue pixels at green pixels, red row, blue column */
     for (row = PAD; ENDORSE(row < WAMI_DEBAYER_IMG_NUM_ROWS-PAD); row += 2)
     {

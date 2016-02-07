@@ -173,9 +173,9 @@ static void cholesky_factorization(
              */
             for (i = 0; ENDORSE(i < N_CHAN*TDOF); ++i)
             {
-	        for (j = i+1; ENDORSE(j < N_CHAN*TDOF); ++j)
+                for (j = i+1; ENDORSE(j < N_CHAN*TDOF); ++j)
                 {
-		    const complex x = R[dop][block][i][j]; // ACCEPT_PERMIT
+                    const complex x = R[dop][block][i][j]; // ACCEPT_PERMIT
                     R[dop][block][j][i].re = x.re;
                     R[dop][block][j][i].im = -1.0f * x.im;
                 }
@@ -213,7 +213,7 @@ static void forward_and_back_substitution(
                 /* First apply forward substitution */
                 for (i = 0; i < N_CHAN*TDOF; ++i)
                 {
-		    APPROX const float Rii_inv = 1.0f / R[dop][block][i][i].re;
+                    APPROX const float Rii_inv = 1.0f / R[dop][block][i][i].re;
                     accum.re = accum.im = 0.0f;
                     for (j = 0; ENDORSE(j < i); ++j)
                     {
