@@ -279,11 +279,10 @@ def computePSNR(golden, relaxed, mode):
     else:
         return SNR_MIN
 
-def display(fn):
+def display(fn, o_fn=None):
     if fn.endswith('.mat'):
         img_array = load_mat(fn)
         plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
-        plt.show()
     elif fn.endswith('.bin'):
         try:
             img_array = load_img_bin(fn, normalize=True)
@@ -293,7 +292,6 @@ def display(fn):
                 plt.imshow(img_array, cmap = cm.Greys_r)
             else:
                 plt.imshow(img_array)
-            plt.show()
         except:
             img_array = load_wami_img(fn)
 
@@ -303,13 +301,22 @@ def display(fn):
             ax4 = plt.subplot(234)
             ax5 = plt.subplot(235)
 
-            ax1.imshow(img_array[0], interpolation='nearest', cmap = cm.Greys_r)
-            ax2.imshow(img_array[1], interpolation='nearest', cmap = cm.Greys_r)
-            ax3.imshow(img_array[2], interpolation='nearest', cmap = cm.Greys_r)
-            ax4.imshow(img_array[3], interpolation='nearest', cmap = cm.Greys_r)
-            ax5.imshow(img_array[4], interpolation='nearest', cmap = cm.Greys_r)
+            ax1.imshow(img_array[0], interpolation='nearest', cmap = cm.brg)
+            ax2.imshow(img_array[1], interpolation='nearest', cmap = cm.brg)
+            ax3.imshow(img_array[2], interpolation='nearest', cmap = cm.brg)
+            ax4.imshow(img_array[3], interpolation='nearest', cmap = cm.brg)
+            ax5.imshow(img_array[4], interpolation='nearest', cmap = cm.brg)
+            ax1.axis('off')
+            ax2.axis('off')
+            ax3.axis('off')
+            ax4.axis('off')
+            ax5.axis('off')
 
-            plt.show()
+    plt.axis('off')
+    if o_fn:
+        plt.savefig(o_fn, bbox_inches='tight')
+    else:
+        plt.show()
 
 def cli():
     parser = argparse.ArgumentParser(
@@ -319,9 +326,13 @@ def cli():
         '-f', dest='path', action='store', type=str, required=True,
         default=None, help='path to file'
     )
+    parser.add_argument(
+        '-o', dest='out', action='store', type=str, required=False,
+        default=None, help='path to output file'
+    )
     args = parser.parse_args()
 
-    display(args.path)
+    display(args.path, args.out)
 
 if __name__ == '__main__':
     cli()
