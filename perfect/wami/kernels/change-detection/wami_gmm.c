@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -91,7 +91,7 @@ void wami_gmm(
 {
     const size_t num_pixels = WAMI_GMM_IMG_NUM_ROWS * WAMI_GMM_IMG_NUM_COLS;
     APPROX int row, col, k, num_foreground = 0;
-    
+
     memset(foreground, 0, sizeof(u8) * num_pixels);
 
     for (row = 0; ENDORSE(row < WAMI_GMM_IMG_NUM_ROWS); ++row)
@@ -109,7 +109,7 @@ void wami_gmm(
                  * C89 does not include fabsf(), so using the double-precision
                  * fabs() function will unnecessarily type-convert to double.
                  */
-	        if (ENDORSE(fabs(ENDORSE(pixel - mu[row][col][k]))/sigma[row][col][k] < STDEV_THRESH))
+                if (ENDORSE(fabs(ENDORSE(pixel - mu[row][col][k]))/sigma[row][col][k] < STDEV_THRESH))
                 {
                     match = k;
                     break;
@@ -119,16 +119,16 @@ void wami_gmm(
             /* Update the weights for all models */
             for (k = 0; ENDORSE(k < WAMI_GMM_NUM_MODELS); ++k)
             {
-	      if (ENDORSE(k == match))
+                if (ENDORSE(k == match))
                 {
                     /* A model matched, so update its corresponding weight. */
-		    weight[row][col][match] += alpha *    // ACCEPT_PERMIT
+                    weight[row][col][match] += alpha *    // ACCEPT_PERMIT
                         (1.0f - weight[row][col][match]);
                 }
                 else
                 {
                     /* Non-matching models have their weights reduced */
-		    weight[row][col][k] *= (1.0f - alpha); // ACCEPT_PERMIT
+                    weight[row][col][k] *= (1.0f - alpha); // ACCEPT_PERMIT
                 }
             }
 
@@ -142,7 +142,7 @@ void wami_gmm(
                  * although that means that one update above was wasted. That
                  * update could be avoided.
                  */
-	        mu[row][col][WAMI_GMM_NUM_MODELS-1] = ENDORSE((float) pixel); // ACCEPT_PERMIT
+                mu[row][col][WAMI_GMM_NUM_MODELS-1] = ENDORSE((float) pixel); // ACCEPT_PERMIT
                 sigma[row][col][WAMI_GMM_NUM_MODELS-1] = INIT_STDEV; // ACCEPT_PERMIT
                 weight[row][col][WAMI_GMM_NUM_MODELS-1] = INIT_WEIGHT; // ACCEPT_PERMIT
             }
@@ -153,13 +153,13 @@ void wami_gmm(
                 sum += weight[row][col][k];
             }
 
-	    // removed loop exit
+            // removed loop exit
             // assert(sum != 0.0f);
 
             norm = 1.0f / sum;
             for (k = 0; ENDORSE(k < WAMI_GMM_NUM_MODELS); ++k)
             {
-	        weight[row][col][k] *= ENDORSE(norm); // ACCEPT_PERMIT
+                weight[row][col][k] *= ENDORSE(norm); // ACCEPT_PERMIT
             }
 
             /* Update mu and sigma for the matched distribution, if any */
@@ -180,7 +180,7 @@ void wami_gmm(
                     (1.0f - rho) * sigma_k * sigma_k +
                     rho * (pixel-mu[row][col][match]) * (pixel-mu[row][col][match])));
                 // removed loop exit
-		// assert(sigma[row][col][match] > 0);
+                // assert(sigma[row][col][match] > 0);
             }
 
             /*
@@ -202,12 +202,12 @@ void wami_gmm(
                         sigma[row][col][k];
                     if (ENDORSE(new_significance <= other_significance))
                     {
-		        break;
+                        break;
                     }
                 }
                 if (ENDORSE(k == 0))
                 {
-		    if (ENDORSE(other_significance >= new_significance))
+                    if (ENDORSE(other_significance >= new_significance))
                     {
                         sorted_position = 1;
                     }
@@ -226,7 +226,7 @@ void wami_gmm(
                 new_weight = weight[row][col][sort_from];
                 for (k = sort_from; ENDORSE(k > sorted_position); --k)
                 {
-		    mu[row][col][k] = mu[row][col][k-1]; // ACCEPT_PERMIT
+                    mu[row][col][k] = mu[row][col][k-1]; // ACCEPT_PERMIT
                     sigma[row][col][k] = sigma[row][col][k-1]; // ACCEPT_PERMIT
                     weight[row][col][k] = weight[row][col][k-1]; // ACCEPT_PERMIT
                 }
@@ -237,10 +237,10 @@ void wami_gmm(
 
             /* Now, we need to determine if this pixel is foreground or background. */
             {
-	        APPROX float cumsum = weight[row][col][0];
+                APPROX float cumsum = weight[row][col][0];
                 int B = 0;
                 while (ENDORSE(B < WAMI_GMM_NUM_MODELS-1 && cumsum <= BACKGROUND_THRESH))
-		{
+                {
                     cumsum += weight[row][col][++B];
                 }
                 foreground[row][col] = ENDORSE(sorted_position > B); // ACCEPT_PERMIT

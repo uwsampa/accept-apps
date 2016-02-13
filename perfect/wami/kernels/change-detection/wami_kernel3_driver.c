@@ -100,7 +100,7 @@
     #error "Unhandled value for INPUT_SIZE"
 #endif
 
-#define ENABLE_CORRECTNESS_CHECKING
+// #define ENABLE_CORRECTNESS_CHECKING
 #define WRITE_OUTPUT_TO_DISK
 
 static void read_gmm_input_data(
