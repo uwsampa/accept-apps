@@ -187,13 +187,13 @@ def computeSNR(golden, relaxed, mode):
             goldenData = load_wami_img(golden)
             relaxedData = load_wami_img(relaxed)
             for goldenFrame, relaxedFrame in zip(goldenData, relaxedData):
-                goldedEroded = wami_morpho_erode(goldenFrame)
+                goldenEroded = wami_morpho_erode(goldenFrame)
                 relaxedEroded = wami_morpho_erode(relaxedFrame)
                 for row in range(WAMI_GMM_IMG_NUM_ROWS):
                     for col in range(WAMI_GMM_IMG_NUM_COLS):
-                        if goldedEroded[row][col] != relaxedEroded[row][col]:
+                        if goldenEroded[row][col] != relaxedEroded[row][col]:
                             numMisclassified += 1
-                        if goldedEroded[row][col] != 0:
+                        if goldenEroded[row][col] != 0:
                             numForeground += 1
             # SNR conversion
             den = numMisclassified
