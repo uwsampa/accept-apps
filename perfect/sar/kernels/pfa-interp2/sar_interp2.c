@@ -75,7 +75,7 @@ static int find_nearest_azimuth_coord(
     double target_coord,
     const double *input_coords);
 
-APPROX static float sinc(APPROX float x)
+static __attribute__((always_inline)) APPROX float sinc(APPROX float x)
 {
     if (ENDORSE(x == 0))
     {
