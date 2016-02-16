@@ -190,7 +190,7 @@ dwt53_row_transpose (APPROX algPixel_t *data, APPROX algPixel_t *data2, int nrow
 int dwt53_inverse(algPixel_t *data, int nrows, int ncols)
 {
   int err = 0;
-    algPixel_t *data2 = (algPixel_t *)calloc(nrows * ncols, sizeof(algPixel_t));
+  algPixel_t *data2 = (algPixel_t *)calloc(nrows * ncols, sizeof(algPixel_t));
   if (!data2)
   {
     perror("Could not allocate temp space for dwt53_inverse op");
@@ -202,7 +202,7 @@ int dwt53_inverse(algPixel_t *data, int nrows, int ncols)
 
   free(data2);
 
-    return err;
+  return err;
 }
 
 
@@ -210,44 +210,44 @@ int dwt53_row_transpose_inverse(algPixel_t *data, algPixel_t *data2, int nrows, 
 {
   int i, j, cur;
   for (i = 0; i < nrows; i++)
-    {
+  {
     // Rearrange the data putting the low frequency components at the front
-        // and the high frequency components at the back, transposing the data
+    // and the high frequency components at the back, transposing the data
     // at the same time
-        for (j = 0; j < ncols / 2; j++)
-        {
+    for (j = 0; j < ncols / 2; j++)
+    {
       data2[i * ncols + 2 * j] = data[j * nrows + i];
       data2[i * ncols + 2 * j + 1] = data[(j + ncols / 2) * nrows + i];
-        }
+    }
 
     // Update the even pixels using the odd pixels
-        // to preserve the mean value of the pixels
-        for (j = 2; j < ncols; j += 2)
-        {
-            cur = i * ncols + j;
+    // to preserve the mean value of the pixels
+    for (j = 2; j < ncols; j += 2)
+    {
+        cur = i * ncols + j;
 #ifdef USE_SHIFT
-      data2[cur] -= ((data2[cur - 1] + data2[cur + 1]) >> 2);
+        data2[cur] -= ((data2[cur - 1] + data2[cur + 1]) >> 2);
 #else
-      data2[cur] -= (algPixel_t)(0.25 * (data2[cur - 1] + data2[cur + 1]));
+        data2[cur] -= (algPixel_t)(0.25 * (data2[cur - 1] + data2[cur + 1]));
 #endif
-        }
-        //The first even pixel only has its right neighboring odd pixel
-        cur = i * ncols + 0;
+      }
+      //The first even pixel only has its right neighboring odd pixel
+      cur = i * ncols + 0;
 #ifdef USE_SHIFT
-        data2[cur] -= (data2[cur + 1] >> 1);
+      data2[cur] -= (data2[cur + 1] >> 1);
 #else
       data2[cur] -= (algPixel_t)(0.5 * data2[cur + 1]);
 #endif
 
-        // Predict the odd pixels using linear
-        // interpolation of the even pixels
-        for (j = 1; j < ncols - 1; j += 2)
-        {
-            cur = i * ncols + j;
+      // Predict the odd pixels using linear
+      // interpolation of the even pixels
+      for (j = 1; j < ncols - 1; j += 2)
+      {
+          cur = i * ncols + j;
 #ifdef USE_SHIFT
-            data2[cur] += ((data2[cur - 1] + data2[cur + 1]) >> 1);
+          data2[cur] += ((data2[cur - 1] + data2[cur + 1]) >> 1);
 #else
-      data2[cur] += (algPixel_t)(0.5 * (data2[cur - 1] + data2[cur + 1]));
+          data2[cur] += (algPixel_t)(0.5 * (data2[cur - 1] + data2[cur + 1]));
 #endif
         }
         // The last odd pixel only has its left neighboring even pixel
