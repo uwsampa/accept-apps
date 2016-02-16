@@ -106,7 +106,7 @@ static const char *output_directory = ".";
 
 int main(int argc, char **argv)
 {
-    u16 (*bayer)[WAMI_DEBAYER_IMG_NUM_COLS] = NULL;
+    APPROX u16 *bayer = NULL;
     rgb_pixel (*debayer)[WAMI_DEBAYER_IMG_NUM_COLS-2*PAD] = NULL;
     char *input_directory = NULL;
 #ifdef ENABLE_CORRECTNESS_CHECKING
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 #endif
 
     read_image_file(
-        (char *) bayer,
+        (char *) ENDORSE(bayer),
         input_filename,
         input_directory,
         sizeof(u16) * num_bayer_pixels);

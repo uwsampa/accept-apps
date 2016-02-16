@@ -76,6 +76,6 @@
 
 void wami_debayer(
     rgb_pixel debayered[WAMI_DEBAYER_IMG_NUM_ROWS-2*PAD][WAMI_DEBAYER_IMG_NUM_COLS-2*PAD],
-    u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS]);
+    APPROX u16 * bayer);
 
 #endif

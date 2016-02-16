@@ -120,7 +120,7 @@ APPROX static __attribute__((always_inline)) u16 compute_and_clamp_pixel_fractio
 }
 
 APPROX static __attribute__((always_inline)) u16 interp_G_at_RRR_or_G_at_BBB(
-    u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS],
+    APPROX u16 *bayer,
     APPROX u32 row,
     APPROX u32 col)
 {
@@ -133,23 +133,23 @@ APPROX static __attribute__((always_inline)) u16 interp_G_at_RRR_or_G_at_BBB(
      *  0  0  2  0  0
      *  0  0 -1  0  0]/8
      */
-    APPROX const u16 pos =
-         2 * bayer[row-1][col] +
-         2 * bayer[row][col-1] +
-         4 * bayer[row][col] +
-         2 * bayer[row][col+1] +
-         2 * bayer[row+1][col];
-    APPROX const u16 neg =
-             bayer[row][col+2] +
-             bayer[row-2][col] +
-             bayer[row][col-2] +
-             bayer[row+2][col];
+    APPROX u16 pos =
+         2 * bayer[(row-1)*WAMI_DEBAYER_IMG_NUM_COLS+col] +
+         2 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col-1] +
+         4 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col] +
+         2 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col+1] +
+         2 * bayer[(row+1)*WAMI_DEBAYER_IMG_NUM_COLS+col]; // ACCEPT_PERMIT
+    APPROX u16 neg =
+             bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col+2] +
+             bayer[(row-2)*WAMI_DEBAYER_IMG_NUM_COLS+col] +
+             bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col-2] +
+             bayer[(row+2)*WAMI_DEBAYER_IMG_NUM_COLS+col]; // ACCEPT_PERMIT
 
     return compute_and_clamp_pixel(pos, neg);
 }
 
 APPROX static __attribute__((always_inline)) u16 interp_R_at_GRB_or_B_at_GBR(
-    u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS],
+    APPROX u16 *bayer,
     APPROX u32 row,
     APPROX u32 col)
 {
@@ -160,24 +160,24 @@ APPROX static __attribute__((always_inline)) u16 interp_R_at_GRB_or_B_at_GBR(
      *  0 -1  0 -1  0
      *  0  0 0.5 0  0]/8;
      */
-    APPROX const u16 pos =
-          ((bayer[row-2][col] + bayer[row+2][col]) >> 1) +
-        4 * bayer[row][col-1] +
-        5 * bayer[row][col] +
-        4 * bayer[row][col+1];
-    APPROX const u16 neg =
-            bayer[row-1][col-1] +
-            bayer[row-1][col+1] +
-            bayer[row][col-2] +
-            bayer[row][col+2] +
-            bayer[row+1][col-1] +
-            bayer[row+1][col+1];
+    APPROX u16 pos =
+          ((bayer[(row-2)*WAMI_DEBAYER_IMG_NUM_COLS+col] + bayer[(row+2)*WAMI_DEBAYER_IMG_NUM_COLS+col]) >> 1) +
+        4 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col-1] +
+        5 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col] +
+        4 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col+1]; // ACCEPT_PERMIT
+    APPROX u16 neg =
+            bayer[(row-1)*WAMI_DEBAYER_IMG_NUM_COLS+col-1] +
+            bayer[(row-1)*WAMI_DEBAYER_IMG_NUM_COLS+col+1] +
+            bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col-2] +
+            bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col+2] +
+            bayer[(row+1)*WAMI_DEBAYER_IMG_NUM_COLS+col-1] +
+            bayer[(row+1)*WAMI_DEBAYER_IMG_NUM_COLS+col+1]; // ACCEPT_PERMIT
 
     return compute_and_clamp_pixel(pos, neg);
 }
 
 APPROX static __attribute__((always_inline)) u16 interp_R_at_GBR_or_B_at_GRB(
-    u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS],
+    APPROX u16 *bayer,
     APPROX u32 row,
     APPROX u32 col)
 {
@@ -188,24 +188,24 @@ APPROX static __attribute__((always_inline)) u16 interp_R_at_GBR_or_B_at_GRB(
      *  0 -1  4 -1  0
      *  0  0 -1 0  0]/8;
      */
-    APPROX const u16 pos =
-        4 * bayer[row-1][col] +
-          ((bayer[row][col-2] + bayer[row][col+2]) >> 1) +
-        5 * bayer[row][col] +
-        4 * bayer[row+1][col];
-    APPROX const u16 neg =
-            bayer[row-2][col] +
-            bayer[row-1][col-1] +
-            bayer[row-1][col+1] +
-            bayer[row+1][col-1] +
-            bayer[row+1][col+1] +
-            bayer[row+2][col];
+    APPROX u16 pos =
+        4 * bayer[(row-1)*WAMI_DEBAYER_IMG_NUM_COLS+col] +
+          ((bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col-2] + bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col+2]) >> 1) +
+        5 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col] +
+        4 * bayer[(row+1)*WAMI_DEBAYER_IMG_NUM_COLS+col]; // ACCEPT_PERMIT
+    APPROX u16 neg =
+            bayer[(row-2)*WAMI_DEBAYER_IMG_NUM_COLS+col] +
+            bayer[(row-1)*WAMI_DEBAYER_IMG_NUM_COLS+col-1] +
+            bayer[(row-1)*WAMI_DEBAYER_IMG_NUM_COLS+col+1] +
+            bayer[(row+1)*WAMI_DEBAYER_IMG_NUM_COLS+col-1] +
+            bayer[(row+1)*WAMI_DEBAYER_IMG_NUM_COLS+col+1] +
+            bayer[(row+2)*WAMI_DEBAYER_IMG_NUM_COLS+col]; // ACCEPT_PERMIT
 
     return compute_and_clamp_pixel(pos, neg);
 }
 
 APPROX static __attribute__((always_inline)) u16 interp_R_at_BBB_or_B_at_RRR(
-    u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS],
+    APPROX u16 *bayer,
     APPROX u32 row,
     APPROX u32 col)
 {
@@ -216,24 +216,24 @@ APPROX static __attribute__((always_inline)) u16 interp_R_at_BBB_or_B_at_RRR(
      *  0  2  0  2  0
      *  0  0 -1.5 0  0]/8;
      */
-    APPROX const u16 pos =
-        2 * bayer[row-1][col-1] +
-        2 * bayer[row-1][col+1] +
-        6 * bayer[row][col] +
-        2 * bayer[row+1][col-1] +
-        2 * bayer[row+1][col+1];
-    APPROX const u16 neg =
-       (3 * bayer[row-2][col] +
-        3 * bayer[row][col-2] +
-        3 * bayer[row][col+2] +
-        3 * bayer[row+2][col]);
+    APPROX u16 pos =
+        2 * bayer[(row-1)*WAMI_DEBAYER_IMG_NUM_COLS+col-1] +
+        2 * bayer[(row-1)*WAMI_DEBAYER_IMG_NUM_COLS+col+1] +
+        6 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col] +
+        2 * bayer[(row+1)*WAMI_DEBAYER_IMG_NUM_COLS+col-1] +
+        2 * bayer[(row+1)*WAMI_DEBAYER_IMG_NUM_COLS+col+1]; // ACCEPT_PERMIT
+    APPROX u16 neg =
+       (3 * bayer[(row-2)*WAMI_DEBAYER_IMG_NUM_COLS+col] +
+        3 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col-2] +
+        3 * bayer[(row)*WAMI_DEBAYER_IMG_NUM_COLS+col+2] +
+        3 * bayer[(row+2)*WAMI_DEBAYER_IMG_NUM_COLS+col]); // ACCEPT_PERMIT
 
     return compute_and_clamp_pixel_fractional_neg(pos, neg);
 }
 
 void wami_debayer(
     rgb_pixel debayered[WAMI_DEBAYER_IMG_NUM_ROWS-2*PAD][WAMI_DEBAYER_IMG_NUM_COLS-2*PAD],
-    u16 (* const bayer)[WAMI_DEBAYER_IMG_NUM_COLS])
+    APPROX u16 *bayer)
 {
     APPROX u32 row, col;
 
@@ -249,7 +249,7 @@ void wami_debayer(
     {
         for (col = PAD; ENDORSE(col < WAMI_DEBAYER_IMG_NUM_COLS-PAD); col += 2)
         {
-            debayered[row-PAD][col-PAD].r = bayer[row][col];
+            debayered[row-PAD][col-PAD].r = bayer[row*WAMI_DEBAYER_IMG_NUM_COLS+col];
         }
     }
 
@@ -258,7 +258,7 @@ void wami_debayer(
     {
         for (col = PAD+1; ENDORSE(col < WAMI_DEBAYER_IMG_NUM_COLS-PAD); col += 2)
         {
-            debayered[row-PAD][col-PAD].g = bayer[row][col];
+            debayered[row-PAD][col-PAD].g = bayer[row*WAMI_DEBAYER_IMG_NUM_COLS+col];
         }
     }
 
@@ -267,7 +267,7 @@ void wami_debayer(
     {
         for (col = PAD; ENDORSE(col < WAMI_DEBAYER_IMG_NUM_COLS-PAD); col += 2)
         {
-            debayered[row-PAD][col-PAD].g = bayer[row][col];
+            debayered[row-PAD][col-PAD].g = bayer[row*WAMI_DEBAYER_IMG_NUM_COLS+col];
         }
     }
 
@@ -276,7 +276,7 @@ void wami_debayer(
     {
         for (col = PAD+1; ENDORSE(col < WAMI_DEBAYER_IMG_NUM_COLS-PAD); col += 2)
         {
-            debayered[row-PAD][col-PAD].b = bayer[row][col];
+            debayered[row-PAD][col-PAD].b = bayer[row*WAMI_DEBAYER_IMG_NUM_COLS+col];
         }
     }
 
