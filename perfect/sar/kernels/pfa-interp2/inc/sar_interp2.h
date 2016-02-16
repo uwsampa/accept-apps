@@ -76,7 +76,7 @@ void sar_interp2(
     complex (* resampled)[PFA_NOUT_RANGE],
     complex (* const data)[PFA_NOUT_RANGE],
     const float *window,
-    double (* const input_coords)[N_PULSES],
+    const double *input_coords,
     const double *output_coords);
 
 #endif

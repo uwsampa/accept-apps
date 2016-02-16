@@ -72,8 +72,8 @@
 #include <assert.h>
 
 static int find_nearest_azimuth_coord(
-    double target_coord,
-    const double *input_coords);
+    APPROX double target_coord,
+    APPROX const double *input_coords);
 
 static __attribute__((always_inline)) APPROX float sinc(APPROX float x)
 {
@@ -95,9 +95,10 @@ static __attribute__((always_inline)) APPROX float sinc(APPROX float x)
 void sar_interp2(
     complex (* resampled)[PFA_NOUT_RANGE],
     complex (* const data)[PFA_NOUT_RANGE],
-    const float *window,
-    double (* const input_coords)[N_PULSES],
-    const double *output_coords)
+    APPROX const float *window,
+    // double (* const input_coords)[N_PULSES],
+    APPROX const double *input_coords,
+    APPROX const double *output_coords)
 {
     int p, r, k, pmin, pmax, window_offset;
     complex accum;
@@ -118,16 +119,16 @@ void sar_interp2(
         input_spacing_avg = 0.0f;
         for (p = 0; p < N_PULSES-1; ++p)
         {
-            input_spacing_avg += fabs(input_coords[r][p+1] - input_coords[r][p]);
+            input_spacing_avg += fabs(ENDORSE(input_coords[r*PFA_NOUT_RANGE+p+1] - input_coords[r*PFA_NOUT_RANGE+p]));
         }
         input_spacing_avg /= (N_PULSES-1);
         input_spacing_avg_inv = 1.0f / input_spacing_avg;
-        scale_factor = fabs(output_coords[1] - output_coords[0]) * input_spacing_avg_inv;
+        scale_factor = fabs(ENDORSE(output_coords[1] - output_coords[0])) * input_spacing_avg_inv;
 
         for (p = 0; p < PFA_NOUT_AZIMUTH; ++p)
         {
-            const double out_coord = output_coords[p];
-            int nearest = find_nearest_azimuth_coord(output_coords[p], input_coords[r]);
+            APPROX const double out_coord = output_coords[p];
+            int nearest = find_nearest_azimuth_coord(output_coords[p], &input_coords[r*PFA_NOUT_RANGE]);
             if (nearest < 0)
             {
                 resampled[p][r].re = 0.0f;
@@ -142,8 +143,8 @@ void sar_interp2(
              * out_coord is bounded in [nearest, nearest+1], so we check
              * which of the two input coordinates is closest.
              */
-            if (fabs(out_coord-input_coords[r][nearest+1]) <
-                fabs(out_coord-input_coords[r][nearest]))
+            if (fabs(ENDORSE(out_coord-input_coords[r*PFA_NOUT_RANGE+nearest+1])) <
+                fabs(ENDORSE(out_coord-input_coords[r*PFA_NOUT_RANGE+nearest])))
             {
                 nearest = nearest + 1;
             }
@@ -162,7 +163,7 @@ void sar_interp2(
             accum.re = accum.im = 0.0f;
             for (k = pmin; k <= pmax; ++k)
             {
-                sinc_arg = (out_coord - input_coords[r][k]) * input_spacing_avg_inv;
+                sinc_arg = (out_coord - input_coords[r*PFA_NOUT_RANGE+k]) * input_spacing_avg_inv;
                 sinc_val = sinc(sinc_arg);
                 accum.re += sinc_val * window[window_offset+(k-pmin)] * data[k][r].re;
                 accum.im += sinc_val * window[window_offset+(k-pmin)] * data[k][r].im;
@@ -174,7 +175,7 @@ void sar_interp2(
 }
 
 __attribute__((always_inline)) int find_nearest_azimuth_coord(
-    double target_coord,
+    APPROX double target_coord,
     const double *input_coords)
 {
     int left_ind, right_ind, mid_ind;
@@ -193,14 +194,14 @@ __attribute__((always_inline)) int find_nearest_azimuth_coord(
     right_val = input_coords[right_ind];
     mid_val = input_coords[mid_ind];
 
-    if (target_coord < left_val || target_coord > right_val)
+    if (ENDORSE(target_coord < left_val || target_coord > right_val))
     {
         return -1;
     }
 
     while (right_ind - left_ind > 1)
     {
-        if (target_coord <= mid_val)
+        if (ENDORSE(target_coord <= mid_val))
         {
             right_ind = mid_ind;
             right_val = mid_val;
