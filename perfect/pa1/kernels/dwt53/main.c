@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -76,17 +76,17 @@
   ALL SOURCE CODE PRESENT IN THIS FILE IS UNCLASSIFIED AND IS
   BEING PROVIDED IN SUPPORT OF THE DARPA PERFECT PROGRAM.
 
-  THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY, EXPRESSED, IMPLIED, 
+  THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY, EXPRESSED, IMPLIED,
   OR OTHERWISE INFERRED. USE AND SUITABILITY FOR ANY PARTICULAR
-  APPLICATION IS SOLELY THE RESPONSIBILITY OF THE IMPLEMENTER. 
+  APPLICATION IS SOLELY THE RESPONSIBILITY OF THE IMPLEMENTER.
   NO CLAIM OF SUITABILITY FOR ANY APPLICATION IS MADE.
   USE OF THIS CODE FOR ANY APPLICATION RELEASES THE AUTHOR
   AND THE US GOVT OF ANY AND ALL LIABILITY.
 
   THE POINT OF CONTACT FOR QUESTIONS REGARDING THIS SOFTWARE IS:
 
-  US ARMY RDECOM CERDEC NVESD, RDER-NVS-SI (JOHN HODAPP, 
-  john.hodapp@us.army.mil), 10221 BURBECK RD, FORT BELVOIR, 
+  US ARMY RDECOM CERDEC NVESD, RDER-NVS-SI (JOHN HODAPP,
+  john.hodapp@us.army.mil), 10221 BURBECK RD, FORT BELVOIR,
   VA 22060-5806
 
   THIS HEADER SHALL REMAIN PART OF ALL SOURCE CODE FILES.
@@ -129,7 +129,7 @@
 int main (int argc, char * argv[])
 {
   APPROX int * frame;
-  int * reference;
+  APPROX int * reference;
   int i;
 
   srand (time (NULL));
@@ -176,7 +176,7 @@ int main (int argc, char * argv[])
   accept_roi_end();
   for (i = 0; i < BATCH_SIZE; i++) // ACCEPT_FORBID
   {
-    memcpy (&reference[i * M * N], ENDORSE(&frame[i * M * N]), M * N * sizeof(algPixel_t));
+    memcpy (&reference[i * M * N], &frame[i * M * N], M * N * sizeof(algPixel_t));
     dwt53_inverse(&reference[i * M * N], N, M);
   }
   accept_roi_end();
@@ -191,7 +191,7 @@ int main (int argc, char * argv[])
     #else
       sprintf (buffer, "dwt53_output.%d.mat", i);
     #endif
-    write_array_to_octave (&reference[i * M * N], N, M, buffer, "output_" SIZE);
+    write_array_to_octave (ENDORSE(&reference[i * M * N]), N, M, buffer, "output_" SIZE);
   }
   #ifdef AUTOTUNER
     PRINT_STAT_STRING ("output_file", "out.mat");

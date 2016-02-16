@@ -104,9 +104,9 @@ int
 dwt53_row_transpose (APPROX algPixel_t *data, APPROX algPixel_t *data2, int nrows, int ncols);
 
 int
-dwt53_inverse(algPixel_t *data, int nrows, int ncols);
+dwt53_inverse(APPROX algPixel_t *data, int nrows, int ncols);
 
 int
-dwt53_row_transpose_inverse(algPixel_t *data, algPixel_t *data2, int nrows, int ncols);
+dwt53_row_transpose_inverse(APPROX algPixel_t *data, APPROX algPixel_t *data2, int nrows, int ncols);
 
 #endif /* _TAV_DWT53_ */

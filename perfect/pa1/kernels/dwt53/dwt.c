@@ -187,10 +187,10 @@ dwt53_row_transpose (APPROX algPixel_t *data, APPROX algPixel_t *data2, int nrow
 }
 
 
-int dwt53_inverse(algPixel_t *data, int nrows, int ncols)
+int dwt53_inverse(APPROX algPixel_t *data, int nrows, int ncols)
 {
   int err = 0;
-  algPixel_t *data2 = (algPixel_t *)calloc(nrows * ncols, sizeof(algPixel_t));
+  APPROX algPixel_t *data2 = (algPixel_t *)calloc(nrows * ncols, sizeof(algPixel_t));
   if (!data2)
   {
     perror("Could not allocate temp space for dwt53_inverse op");
@@ -206,7 +206,7 @@ int dwt53_inverse(algPixel_t *data, int nrows, int ncols)
 }
 
 
-int dwt53_row_transpose_inverse(algPixel_t *data, algPixel_t *data2, int nrows, int ncols)
+int dwt53_row_transpose_inverse(APPROX algPixel_t *data, APPROX algPixel_t *data2, int nrows, int ncols)
 {
   int i, j, cur;
   for (i = 0; i < nrows; i++)
