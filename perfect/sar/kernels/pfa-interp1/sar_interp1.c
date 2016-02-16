@@ -99,10 +99,10 @@ static __attribute__((always_inline)) APPROX float sinc(APPROX float x)
 void sar_interp1(
     complex (* resampled)[PFA_NOUT_RANGE],
     complex (* const data)[N_RANGE],
-    const float *window,
-    const double input_coords_start[N_PULSES],
-    const double input_coords_spacing[N_PULSES],
-    const double output_coords[PFA_NOUT_RANGE])
+    const APPROX float *window,
+    const APPROX double input_coords_start[N_PULSES],
+    const APPROX double input_coords_spacing[N_PULSES],
+    const APPROX double output_coords[PFA_NOUT_RANGE])
 {
     int p, r, k, rmin, rmax, window_offset;
     complex accum;
@@ -129,7 +129,7 @@ void sar_interp1(
 
         for (r = 0; r < PFA_NOUT_RANGE; ++r)
         {
-            const double out_coord = output_coords[r];
+            const APPROX double out_coord = output_coords[r];
             int nearest = find_nearest_range_coord(
                 output_coords[r], input_start, input_spacing, input_spacing_inv);
             if (nearest < 0)
