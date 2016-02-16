@@ -73,9 +73,9 @@
 
 void wami_gmm(
     u8 foreground[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS],
-    float mu[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    float sigma[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    float weights[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    u16 (* const frames)[WAMI_GMM_IMG_NUM_COLS]);
-    
+    APPROX float *mu,
+    APPROX float *sigma,
+    APPROX float *weight,
+    APPROX u16 *frame);
+
 #endif

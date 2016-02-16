@@ -104,18 +104,18 @@
 #define WRITE_OUTPUT_TO_DISK
 
 static void read_gmm_input_data(
-    float mu[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    float sigma[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    float weights[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    u16 frames[WAMI_GMM_NUM_FRAMES][WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS],
+    float *mu,
+    float *sigma,
+    float *weights,
+    u16 *frames,
     const char *filename,
     const char *directory);
 
 int main(int argc, char **argv)
 {
-    float (*mu)[WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS] = NULL;
-    float (*sigma)[WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS] = NULL;
-    float (*weights)[WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS] = NULL;
+    APPROX float *mu = NULL;
+    APPROX float *sigma = NULL;
+    APPROX float *weights = NULL;
     u8 (*foreground)[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS] = NULL;
 #ifdef ENABLE_CORRECTNESS_CHECKING
     u8 (*golden_foreground)[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS] = NULL;
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
     u8 (*eroded)[WAMI_GMM_IMG_NUM_COLS] = NULL;
 #endif
     u8 (*morph)[WAMI_GMM_IMG_NUM_COLS] = NULL;
-    u16 (*frames)[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS] = NULL;
+    APPROX u16 *frames = NULL;
     int i;
 
     char *input_directory = NULL;
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
     memset(frames, 0, sizeof(u16) * num_pixels * WAMI_GMM_NUM_FRAMES);
 
     read_gmm_input_data(
-        mu, sigma, weights, frames, input_filename, input_directory);
+        ENDORSE(mu), ENDORSE(sigma), ENDORSE(weights), ENDORSE(frames), input_filename, input_directory);
 
 #ifdef ENABLE_CORRECTNESS_CHECKING
     read_data_file(
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
             mu,
             sigma,
             weights,
-            (u16 (*)[WAMI_GMM_IMG_NUM_COLS]) &frames[i][0][0]);
+            &frames[i*WAMI_GMM_IMG_NUM_ROWS*WAMI_GMM_IMG_NUM_COLS]);
     }
     accept_roi_end();
     PRINT_STAT_DOUBLE("CPU time using func toc - ", toc());
@@ -277,10 +277,10 @@ int main(int argc, char **argv)
 }
 
 static void read_gmm_input_data(
-    float mu[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    float sigma[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    float weights[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    u16 frames[WAMI_GMM_NUM_FRAMES][WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS],
+    float *mu,
+    float *sigma,
+    float *weights,
+    u16 *frames,
     const char *filename,
     const char *directory)
 {
@@ -341,8 +341,7 @@ static void read_gmm_input_data(
                 i, dir_and_filename, width, height, channels, depth);
             exit(EXIT_FAILURE);
         }
-
-        nread = fread(&frames[i][0][0], 1, num_image_bytes, fp);
+        nread = fread(&frames[i*WAMI_GMM_IMG_NUM_ROWS*WAMI_GMM_IMG_NUM_COLS], 1, num_image_bytes, fp);
         if (nread != num_image_bytes)
         {
             fprintf(stderr, "Error: Unable to read input image %d from %s.\n",

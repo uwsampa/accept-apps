@@ -75,6 +75,10 @@
 #include "wami_utils.h"
 #include "wami_gmm.h"
 
+// Row and column coefficients
+#define ROW_C WAMI_GMM_IMG_NUM_COLS*WAMI_GMM_NUM_MODELS
+#define COL_C WAMI_GMM_NUM_MODELS
+
 static const float STDEV_THRESH = 2.5f;
 static const float INIT_STDEV = 80.0f;
 static const float alpha = 0.01f; /* Learning rate */
@@ -84,10 +88,10 @@ static const float BACKGROUND_THRESH = 0.9f;
 
 void wami_gmm(
     u8 foreground[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS],
-    float mu[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    float sigma[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    float weight[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS][WAMI_GMM_NUM_MODELS],
-    u16 (* const frame)[WAMI_GMM_IMG_NUM_COLS])
+    APPROX float *mu,
+    APPROX float *sigma,
+    APPROX float *weight,
+    APPROX u16 *frame)
 {
     const size_t num_pixels = WAMI_GMM_IMG_NUM_ROWS * WAMI_GMM_IMG_NUM_COLS;
     APPROX int row, col, k, num_foreground = 0;
@@ -98,7 +102,7 @@ void wami_gmm(
     {
         for (col = 0; ENDORSE(col < WAMI_GMM_IMG_NUM_COLS); ++col)
         {
-            APPROX const u16 pixel = frame[row][col];
+            APPROX const u16 pixel = frame[row*WAMI_GMM_IMG_NUM_COLS+col];
             APPROX int match = -1;
             APPROX float sum = 0.0f, norm = 0.0f;
             APPROX int sorted_position = 0;
@@ -109,7 +113,7 @@ void wami_gmm(
                  * C89 does not include fabsf(), so using the double-precision
                  * fabs() function will unnecessarily type-convert to double.
                  */
-                if (ENDORSE(fabs(ENDORSE(pixel - mu[row][col][k]))/sigma[row][col][k] < STDEV_THRESH))
+                if (ENDORSE(fabs(ENDORSE(pixel - mu[row*ROW_C+col*COL_C+k]))/sigma[row*ROW_C+col*COL_C+k] < STDEV_THRESH))
                 {
                     match = k;
                     break;
@@ -122,13 +126,13 @@ void wami_gmm(
                 if (ENDORSE(k == match))
                 {
                     /* A model matched, so update its corresponding weight. */
-                    weight[row][col][match] += alpha *    // ACCEPT_PERMIT
-                        (1.0f - weight[row][col][match]);
+                    weight[row*ROW_C+col*COL_C+match] += alpha *
+                        (1.0f - weight[row*ROW_C+col*COL_C+match]);
                 }
                 else
                 {
                     /* Non-matching models have their weights reduced */
-                    weight[row][col][k] *= (1.0f - alpha); // ACCEPT_PERMIT
+                    weight[row*ROW_C+col*COL_C+k] *= (1.0f - alpha);
                 }
             }
 
@@ -142,15 +146,15 @@ void wami_gmm(
                  * although that means that one update above was wasted. That
                  * update could be avoided.
                  */
-                mu[row][col][WAMI_GMM_NUM_MODELS-1] = ENDORSE((float) pixel); // ACCEPT_PERMIT
-                sigma[row][col][WAMI_GMM_NUM_MODELS-1] = INIT_STDEV; // ACCEPT_PERMIT
-                weight[row][col][WAMI_GMM_NUM_MODELS-1] = INIT_WEIGHT; // ACCEPT_PERMIT
+                mu[row*ROW_C+col*COL_C+WAMI_GMM_NUM_MODELS-1] = ENDORSE((float) pixel);
+                sigma[row*ROW_C+col*COL_C+WAMI_GMM_NUM_MODELS-1] = INIT_STDEV;
+                weight[row*ROW_C+col*COL_C+WAMI_GMM_NUM_MODELS-1] = INIT_WEIGHT;
             }
 
             /* Normalize weights */
             for (k = 0; ENDORSE(k < WAMI_GMM_NUM_MODELS); ++k)
             {
-                sum += weight[row][col][k];
+                sum += weight[row*ROW_C+col*COL_C+k];
             }
 
             // removed loop exit
@@ -159,14 +163,14 @@ void wami_gmm(
             norm = 1.0f / sum;
             for (k = 0; ENDORSE(k < WAMI_GMM_NUM_MODELS); ++k)
             {
-                weight[row][col][k] *= ENDORSE(norm); // ACCEPT_PERMIT
+                weight[row*ROW_C+col*COL_C+k] *= ENDORSE(norm);
             }
 
             /* Update mu and sigma for the matched distribution, if any */
             if (ENDORSE(match >= 0))
             {
-                APPROX const float mu_k = mu[row][col][match];
-                APPROX const float sigma_k = sigma[row][col][match];
+                APPROX const float mu_k = mu[row*ROW_C+col*COL_C+match];
+                APPROX const float sigma_k = sigma[row*ROW_C+col*COL_C+match];
                 APPROX const float sigma_k_inv = 1.0f / sigma_k;
                 /*
                  * C89 does not include a single-precision expf() exponential function,
@@ -175,10 +179,10 @@ void wami_gmm(
                  */
                 APPROX const float rho = alpha * (ONE_OVER_SQRT_TWO_PI * sigma_k_inv) *
                     exp( -1.0f * (pixel-mu_k)*(pixel-mu_k) / (2.0f * sigma_k * sigma_k) );
-                mu[row][col][match] = ENDORSE((1.0f - rho) * mu_k + rho * pixel); // ACCEPT_PERMIT
-                sigma[row][col][match] = ENDORSE(sqrt( // ACCEPT_PERMIT
+                mu[row*ROW_C+col*COL_C+match] = ENDORSE((1.0f - rho) * mu_k + rho * pixel);
+                sigma[row*ROW_C+col*COL_C+match] = ENDORSE(sqrt(
                     (1.0f - rho) * sigma_k * sigma_k +
-                    rho * (pixel-mu[row][col][match]) * (pixel-mu[row][col][match])));
+                    rho * (pixel-mu[row*ROW_C+col*COL_C+match]) * (pixel-mu[row*ROW_C+col*COL_C+match])));
                 // removed loop exit
                 // assert(sigma[row][col][match] > 0);
             }
@@ -193,13 +197,13 @@ void wami_gmm(
             if (ENDORSE(match != 0))
             {
                 APPROX const int sort_from = (match >= 0) ? match : WAMI_GMM_NUM_MODELS-1;
-                APPROX const float new_significance = weight[row][col][sort_from] /
-                    sigma[row][col][sort_from];
+                APPROX const float new_significance = weight[row*ROW_C+col*COL_C+sort_from] /
+                    sigma[row*ROW_C+col*COL_C+sort_from];
                 APPROX float other_significance, new_mu, new_sigma, new_weight;
                 for (k = sort_from-1; ENDORSE(k >= 0); --k)
                 {
-                    other_significance = weight[row][col][k] /
-                        sigma[row][col][k];
+                    other_significance = weight[row*ROW_C+col*COL_C+k] /
+                        sigma[row*ROW_C+col*COL_C+k];
                     if (ENDORSE(new_significance <= other_significance))
                     {
                         break;
@@ -221,29 +225,29 @@ void wami_gmm(
                     sorted_position = k + 1;
                 }
 
-                new_mu = mu[row][col][sort_from];
-                new_sigma = sigma[row][col][sort_from];
-                new_weight = weight[row][col][sort_from];
+                new_mu = mu[row*ROW_C+col*COL_C+sort_from];
+                new_sigma = sigma[row*ROW_C+col*COL_C+sort_from];
+                new_weight = weight[row*ROW_C+col*COL_C+sort_from];
                 for (k = sort_from; ENDORSE(k > sorted_position); --k)
                 {
-                    mu[row][col][k] = mu[row][col][k-1]; // ACCEPT_PERMIT
-                    sigma[row][col][k] = sigma[row][col][k-1]; // ACCEPT_PERMIT
-                    weight[row][col][k] = weight[row][col][k-1]; // ACCEPT_PERMIT
+                    mu[row*ROW_C+col*COL_C+k] = mu[row*ROW_C+col*COL_C+k-1];
+                    sigma[row*ROW_C+col*COL_C+k] = sigma[row*ROW_C+col*COL_C+k-1];
+                    weight[row*ROW_C+col*COL_C+k] = weight[row*ROW_C+col*COL_C+k-1];
                 }
-                mu[row][col][sorted_position] = ENDORSE(new_mu); // ACCEPT_PERMIT
-                sigma[row][col][sorted_position] = ENDORSE(new_sigma); // ACCEPT_PERMIT
-                weight[row][col][sorted_position] = ENDORSE(new_weight); // ACCEPT_PERMIT
+                mu[row*ROW_C+col*COL_C+sorted_position] = ENDORSE(new_mu);
+                sigma[row*ROW_C+col*COL_C+sorted_position] = ENDORSE(new_sigma);
+                weight[row*ROW_C+col*COL_C+sorted_position] = ENDORSE(new_weight);
             }
 
             /* Now, we need to determine if this pixel is foreground or background. */
             {
-                APPROX float cumsum = weight[row][col][0];
+                APPROX float cumsum = weight[row*ROW_C+col*COL_C+0];
                 int B = 0;
                 while (ENDORSE(B < WAMI_GMM_NUM_MODELS-1 && cumsum <= BACKGROUND_THRESH))
                 {
-                    cumsum += weight[row][col][++B];
+                    cumsum += weight[row*ROW_C+col*COL_C+(++B)];
                 }
-                foreground[row][col] = ENDORSE(sorted_position > B); // ACCEPT_PERMIT
+                foreground[row][col] = ENDORSE(sorted_position > B);
                 num_foreground += foreground[row][col];
             }
         }
