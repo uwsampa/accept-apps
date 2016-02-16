@@ -94,7 +94,7 @@ APPROX static __attribute__((always_inline)) float *
 bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
 {
   unsigned int i;
-  APPROX unsigned int s, shift;
+  unsigned int s, shift;
   s = sizeof(i) * CHAR_BIT - 1;
   shift = s - bits + 1;
 
