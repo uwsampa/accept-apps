@@ -106,7 +106,7 @@ void stap_compute_covariance_estimate(
             const int first_cell = block*TRAINING_BLOCK_SIZE;
             const int last_cell = (block+1)*TRAINING_BLOCK_SIZE-1;
             int i;
-            APPROX int j;
+            int j;
             // For some reason the stores to j are preventing perforation of
             // some of the loops, even though all are in loop headers.
             // Is it the j = i+1 initializations?
@@ -137,7 +137,7 @@ void stap_compute_covariance_estimate(
             {
                for (j = i+1; ENDORSE(j < N_CHAN*TDOF); ++j)
                 {
-                    const complex x = covariance[dop][block][j][i]; // ACCEPT_PERMIT
+                    const complex x = covariance[dop][block][j][i];
                     covariance[dop][block][i][j].re = x.re;
                     covariance[dop][block][i][j].im = -1.0f * x.im;
                 }

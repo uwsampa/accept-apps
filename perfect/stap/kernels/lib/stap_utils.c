@@ -82,9 +82,9 @@
 
 __attribute__((always_inline)) complex cconj(complex x)
 {
-    complex xconj = x; // ACCEPT_PERMIT
+    complex xconj = x;
     xconj.im *= -1.0f;
-    return xconj; // ACCEPT_PERMIT
+    return xconj;
 }
 
 __attribute__((always_inline)) complex cmult(complex lhs, complex rhs)
@@ -92,7 +92,7 @@ __attribute__((always_inline)) complex cmult(complex lhs, complex rhs)
     complex prod;
     prod.re = lhs.re * rhs.re - lhs.im * rhs.im;
     prod.im = lhs.re * rhs.im + lhs.im * rhs.re;
-    return prod; // ACCEPT_PERMIT
+    return prod;
 }
 
 double calculate_snr(
@@ -154,7 +154,7 @@ __attribute__((always_inline)) void extract_snapshot(
             if (dop < 0) { dop += N_DOP; }
             if (dop >= N_DOP) { dop -= N_DOP; }
 
-            snapshot[chan*TDOF+dof] = datacube[chan][dop][range_cell]; // ACCEPT_PERMIT
+            snapshot[chan*TDOF+dof] = datacube[chan][dop][range_cell];
         }
     }
 }
