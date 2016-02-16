@@ -111,7 +111,7 @@ static void cholesky_factorization(
     complex (* const covariance)[N_BLOCKS][N_CHAN*TDOF][N_CHAN*TDOF])
 {
     int k, dop, block;
-    APPROX int i, j;
+    int i, j;
     complex (* R)[N_BLOCKS][N_CHAN*TDOF][N_CHAN*TDOF] = NULL;
     APPROX float Rkk_inv, Rkk_inv_sqrt;
 
@@ -146,10 +146,10 @@ static void cholesky_factorization(
                 Rkk_inv = 1.0f / R[dop][block][k][k].re;
                 Rkk_inv_sqrt = sqrt(Rkk_inv);
 
-                for (j = k+1; ENDORSE(j < N_CHAN*TDOF); ++j)
+                for (j = k+1; j < N_CHAN*TDOF; ++j)
                 {
                     const complex Rkj_conj = cconj(R[dop][block][k][j]);
-                    for (i = j; ENDORSE(i < N_CHAN*TDOF); ++i)
+                    for (i = j; i < N_CHAN*TDOF; ++i)
                     {
                         const complex Rki_Rkj_conj = cmult(
                             R[dop][block][k][i], Rkj_conj);
@@ -157,7 +157,7 @@ static void cholesky_factorization(
                         R[dop][block][j][i].im -= Rki_Rkj_conj.im * Rkk_inv;
                     }
                 }
-                for (i = k; ENDORSE(i < N_CHAN*TDOF); ++i)
+                for (i = k; i < N_CHAN*TDOF; ++i)
                 {
                     R[dop][block][k][i].re *= Rkk_inv_sqrt;
                     R[dop][block][k][i].im *= Rkk_inv_sqrt;
@@ -171,11 +171,11 @@ static void cholesky_factorization(
              * will not be "diluted" by trivially correct zeros in the
              * lower diagonal region).
              */
-            for (i = 0; ENDORSE(i < N_CHAN*TDOF); ++i)
+            for (i = 0; i < N_CHAN*TDOF; ++i)
             {
-                for (j = i+1; ENDORSE(j < N_CHAN*TDOF); ++j)
+                for (j = i+1; j < N_CHAN*TDOF; ++j)
                 {
-                    const complex x = R[dop][block][i][j]; // ACCEPT_PERMIT
+                    const complex x = R[dop][block][i][j];
                     R[dop][block][j][i].re = x.re;
                     R[dop][block][j][i].im = -1.0f * x.im;
                 }
@@ -200,8 +200,7 @@ static void forward_and_back_substitution(
     complex (* R)[N_BLOCKS][N_CHAN*TDOF][N_CHAN*TDOF] = cholesky_factors;
     complex (* x)[N_BLOCKS][N_STEERING][N_CHAN*TDOF] = adaptive_weights;
     complex (* b)[N_CHAN*TDOF] = steering_vectors;
-    int dop, block, sv, i, k;
-    APPROX int j;
+    int dop, block, sv, i, j, k;
     complex accum;
 
     for (dop = 0; dop < N_DOP; ++dop)
