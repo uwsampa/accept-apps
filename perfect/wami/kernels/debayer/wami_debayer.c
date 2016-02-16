@@ -160,12 +160,12 @@ APPROX static __attribute__((always_inline)) u16 interp_R_at_GRB_or_B_at_GBR(
      *  0 -1  0 -1  0
      *  0  0 0.5 0  0]/8;
      */
-    const u16 pos =
+    APPROX const u16 pos =
           ((bayer[row-2][col] + bayer[row+2][col]) >> 1) +
         4 * bayer[row][col-1] +
         5 * bayer[row][col] +
         4 * bayer[row][col+1];
-    const u16 neg =
+    APPROX const u16 neg =
             bayer[row-1][col-1] +
             bayer[row-1][col+1] +
             bayer[row][col-2] +
@@ -188,12 +188,12 @@ APPROX static __attribute__((always_inline)) u16 interp_R_at_GBR_or_B_at_GRB(
      *  0 -1  4 -1  0
      *  0  0 -1 0  0]/8;
      */
-    const u16 pos =
+    APPROX const u16 pos =
         4 * bayer[row-1][col] +
           ((bayer[row][col-2] + bayer[row][col+2]) >> 1) +
         5 * bayer[row][col] +
         4 * bayer[row+1][col];
-    const u16 neg =
+    APPROX const u16 neg =
             bayer[row-2][col] +
             bayer[row-1][col-1] +
             bayer[row-1][col+1] +
@@ -216,13 +216,13 @@ APPROX static __attribute__((always_inline)) u16 interp_R_at_BBB_or_B_at_RRR(
      *  0  2  0  2  0
      *  0  0 -1.5 0  0]/8;
      */
-    const u16 pos =
+    APPROX const u16 pos =
         2 * bayer[row-1][col-1] +
         2 * bayer[row-1][col+1] +
         6 * bayer[row][col] +
         2 * bayer[row+1][col-1] +
         2 * bayer[row+1][col+1];
-    const u16 neg =
+    APPROX const u16 neg =
        (3 * bayer[row-2][col] +
         3 * bayer[row][col-2] +
         3 * bayer[row][col+2] +
