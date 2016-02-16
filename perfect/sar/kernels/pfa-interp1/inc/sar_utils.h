@@ -83,7 +83,7 @@ typedef struct _complex { APPROX float re, im; } complex;
 
 typedef struct _position
 {
-    double x, y, z;
+    APPROX double x, y, z;
 } position;
 
 /* complex conjugate */

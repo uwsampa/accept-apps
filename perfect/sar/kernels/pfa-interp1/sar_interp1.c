@@ -74,14 +74,14 @@
 #include "sar_interp1.h"
 
 static __attribute__((always_inline)) int find_nearest_range_coord(
-    double target_coord,
-    double input_coord_start,
-    double input_coord_spacing,
-    double input_coord_spacing_inv);
+    APPROX double target_coord,
+    APPROX double input_coord_start,
+    APPROX double input_coord_spacing,
+    APPROX double input_coord_spacing_inv);
 
-static __attribute__((always_inline)) float sinc(float x)
+static __attribute__((always_inline)) APPROX float sinc(APPROX float x)
 {
-    if (x == 0)
+    if (ENDORSE(x == 0))
     {
         return 1.0f;
     }
@@ -91,8 +91,8 @@ static __attribute__((always_inline)) float sinc(float x)
          * C89 does not support sinf(), but we would use it here if it
          * were supported.
          */
-        const float arg = M_PI * x;
-        return (float) sin(arg) / arg;
+        const APPROX float arg = M_PI * x;
+        return (float) sin(ENDORSE(arg)) / arg;
     }
 }
 
@@ -106,9 +106,9 @@ void sar_interp1(
 {
     int p, r, k, rmin, rmax, window_offset;
     complex accum;
-    float sinc_arg, sinc_val, win_val;
-    double input_spacing, input_start, input_spacing_inv;
-    float scale_factor;
+    APPROX float sinc_arg, sinc_val, win_val;
+    APPROX double input_spacing, input_start, input_spacing_inv;
+    APPROX float scale_factor;
 
     const int PFA_N_TSINC_POINTS_PER_SIDE = (T_PFA - 1)/2;
 
@@ -125,7 +125,7 @@ void sar_interp1(
         input_spacing = input_coords_spacing[p];
         input_spacing_inv = 1.0 / input_spacing;
 
-        scale_factor = fabs(output_coords[1] - output_coords[0]) * input_spacing_inv;
+        scale_factor = fabs(ENDORSE(output_coords[1] - output_coords[0])) * input_spacing_inv;
 
         for (r = 0; r < PFA_NOUT_RANGE; ++r)
         {
@@ -146,8 +146,8 @@ void sar_interp1(
              * out_coord is bounded in [nearest, nearest+1], so we check
              * which of the two input coordinates is closest.
              */
-            if (fabs(out_coord - (input_start + (nearest+1)*input_spacing)) <
-            fabs(out_coord - (input_start + (nearest)*input_spacing)))
+            if (fabs(ENDORSE(out_coord - (input_start + (nearest+1)*input_spacing))) <
+            fabs(ENDORSE(out_coord - (input_start + (nearest)*input_spacing))))
             {
                 nearest = nearest + 1;
             }
@@ -184,23 +184,23 @@ void sar_interp1(
  * naive in the sense that it does not work for all inputs and
  * does not honor rounding modes specified by, e.g., fesetround().
  */
-static __attribute__((always_inline)) int naive_round(double x)
+static __attribute__((always_inline)) int naive_round(APPROX double x)
 {
-    return (int) (x + 0.5);
+    return (int) ENDORSE(x + 0.5);
 }
 
 __attribute__((always_inline)) int find_nearest_range_coord(
-    double target_coord,
-    double input_coord_start,
-    double input_coord_spacing,
-    double input_coord_spacing_inv)
+    APPROX double target_coord,
+    APPROX double input_coord_start,
+    APPROX double input_coord_spacing,
+    APPROX double input_coord_spacing_inv)
 {
     /*
      * Test for the target coordinate being out-of-bounds with respect to
      * the input coordinates.
      */
-    if (target_coord < input_coord_start ||
-        target_coord >= (input_coord_start + (N_RANGE-1)*input_coord_spacing))
+    if (ENDORSE(target_coord < input_coord_start ||
+        target_coord >= (input_coord_start + (N_RANGE-1)*input_coord_spacing)))
     {
         return -1;
     }
