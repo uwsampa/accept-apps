@@ -132,7 +132,7 @@ int
 dwt53_row_transpose (APPROX algPixel_t *data, APPROX algPixel_t *data2, int nrows, int ncols)
 {
   int i, j;
-  APPROX int cur;
+  int cur;
 
   for (i = 0; i < nrows; i++)
   {
