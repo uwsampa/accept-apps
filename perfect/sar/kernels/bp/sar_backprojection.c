@@ -75,47 +75,47 @@ void sar_backprojection(
     complex image[BP_NPIX_Y][BP_NPIX_X],
     complex (* const data)[N_RANGE_UPSAMPLED],
     const position platpos[N_PULSES],
-    double ku,
-    double R0,
-    double dR,
-    double dxdy,
-    double z0)
+    APPROX double ku,
+    APPROX double R0,
+    APPROX double dR,
+    APPROX double dxdy,
+    APPROX double z0)
 {
     int p, ix, iy;
-    const double dR_inv = 1.0/dR;
+    APPROX const double dR_inv = 1.0/dR;
 
     #pragma omp parallel for private(iy, ix, p)
     for (iy = 0; iy < BP_NPIX_Y; ++iy)
     {
-        const double py = (-BP_NPIX_Y/2.0 + 0.5 + iy) * dxdy;
+        APPROX const double py = (-BP_NPIX_Y/2.0 + 0.5 + iy) * dxdy;
         for (ix = 0; ix < BP_NPIX_X; ++ix)
         {
             complex accum;
-            const double px = (-BP_NPIX_X/2.0 + 0.5 + ix) * dxdy;
+            APPROX const double px = (-BP_NPIX_X/2.0 + 0.5 + ix) * dxdy;
             accum.re = accum.im = 0.0f;
             for (p = 0; p < N_PULSES; ++p)
             {
                 /* calculate the range R from the platform to this pixel */
-                const double xdiff = platpos[p].x - px;
-                const double ydiff = platpos[p].y - py;
-                const double zdiff = platpos[p].z - z0;
-                const double R = sqrt(
+                APPROX const double xdiff = platpos[p].x - px;
+                APPROX const double ydiff = platpos[p].y - py;
+                APPROX const double zdiff = platpos[p].z - z0;
+                APPROX const double R = sqrt(
                     xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
                 /* convert to a range bin index */
-                const double bin = (R-R0)*dR_inv;
-                if (bin >= 0 && bin <= N_RANGE_UPSAMPLED-2)
+                APPROX const double bin = (R-R0)*dR_inv;
+                if (ENDORSE(bin >= 0 && bin <= N_RANGE_UPSAMPLED-2))
                 {
                     complex sample, matched_filter, prod;
                     /* interpolation range is [bin_floor, bin_floor+1] */
-                    const int bin_floor = (int) bin;
+                    const int bin_floor = (int) ENDORSE(bin);
                     /* interpolation weight */
-                    const float w = (float) (bin - (double) bin_floor);
+                    APPROX const float w = (float) (bin - (double) bin_floor);
                     /* linearly interpolate to obtain a sample at bin */
                     sample.re = (1.0f-w)*data[p][bin_floor].re + w*data[p][bin_floor+1].re;
                     sample.im = (1.0f-w)*data[p][bin_floor].im + w*data[p][bin_floor+1].im;
                     /* compute the complex exponential for the matched filter */
                     matched_filter.re = cos(2.0 * ku * R);
-                    matched_filter.im = sin(2.0 * ku * R);
+                    matched_filter.im = sin(ENDORSE(2.0 * ku * R));
                     /* scale the interpolated sample by the matched filter */
                     prod = cmult(sample, matched_filter); // ACCEPT_PERMIT
                     /* accumulate this pulse's contribution into the pixel */
