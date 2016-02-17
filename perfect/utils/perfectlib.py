@@ -279,40 +279,45 @@ def computePSNR(golden, relaxed, mode):
     else:
         return SNR_MIN
 
-def display(fn, o_fn=None):
-    if fn.endswith('.mat'):
-        img_array = load_mat(fn)
-        plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
-    elif fn.endswith('.bin'):
-        try:
-            img_array = load_img_bin(fn, normalize=True)
-            print img_array[0]
-            channels = 1 if len(img_array.shape)==2 else img_array.shape[2]
-            if channels==1:
-                plt.imshow(img_array, cmap = cm.Greys_r)
-            else:
-                plt.imshow(img_array)
-        except:
-            img_array = load_wami_img(fn)
+def display(fn, o_fn=None, fft=None):
+    if fft:
+        data = np.array(load_fft(fn))[0]
+        plt.plot(data)
+    else:
+        if fn.endswith('.mat'):
+            img_array = load_mat(fn)
+            plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
+        elif fn.endswith('.bin'):
+            try:
+                img_array = load_img_bin(fn, normalize=True)
+                print img_array[0]
+                channels = 1 if len(img_array.shape)==2 else img_array.shape[2]
+                if channels==1:
+                    plt.imshow(img_array, cmap = cm.Greys_r)
+                else:
+                    plt.imshow(img_array)
+            except:
+                img_array = load_wami_img(fn)
 
-            ax1 = plt.subplot(231)
-            ax2 = plt.subplot(232)
-            ax3 = plt.subplot(233)
-            ax4 = plt.subplot(234)
-            ax5 = plt.subplot(235)
+                ax1 = plt.subplot(231)
+                ax2 = plt.subplot(232)
+                ax3 = plt.subplot(233)
+                ax4 = plt.subplot(234)
+                ax5 = plt.subplot(235)
 
-            ax1.imshow(img_array[0], interpolation='nearest', cmap = cm.brg)
-            ax2.imshow(img_array[1], interpolation='nearest', cmap = cm.brg)
-            ax3.imshow(img_array[2], interpolation='nearest', cmap = cm.brg)
-            ax4.imshow(img_array[3], interpolation='nearest', cmap = cm.brg)
-            ax5.imshow(img_array[4], interpolation='nearest', cmap = cm.brg)
-            ax1.axis('off')
-            ax2.axis('off')
-            ax3.axis('off')
-            ax4.axis('off')
-            ax5.axis('off')
+                ax1.imshow(img_array[0], interpolation='nearest', cmap = cm.brg)
+                ax2.imshow(img_array[1], interpolation='nearest', cmap = cm.brg)
+                ax3.imshow(img_array[2], interpolation='nearest', cmap = cm.brg)
+                ax4.imshow(img_array[3], interpolation='nearest', cmap = cm.brg)
+                ax5.imshow(img_array[4], interpolation='nearest', cmap = cm.brg)
+                ax1.axis('off')
+                ax2.axis('off')
+                ax3.axis('off')
+                ax4.axis('off')
+                ax5.axis('off')
 
-    plt.axis('off')
+        plt.axis('off')
+
     if o_fn:
         plt.savefig(o_fn, bbox_inches='tight')
     else:
@@ -330,9 +335,12 @@ def cli():
         '-o', dest='out', action='store', type=str, required=False,
         default=None, help='path to output file'
     )
+    parser.add_argument(
+        '-fft', dest='fft', action='store_true', required=False,
+        default=False, help='display a 1-d FFT signal')
     args = parser.parse_args()
 
-    display(args.path, args.out)
+    display(args.path, args.out, fft=args.fft)
 
 if __name__ == '__main__':
     cli()
