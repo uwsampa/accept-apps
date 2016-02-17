@@ -20,20 +20,41 @@ stringMap = {
     "sar": "SAR",
     "wami": "WAMI",
     "required": "Required",
-    "2d-conv": "2d-conv",
+    "2d-convolution": "2d-conv",
     "dwt53": "dwt53",
-    "hist-equal": "hist-equal",
+    "histogram-equal": "hist-equal",
     "innter-product": "innter-product",
     "outer-product": "outer-product",
     "system-solve": "system-solve",
     "pfa-interp1": "pfa-interp1",
     "pfa-interp2": "pfa-interp2",
     "debayer": "debayer",
-    "gmm": "gmm",
+    "change-detection": "gmm",
     "lucas-kanade": "lucas-kanade",
     "fft-1d": "fft-1d",
     "fft-2d": "fft-2d"
 }
+
+def simpleVisualization():
+    db_range = [10, 20, 40, 60, 80, 100, 120]
+    bit_savings = [93,83,75,70,67,63,55]
+    memory_savings = [0.875772361,0.8392786702,0.7892933058,0.7601111821,0.731401315,0.694701043,0.616858759]
+    exe_savings = [0.9177500644,0.8120697499,0.7024116917,0.6426573056,0.6032877772,0.5664314329,0.4863831787]
+    fp_savings = [0.9178708019,0.8075741525,0.6245486779,0.5532578172,0.5128679032,0.4753819891,0.389494369]
+    int_savings = [0.92031818130,.8936952261,0.8472632767,0.8233294395,0.8116106895,0.8037981895,0.8015685351]
+
+    width = 0.20
+    ind = np.array(range(len(db_range)))
+
+    plt.plot(db_range, memory_savings, label="Average Memory Bit-Savings", linestyle='-')
+    plt.plot(db_range, fp_savings, label="Average FP Ops Bit-Savings", linestyle='--')
+    plt.plot(db_range, int_savings, label="Average Int Ops Bit-Savings", linestyle=':')
+
+    # add some text for labels, title and axes ticks
+    plt.xlabel('Quality (SNR - higher is better)')
+    plt.ylabel('Compute Bit Savings (higher is better)')
+    plt.legend()
+    plt.show()
 
 def findBest(csv, idx, threshold):
     best = 0
@@ -123,16 +144,16 @@ def plotResults(results, size=5, smoothing=False):
 
     # Individualized legends
     axarr[0][0].legend(loc="upper right", ncol=2, fontsize=11)
-    axarr[1][0].legend(loc="upper right", ncol=1, fontsize=11)
+    axarr[1][0].legend(loc="lower center", ncol=3, fontsize=11)
     axarr[2][0].legend(loc="lower left", ncol=3, fontsize=11)
-    axarr[3][0].legend(loc="lower left", ncol=3, fontsize=11)
-    axarr[4][0].legend(loc="upper right", ncol=1, fontsize=11)
+    # axarr[3][0].legend(loc="upper right", ncol=1, fontsize=11)
+    axarr[4][0].legend(loc="lower center", ncol=2, fontsize=11)
 
     axarr[0][1].legend(loc="lower center", ncol=3, fontsize=11)
     axarr[1][1].legend(loc="lower center", ncol=3, fontsize=11)
-    axarr[2][1].legend(loc="upper right", ncol=1, fontsize=11)
-    axarr[3][1].legend(loc="lower left", ncol=3, fontsize=11)
-    axarr[4][1].legend(loc="upper right", ncol=1, fontsize=11)
+    axarr[2][1].legend(loc="lower center", ncol=3, fontsize=11)
+    axarr[3][1].legend(loc="lower left", ncol=1, fontsize=11)
+    axarr[4][1].legend(loc="lower center", ncol=2, fontsize=11)
 
     # Labels
     axarr[size-1][0].set_xlabel('Quality (SNR - higher is better)')
@@ -160,6 +181,8 @@ def process(fn, pareto=True, plotMe=False, arithRatio=None, memoryRatio=None):
     errorIdx = csv[0].index("error")
     memIdx = csv[0].index("mem")
     exeIdx = csv[0].index("exe")
+    fpIdx = csv[0].index("exe_fp")
+    intIdx = csv[0].index("exe_int")
 
     if pareto:
         # Select the pareto-optimal points
@@ -175,12 +198,15 @@ def process(fn, pareto=True, plotMe=False, arithRatio=None, memoryRatio=None):
 
     # Record error at 20dB, 40dB, 60dB
     thresholds = []
-    for dB in [0]+range(20,121,20):
+    for dB in [10]+range(20,121,20):
         thresholds.append([dB, findBest(csv[1:], errorIdx, dB)])
 
     # Report bit reduction savings at each threshold
+    # csvLine = []
     for t in thresholds:
         print "Best error above {}dB: {}\t{}\t{}".format(t[0], t[1][errorIdx], t[1][memIdx], t[1][exeIdx])
+    #     csvLine.append(t[1][intIdx])
+    # print "\t".join(csvLine)
 
     if plotMe:
         y1 = [float(x[memIdx]) for x in csv[1:]]
@@ -231,4 +257,5 @@ def cli():
 
 if __name__ == '__main__':
     cli()
+
 
