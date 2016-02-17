@@ -214,7 +214,7 @@ static void forward_and_back_substitution(
                 {
                     APPROX const float Rii_inv = 1.0f / R[dop][block][i][i].re;
                     accum.re = accum.im = 0.0f;
-                    for (j = 0; ENDORSE(j < i); ++j)
+                    for (j = 0; j < i; ++j)
                     {
                         /*
                          * Use the conjugate of the upper triangular entries
@@ -230,11 +230,11 @@ static void forward_and_back_substitution(
                 }
 
                 /* And now apply back substitution */
-                for (j = N_CHAN*TDOF-1; ENDORSE(j >= 0); --j)
+                for (j = N_CHAN*TDOF-1; j >= 0; --j)
                 {
                     APPROX const float Rjj_inv = 1.0f / R[dop][block][j][j].re;
                     accum.re = accum.im = 0.0f;
-                    for (k = ENDORSE(j+1); k < N_CHAN*TDOF; ++k)
+                    for (k = j+1; k < N_CHAN*TDOF; ++k)
                     {
                         const complex prod = cmult(
                             R[dop][block][j][k], x[dop][block][sv][k]);
