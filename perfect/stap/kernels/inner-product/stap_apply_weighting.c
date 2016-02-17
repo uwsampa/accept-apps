@@ -134,7 +134,7 @@ void stap_apply_weighting(
                      * Apply the adaptive weights to the snapshot vector via
                      * a complex inner product.
                      */
-                    prod = complex_inner_product(             // ACCEPT_PERMIT
+                    prod = complex_inner_product(
                         &adaptive_weights[dop][block][sv][0],
                         snapshot,
                         TDOF * N_CHAN);
@@ -164,7 +164,7 @@ __attribute__((always_inline)) static complex complex_inner_product(
         accum.re += prod.re;
         accum.im += prod.im;
     }
-    return accum; // ACCEPT_PERMIT
+    return accum;
 }
 
 __attribute__((always_inline)) static void compute_gamma_weights(
