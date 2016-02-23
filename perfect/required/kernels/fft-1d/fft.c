@@ -91,7 +91,7 @@ static APPROX __attribute__((always_inline)) float *
 bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
 {
   unsigned int i;
-  unsigned int s, shift;
+  APPROX unsigned int s, shift;
   s = sizeof(i) * CHAR_BIT - 1;
   shift = s - bits + 1;
 
@@ -124,6 +124,9 @@ fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
 
   transform_length = 1;
 
+  APPROX approx_pi = M_PI;
+  APPROX approx_tl = (float) transform_length;
+
   /* bit reversal */
   bit_reverse (data, N, logn);
 
@@ -132,10 +135,10 @@ fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
     w_real = 1.0;
     w_imag = 0.0;
 
-    theta = 1.0 * sign * M_PI / (float) transform_length;
+    theta = 1.0 * sign * approx_pi / approx_tl;
 
-    s = sin (ENDORSE(theta));
-    t = sin (ENDORSE(0.5 * theta));
+    s = sin (theta);
+    t = sin (0.5 * theta);
     s2 = 2.0 * t * t;
 
     for (a = 0; a < transform_length; a++) {
