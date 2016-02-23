@@ -99,7 +99,6 @@
 #endif
 
 // Let's turn this off for now since it does not tolerate approximate outputs
-#define ENABLE_CORRECTNESS_CHECKING
 #define WRITE_OUTPUT_TO_DISK
 
 static const char *output_directory = ".";
