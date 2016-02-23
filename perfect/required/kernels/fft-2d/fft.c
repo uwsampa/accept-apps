@@ -127,6 +127,10 @@ fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
 
   transform_length = 1;
 
+  APPROX float approx_pi = M_PI;
+  APPROX float approx_05 = 0.5;
+  APPROX float approx_tl = (float) transform_length;
+
   /* bit reversal */
   bit_reverse (data, N, logn);
 
@@ -135,10 +139,10 @@ fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
     w_real = 1.0;
     w_imag = 0.0;
 
-    theta = 1.0 * sign * M_PI / (float) transform_length;
+    theta = 1.0 * sign * approx_pi / approx_tl;
 
-    s = sin (ENDORSE(theta));
-    t = sin (ENDORSE(0.5 * theta));
+    s = sin (theta);
+    t = sin (approx_05 * theta);
     s2 = 2.0 * t * t;
 
     for (a = 0; a < transform_length; a++) {
@@ -168,6 +172,7 @@ fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
     }
 
     transform_length *= 2;
+    approx_tl = transform_length;
   }
 
   return 0;
