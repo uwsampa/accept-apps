@@ -114,8 +114,8 @@ interpolate (APPROX float Tlocalx, APPROX float Tlocaly, int nCols, int nRows, A
 
   /* Determine the coordinates of the pixel(s) which will become the current pixel */
   /* (using linear interpolation) */
-  fTlocalx = floor(ENDORSE(Tlocalx));
-  fTlocaly = floor(ENDORSE(Tlocaly));
+  fTlocalx = floor(Tlocalx);
+  fTlocaly = floor(Tlocaly);
   xBas0 = ENDORSE((int) fTlocalx);
   yBas0 = ENDORSE((int) fTlocaly);
   xBas1 = xBas0 + 1;
