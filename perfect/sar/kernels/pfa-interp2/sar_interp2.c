@@ -71,7 +71,7 @@
 #include <math.h>
 #include <assert.h>
 
-static int find_nearest_azimuth_coord(
+static APPROX int find_nearest_azimuth_coord(
     APPROX double target_coord,
     APPROX const double *input_coords);
 
@@ -88,7 +88,7 @@ static __attribute__((always_inline)) APPROX float sinc(APPROX float x)
          * were supported.
          */
         APPROX const float arg = M_PI * x;
-        return (float) sin(ENDORSE(arg)) / arg;
+        return (float) sin(arg) / arg;
     }
 }
 
@@ -119,17 +119,18 @@ void sar_interp2(
         input_spacing_avg = 0.0f;
         for (p = 0; p < N_PULSES-1; ++p)
         {
-            input_spacing_avg += fabs(ENDORSE(input_coords[r*PFA_NOUT_RANGE+p+1] - input_coords[r*PFA_NOUT_RANGE+p]));
+            APPROX const double fabsArg = input_coords[r*PFA_NOUT_RANGE+p+1] - input_coords[r*PFA_NOUT_RANGE+p];
+            input_spacing_avg += fabs(fabsArg);
         }
         input_spacing_avg /= (N_PULSES-1);
         input_spacing_avg_inv = 1.0f / input_spacing_avg;
-        scale_factor = fabs(ENDORSE(output_coords[1] - output_coords[0])) * input_spacing_avg_inv;
+        scale_factor = fabs(output_coords[1]-output_coords[0]) * input_spacing_avg_inv;
 
         for (p = 0; p < PFA_NOUT_AZIMUTH; ++p)
         {
             APPROX const double out_coord = output_coords[p];
-            int nearest = find_nearest_azimuth_coord(output_coords[p], &input_coords[r*PFA_NOUT_RANGE]);
-            if (nearest < 0)
+            APPROX int nearest = find_nearest_azimuth_coord(output_coords[p], &input_coords[r*PFA_NOUT_RANGE]);
+            if (ENDORSE(nearest) < 0)
             {
                 resampled[p][r].re = 0.0f;
                 resampled[p][r].im = 0.0f;
@@ -137,27 +138,28 @@ void sar_interp2(
             }
 
             /* find_nearest_azimuth_coord should never return a value >= N_PULSES */
-            //assert(nearest < N_PULSES); // ACCEPT_PERMIT
+            assert(nearest < N_PULSES); // ACCEPT_PERMIT
 
             /*
              * out_coord is bounded in [nearest, nearest+1], so we check
              * which of the two input coordinates is closest.
              */
-            if (fabs(ENDORSE(out_coord-input_coords[r*PFA_NOUT_RANGE+nearest+1])) <
-                fabs(ENDORSE(out_coord-input_coords[r*PFA_NOUT_RANGE+nearest])))
+            APPROX const double fabsArg3 = out_coord-input_coords[r*PFA_NOUT_RANGE+nearest+1];
+            APPROX const double fabsArg4 = out_coord-input_coords[r*PFA_NOUT_RANGE+nearest];
+            if (ENDORSE(fabs(fabsArg3) < fabs(fabsArg4)))
             {
                 nearest = nearest + 1;
             }
 
-            pmin = nearest - PFA_N_TSINC_POINTS_PER_SIDE;
+            pmin = ENDORSE(nearest) - PFA_N_TSINC_POINTS_PER_SIDE;
             if (pmin < 0) { pmin = 0; }
-            pmax = nearest + PFA_N_TSINC_POINTS_PER_SIDE;
+            pmax = ENDORSE(nearest) + PFA_N_TSINC_POINTS_PER_SIDE;
             if (pmax >= N_PULSES) { pmax = N_PULSES-1; }
 
             window_offset = 0;
-            if (nearest - PFA_N_TSINC_POINTS_PER_SIDE < 0)
+            if (ENDORSE(nearest) - PFA_N_TSINC_POINTS_PER_SIDE < 0)
             {
-                window_offset = PFA_N_TSINC_POINTS_PER_SIDE - nearest;
+                window_offset = PFA_N_TSINC_POINTS_PER_SIDE - ENDORSE(nearest);
             }
 
             accum.re = accum.im = 0.0f;
@@ -174,12 +176,12 @@ void sar_interp2(
     }
 }
 
-__attribute__((always_inline)) int find_nearest_azimuth_coord(
+__attribute__((always_inline)) APPROX int find_nearest_azimuth_coord(
     APPROX double target_coord,
-    const double *input_coords)
+    APPROX const double *input_coords)
 {
     int left_ind, right_ind, mid_ind;
-    double left_val, right_val, mid_val;
+    APPROX double left_val, right_val, mid_val;
 
     /*
      * We assume for simplicity that the input coordinates are
@@ -212,6 +214,11 @@ __attribute__((always_inline)) int find_nearest_azimuth_coord(
             left_val = mid_val;
         }
         mid_ind = (left_ind+right_ind)/2;
+        // The load from input_coords will be precise
+        // since the subsequent use of mid_val is for
+        // a condiftional jump. It'd be great if we could
+        // force ACCEPT to annotate the load as appoximate
+        // just to save memory bandwidth here.
         mid_val = input_coords[mid_ind];
     }
 
