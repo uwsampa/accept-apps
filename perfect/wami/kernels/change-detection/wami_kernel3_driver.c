@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     APPROX float *mu = NULL;
     APPROX float *sigma = NULL;
     APPROX float *weights = NULL;
-    u8 (*foreground)[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS] = NULL;
+    APPROX u8 *foreground = NULL;
 #ifdef ENABLE_CORRECTNESS_CHECKING
     u8 (*golden_foreground)[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS] = NULL;
     u8 (*golden_eroded)[WAMI_GMM_IMG_NUM_COLS] = NULL;
@@ -176,10 +176,12 @@ int main(int argc, char **argv)
     printf("\nStarting WAMI kernel 3 (Gaussian Mixture Model / Change Detection).\n\n");
     tic();
     accept_roi_begin();
+
     for (i = 0; i < WAMI_GMM_NUM_FRAMES; ++i)
     {
+        APPROX u8 *fg = &foreground[i*num_pixels];
         wami_gmm(
-            (u8 (*)[WAMI_GMM_IMG_NUM_COLS]) &foreground[i][0][0],
+            fg,
             mu,
             sigma,
             weights,
@@ -198,7 +200,7 @@ int main(int argc, char **argv)
             double misclassification_rate = 0;
 
             wami_morpho_erode(
-                eroded, (u8 (*)[WAMI_GMM_IMG_NUM_COLS]) &foreground[i][0][0]);
+                eroded, (u8 (*)[WAMI_GMM_IMG_NUM_COLS]) &foreground[i*num_pixels]);
             wami_morpho_erode(
                 golden_eroded, (u8 (*)[WAMI_GMM_IMG_NUM_COLS]) &golden_foreground[i][0][0]);
 
@@ -255,7 +257,7 @@ int main(int argc, char **argv)
     {
         FILE *fp = fopen(output_filename, "wb");
         assert(fp != NULL);
-        assert(fwrite(foreground, sizeof(u8), num_pixels * WAMI_GMM_NUM_FRAMES, fp) ==
+        assert(fwrite(ENDORSE(foreground), sizeof(u8), num_pixels * WAMI_GMM_NUM_FRAMES, fp) ==
             num_pixels * WAMI_GMM_NUM_FRAMES);
         fclose(fp);
     }

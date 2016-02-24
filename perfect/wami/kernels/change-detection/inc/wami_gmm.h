@@ -72,7 +72,7 @@
 #include "wami_params.h"
 
 void wami_gmm(
-    u8 foreground[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS],
+    APPROX u8 *foreground,
     APPROX float *mu,
     APPROX float *sigma,
     APPROX float *weight,

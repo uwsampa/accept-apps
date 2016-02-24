@@ -79,15 +79,15 @@
 #define ROW_C WAMI_GMM_IMG_NUM_COLS*WAMI_GMM_NUM_MODELS
 #define COL_C WAMI_GMM_NUM_MODELS
 
-static const float STDEV_THRESH = 2.5f;
-static const float INIT_STDEV = 80.0f;
-static const float alpha = 0.01f; /* Learning rate */
-static const float INIT_WEIGHT = 0.01f;
-static const float BACKGROUND_THRESH = 0.9f;
+static const APPROX float STDEV_THRESH = 2.5f;
+static const APPROX float INIT_STDEV = 80.0f;
+static const APPROX float alpha = 0.01f; /* Learning rate */
+static const APPROX float INIT_WEIGHT = 0.01f;
+static const APPROX float BACKGROUND_THRESH = 0.9f;
 #define ONE_OVER_SQRT_TWO_PI (1.0f / sqrt(2.0f * M_PI))
 
 void wami_gmm(
-    u8 foreground[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS],
+    APPROX u8 *foreground,
     APPROX float *mu,
     APPROX float *sigma,
     APPROX float *weight,
@@ -102,7 +102,7 @@ void wami_gmm(
     {
         for (col = 0; ENDORSE(col < WAMI_GMM_IMG_NUM_COLS); ++col)
         {
-            APPROX const u16 pixel = frame[row*WAMI_GMM_IMG_NUM_COLS+col];
+            APPROX u16 pixel = frame[row*WAMI_GMM_IMG_NUM_COLS+col];
             APPROX int match = -1;
             APPROX float sum = 0.0f, norm = 0.0f;
             APPROX int sorted_position = 0;
@@ -113,7 +113,8 @@ void wami_gmm(
                  * C89 does not include fabsf(), so using the double-precision
                  * fabs() function will unnecessarily type-convert to double.
                  */
-                if (ENDORSE(fabs(ENDORSE(pixel - mu[row*ROW_C+col*COL_C+k]))/sigma[row*ROW_C+col*COL_C+k] < STDEV_THRESH))
+                const APPROX float fabsArg = pixel - mu[row*ROW_C+col*COL_C+k];
+                if (ENDORSE(fabsf(fabsArg)/sigma[row*ROW_C+col*COL_C+k] < STDEV_THRESH))
                 {
                     match = k;
                     break;
@@ -146,7 +147,7 @@ void wami_gmm(
                  * although that means that one update above was wasted. That
                  * update could be avoided.
                  */
-                mu[row*ROW_C+col*COL_C+WAMI_GMM_NUM_MODELS-1] = ENDORSE((float) pixel);
+                mu[row*ROW_C+col*COL_C+WAMI_GMM_NUM_MODELS-1] = (float) pixel;
                 sigma[row*ROW_C+col*COL_C+WAMI_GMM_NUM_MODELS-1] = INIT_STDEV;
                 weight[row*ROW_C+col*COL_C+WAMI_GMM_NUM_MODELS-1] = INIT_WEIGHT;
             }
@@ -177,12 +178,13 @@ void wami_gmm(
                  * so we instead use the double-precision variant exp(). Same for sqrt()
                  * below.
                  */
-                APPROX const float rho = alpha * (ONE_OVER_SQRT_TWO_PI * sigma_k_inv) *
-                    exp( -1.0f * (pixel-mu_k)*(pixel-mu_k) / (2.0f * sigma_k * sigma_k) );
-                mu[row*ROW_C+col*COL_C+match] = ENDORSE((1.0f - rho) * mu_k + rho * pixel);
-                sigma[row*ROW_C+col*COL_C+match] = ENDORSE(sqrt(
-                    (1.0f - rho) * sigma_k * sigma_k +
-                    rho * (pixel-mu[row*ROW_C+col*COL_C+match]) * (pixel-mu[row*ROW_C+col*COL_C+match])));
+                // Precompute input arguments
+                APPROX const float expArg = -1.0f * (pixel-mu_k)*(pixel-mu_k) / (2.0f * sigma_k * sigma_k);
+                APPROX const float rho = alpha * (ONE_OVER_SQRT_TWO_PI * sigma_k_inv) * exp(expArg);
+                mu[row*ROW_C+col*COL_C+match] = (1.0f - rho) * mu_k + rho * pixel;
+                APPROX const float sqrtArg = (1.0f - rho) * sigma_k * sigma_k +
+                    rho * (pixel-mu[row*ROW_C+col*COL_C+match]) * (pixel-mu[row*ROW_C+col*COL_C+match]);
+                sigma[row*ROW_C+col*COL_C+match] = sqrtf(sqrtArg);
                 // removed loop exit
                 // assert(sigma[row][col][match] > 0);
             }
@@ -234,9 +236,9 @@ void wami_gmm(
                     sigma[row*ROW_C+col*COL_C+k] = sigma[row*ROW_C+col*COL_C+k-1];
                     weight[row*ROW_C+col*COL_C+k] = weight[row*ROW_C+col*COL_C+k-1];
                 }
-                mu[row*ROW_C+col*COL_C+sorted_position] = ENDORSE(new_mu);
-                sigma[row*ROW_C+col*COL_C+sorted_position] = ENDORSE(new_sigma);
-                weight[row*ROW_C+col*COL_C+sorted_position] = ENDORSE(new_weight);
+                mu[row*ROW_C+col*COL_C+sorted_position] = new_mu;
+                sigma[row*ROW_C+col*COL_C+sorted_position] = new_sigma;
+                weight[row*ROW_C+col*COL_C+sorted_position] = new_weight;
             }
 
             /* Now, we need to determine if this pixel is foreground or background. */
@@ -247,8 +249,8 @@ void wami_gmm(
                 {
                     cumsum += weight[row*ROW_C+col*COL_C+(++B)];
                 }
-                foreground[row][col] = ENDORSE(sorted_position > B);
-                num_foreground += foreground[row][col];
+                foreground[row*WAMI_GMM_IMG_NUM_ROWS+col] = ENDORSE(sorted_position > B);
+                num_foreground += foreground[row*WAMI_GMM_IMG_NUM_ROWS+col];
             }
         }
     }
