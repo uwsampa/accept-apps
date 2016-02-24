@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -87,11 +87,13 @@ void sar_backprojection(
     #pragma omp parallel for private(iy, ix, p)
     for (iy = 0; iy < BP_NPIX_Y; ++iy)
     {
-        APPROX const double py = (-BP_NPIX_Y/2.0 + 0.5 + iy) * dxdy;
+        APPROX const double iy_double = iy;
+        APPROX const double py = (-BP_NPIX_Y/2.0 + 0.5 + iy_double) * dxdy;
         for (ix = 0; ix < BP_NPIX_X; ++ix)
         {
             complex accum;
-            APPROX const double px = (-BP_NPIX_X/2.0 + 0.5 + ix) * dxdy;
+            APPROX const double ix_double = ix;
+            APPROX const double px = (-BP_NPIX_X/2.0 + 0.5 + ix_double) * dxdy;
             accum.re = accum.im = 0.0f;
             for (p = 0; p < N_PULSES; ++p)
             {
@@ -99,8 +101,8 @@ void sar_backprojection(
                 APPROX const double xdiff = platpos[p].x - px;
                 APPROX const double ydiff = platpos[p].y - py;
                 APPROX const double zdiff = platpos[p].z - z0;
-                APPROX const double R = sqrt(
-                    xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
+                APPROX const double sqrtArg = xdiff*xdiff + ydiff*ydiff + zdiff*zdiff;
+                APPROX const double R = sqrt(sqrtArg);
                 /* convert to a range bin index */
                 APPROX const double bin = (R-R0)*dR_inv;
                 if (ENDORSE(bin >= 0 && bin <= N_RANGE_UPSAMPLED-2))
@@ -114,16 +116,18 @@ void sar_backprojection(
                     sample.re = (1.0f-w)*data[p][bin_floor].re + w*data[p][bin_floor+1].re;
                     sample.im = (1.0f-w)*data[p][bin_floor].im + w*data[p][bin_floor+1].im;
                     /* compute the complex exponential for the matched filter */
-                    matched_filter.re = cos(2.0 * ku * R);
-                    matched_filter.im = sin(ENDORSE(2.0 * ku * R));
+                    APPROX const double trigArg = 2.0 * ku * R;
+                    matched_filter.re = cos(trigArg);
+                    matched_filter.im = sin(trigArg);
                     /* scale the interpolated sample by the matched filter */
-                    prod = cmult(sample, matched_filter); // ACCEPT_PERMIT
+                    prod = cmult(sample, matched_filter);
                     /* accumulate this pulse's contribution into the pixel */
                     accum.re += prod.re;
                     accum.im += prod.im;
                 }
             }
-            image[iy][ix] = accum; // ACCEPT_PERMIT
+            image[iy][ix].re = accum.re;
+            image[iy][ix].im = accum.im;
         }
     }
 }

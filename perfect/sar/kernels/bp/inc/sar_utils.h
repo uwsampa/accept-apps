@@ -79,11 +79,11 @@
 
 #define SPEED_OF_LIGHT (3.0e8)
 
-typedef struct _complex { APPROX float re, im; } complex;
+typedef struct _complex { APPROX float re; APPROX float im; } complex;
 
 typedef struct _position
 {
-    double x, y, z;
+    APPROX double x, y, z;
 } position;
 
 /* complex conjugate */
