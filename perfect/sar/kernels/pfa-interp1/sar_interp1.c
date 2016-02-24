@@ -73,7 +73,7 @@
 
 #include "sar_interp1.h"
 
-static __attribute__((always_inline)) int find_nearest_range_coord(
+static __attribute__((always_inline)) APPROX int find_nearest_range_coord(
     APPROX double target_coord,
     APPROX double input_coord_start,
     APPROX double input_coord_spacing,
@@ -92,7 +92,7 @@ static __attribute__((always_inline)) APPROX float sinc(APPROX float x)
          * were supported.
          */
         const APPROX float arg = M_PI * x;
-        return (float) sin(ENDORSE(arg)) / arg;
+        return (float) sin(arg) / arg;
     }
 }
 
@@ -125,14 +125,14 @@ void sar_interp1(
         input_spacing = input_coords_spacing[p];
         input_spacing_inv = 1.0 / input_spacing;
 
-        scale_factor = fabs(ENDORSE(output_coords[1] - output_coords[0])) * input_spacing_inv;
+        scale_factor = fabs(output_coords[1] - output_coords[0]) * input_spacing_inv;
 
         for (r = 0; r < PFA_NOUT_RANGE; ++r)
         {
             const APPROX double out_coord = output_coords[r];
-            int nearest = find_nearest_range_coord(
+            APPROX int nearest = find_nearest_range_coord(
                 output_coords[r], input_start, input_spacing, input_spacing_inv);
-            if (nearest < 0)
+            if (ENDORSE(nearest < 0))
             {
                 resampled[p][r].re = 0.0f;
                 resampled[p][r].im = 0.0f;
@@ -140,27 +140,26 @@ void sar_interp1(
             }
 
             /* find_nearest_range_coord should never return a value >= N_RANGE */
-            // assert(nearest < N_RANGE); // ACCEPT_PERMIT
+            assert(nearest < N_RANGE); // ACCEPT_PERMIT
 
             /*
              * out_coord is bounded in [nearest, nearest+1], so we check
              * which of the two input coordinates is closest.
              */
-            if (fabs(ENDORSE(out_coord - (input_start + (nearest+1)*input_spacing))) <
-            fabs(ENDORSE(out_coord - (input_start + (nearest)*input_spacing))))
+            if (ENDORSE(fabsf(out_coord - (input_start + (nearest)*input_spacing)) < fabsf(out_coord - (input_start + (nearest)*input_spacing))))
             {
                 nearest = nearest + 1;
             }
 
-            rmin = nearest - PFA_N_TSINC_POINTS_PER_SIDE;
+            rmin = ENDORSE(nearest) - PFA_N_TSINC_POINTS_PER_SIDE;
             if (rmin < 0) { rmin = 0; }
-            rmax = nearest + PFA_N_TSINC_POINTS_PER_SIDE;
+            rmax = ENDORSE(nearest) + PFA_N_TSINC_POINTS_PER_SIDE;
             if (rmax >= N_RANGE) { rmax = N_RANGE-1; }
 
             window_offset = 0;
-            if (nearest - PFA_N_TSINC_POINTS_PER_SIDE < 0)
+            if (ENDORSE(nearest) - PFA_N_TSINC_POINTS_PER_SIDE < 0)
             {
-                window_offset = PFA_N_TSINC_POINTS_PER_SIDE - nearest;
+                window_offset = PFA_N_TSINC_POINTS_PER_SIDE - ENDORSE(nearest);
             }
 
             accum.re = accum.im = 0.0f;
@@ -189,7 +188,7 @@ static __attribute__((always_inline)) int naive_round(APPROX double x)
     return (int) ENDORSE(x + 0.5);
 }
 
-__attribute__((always_inline)) int find_nearest_range_coord(
+__attribute__((always_inline)) APPROX int find_nearest_range_coord(
     APPROX double target_coord,
     APPROX double input_coord_start,
     APPROX double input_coord_spacing,
