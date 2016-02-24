@@ -146,7 +146,9 @@ void sar_interp1(
              * out_coord is bounded in [nearest, nearest+1], so we check
              * which of the two input coordinates is closest.
              */
-            if (ENDORSE(fabsf(out_coord - (input_start + (nearest)*input_spacing)) < fabsf(out_coord - (input_start + (nearest)*input_spacing))))
+            APPROX float fabsArg1 = out_coord - (input_start + (nearest+1)*input_spacing);
+            APPROX float fabsArg2 = out_coord - (input_start + (nearest)*input_spacing);
+            if (ENDORSE(fabsf(fabsArg1) < fabsf(fabsArg2)))
             {
                 nearest = nearest + 1;
             }
