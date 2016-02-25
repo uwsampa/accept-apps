@@ -149,7 +149,8 @@ int main (int argc, char * argv[])
 
   for (i = 0; i < nFilterRowsFD * nFilterColsFD; i++) // ACCEPT_FORBID
   {
-    FD[i] /= (1024.0);
+    const APPROX fltPixel_t tmp = 1/(1024.0);
+    FD[i] *= tmp;
   }
 
   srand (time (NULL));

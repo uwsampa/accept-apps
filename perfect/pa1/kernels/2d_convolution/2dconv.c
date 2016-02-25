@@ -101,7 +101,7 @@
 #include "2d_convolution.h"
 
 int
-conv2d (APPROX algPixel_t *in, APPROX algPixel_t *out, int nRows, int nCols, APPROX fltPixel_t *filter, float normFactor, int nFilterRows, int nFilterCols)
+conv2d (APPROX algPixel_t *in, APPROX algPixel_t *out, int nRows, int nCols, APPROX fltPixel_t *filter, APPROX float normFactor, int nFilterRows, int nFilterCols)
 {
   APPROX float sum = 0.0;
   int m = 0, n = 0;
@@ -148,7 +148,7 @@ conv2d (APPROX algPixel_t *in, APPROX algPixel_t *out, int nRows, int nCols, APP
         }
         m++;
       }
-      out[(row - rowBegIndex) * nCols + (col - colBegIndex)] = (algPixel_t) (sum / normFactor);
+      out[(row - rowBegIndex) * nCols + (col - colBegIndex)] = (sum / normFactor);
     }
   }
 
