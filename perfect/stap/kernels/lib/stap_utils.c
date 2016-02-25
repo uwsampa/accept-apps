@@ -154,7 +154,8 @@ __attribute__((always_inline)) void extract_snapshot(
             if (dop < 0) { dop += N_DOP; }
             if (dop >= N_DOP) { dop -= N_DOP; }
 
-            snapshot[chan*TDOF+dof] = datacube[chan][dop][range_cell];
+            snapshot[chan*TDOF+dof].re = datacube[chan][dop][range_cell].re;
+            snapshot[chan*TDOF+dof].im = datacube[chan][dop][range_cell].im;
         }
     }
 }
