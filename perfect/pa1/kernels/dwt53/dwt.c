@@ -100,6 +100,8 @@ THIS HEADER SHALL REMAIN PART OF ALL SOURCE CODE FILES.
 #include "xmalloc.h"
 #include "dwt53.h"
 
+#define USE_SHIFT
+
 
 int
 dwt53 (APPROX algPixel_t *data, int nrows, int ncols)
