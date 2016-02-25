@@ -22,27 +22,27 @@
  *    publish, distribute, sublicense, and/or sell copies of the
  *    Software, and may permit others to do so, subject to the following
  *    conditions:
- * 
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimers.
- * 
+ *
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in
  *      the documentation and/or other materials provided with the
  *      distribution.
- * 
+ *
  *    * Other than as used herein, neither the name Battelle Memorial
  *      Institute nor Battelle may be used in any form whatsoever without
  *      the express written consent of Battelle.
- * 
+ *
  *      Other than as used herein, neither the name Georgia Tech Research
  *      Corporation nor GTRC may not be used in any form whatsoever
  *      without the express written consent of GTRC.
- * 
+ *
  *    * Redistributions of the software in any form, and publications
  *      based on work performed using the software should include the
  *      following citation as a reference:
- * 
+ *
  *      Kevin Barker, Thomas Benson, Dan Campbell, David Ediger, Roberto
  *      Gioiosa, Adolfy Hoisie, Darren Kerbyson, Joseph Manzano, Andres
  *      Marquez, Leon Song, Nathan R. Tallent, and Antonino Tumeo.
@@ -140,19 +140,19 @@ static void cholesky_factorization(
                  * Hermitian positive definite matrices are assumed, but
                  * for safety we check that the diagonal is always positive.
                  */
-                //assert(R[dop][block][k][k].re > 0);
+                assert(R[dop][block][k][k].re > 0);
 
                 /* Diagonal entries are real-valued. */
                 Rkk_inv = 1.0f / R[dop][block][k][k].re;
-                Rkk_inv_sqrt = sqrt(Rkk_inv);
+                Rkk_inv_sqrt = sqrtf(Rkk_inv);
 
                 for (j = k+1; j < N_CHAN*TDOF; ++j)
                 {
-                    const complex Rkj_conj = cconj(R[dop][block][k][j]);
                     for (i = j; i < N_CHAN*TDOF; ++i)
                     {
-                        const complex Rki_Rkj_conj = cmult(
-                            R[dop][block][k][i], Rkj_conj);
+                        complex Rki_Rkj_conj;
+                        Rki_Rkj_conj.re = R[dop][block][k][i].re * R[dop][block][k][j].re + R[dop][block][k][i].im * R[dop][block][k][j].im;
+                        Rki_Rkj_conj.im = 0 - R[dop][block][k][i].re * R[dop][block][k][j].im + R[dop][block][k][i].im * R[dop][block][k][j].re;
                         R[dop][block][j][i].re -= Rki_Rkj_conj.re * Rkk_inv;
                         R[dop][block][j][i].im -= Rki_Rkj_conj.im * Rkk_inv;
                     }
@@ -175,9 +175,8 @@ static void cholesky_factorization(
             {
                 for (j = i+1; j < N_CHAN*TDOF; ++j)
                 {
-                    const complex x = R[dop][block][i][j];
-                    R[dop][block][j][i].re = x.re;
-                    R[dop][block][j][i].im = -1.0f * x.im;
+                    R[dop][block][j][i].re = R[dop][block][i][j].re;
+                    R[dop][block][j][i].im = -1.0f * R[dop][block][i][j].im;
                 }
             }
         }
@@ -220,10 +219,8 @@ static void forward_and_back_substitution(
                          * Use the conjugate of the upper triangular entries
                          * of R as the lower triangular entries.
                          */
-                        const complex prod = cmult(
-                            cconj(R[dop][block][j][i]), x[dop][block][sv][j]);
-                        accum.re += prod.re;
-                        accum.im += prod.im;
+                        accum.re += R[dop][block][j][i].re * x[dop][block][sv][j].re + R[dop][block][j][i].im * x[dop][block][sv][j].im;
+                        accum.im += R[dop][block][j][i].re * x[dop][block][sv][j].im - R[dop][block][j][i].im * x[dop][block][sv][j].re;
                     }
                     x[dop][block][sv][i].re = (b[sv][i].re - accum.re) * Rii_inv;
                     x[dop][block][sv][i].im = (b[sv][i].im - accum.im) * Rii_inv;
@@ -236,10 +233,8 @@ static void forward_and_back_substitution(
                     accum.re = accum.im = 0.0f;
                     for (k = j+1; k < N_CHAN*TDOF; ++k)
                     {
-                        const complex prod = cmult(
-                            R[dop][block][j][k], x[dop][block][sv][k]);
-                        accum.re += prod.re;
-                        accum.im += prod.im;
+                        accum.re += R[dop][block][j][k].re * x[dop][block][sv][k].re - R[dop][block][j][k].im * x[dop][block][sv][k].im;
+                        accum.im += R[dop][block][j][k].re * x[dop][block][sv][k].im + R[dop][block][j][k].im * x[dop][block][sv][k].re;
                     }
                     x[dop][block][sv][j].re =
                         (x[dop][block][sv][j].re - accum.re) * Rjj_inv;
