@@ -159,10 +159,8 @@ __attribute__((always_inline)) static complex complex_inner_product(
     accum.re = accum.im = 0.0f;
     for (i = 0; i < length; ++i)
     {
-        const complex prod = cmult(
-            cconj(lhs[i]), rhs[i]);
-        accum.re += prod.re;
-        accum.im += prod.im;
+        accum.re += lhs[i].re * rhs[i].re + lhs[i].im * rhs[i].im;
+        accum.im += lhs[i].re * rhs[i].im - lhs[i].im * rhs[i].re;
     }
     return accum;
 }
@@ -182,11 +180,8 @@ __attribute__((always_inline)) static void compute_gamma_weights(
         accum.re = accum.im = 0.0f;
         for (i = 0; i < N_CHAN*TDOF; ++i)
         {
-            const complex prod = cmult(
-                cconj(adaptive_weights[dop_index][range_block][sv][i]),
-                steering_vectors[sv][i]);
-            accum.re += prod.re;
-            accum.im += prod.im;
+            accum.re += adaptive_weights[dop_index][range_block][sv][i].re * steering_vectors[sv][i].re + adaptive_weights[dop_index][range_block][sv][i].im * steering_vectors[sv][i].im;
+            accum.im += adaptive_weights[dop_index][range_block][sv][i].re * steering_vectors[sv][i].im - adaptive_weights[dop_index][range_block][sv][i].im * steering_vectors[sv][i].re;
         }
 
         /*
@@ -197,10 +192,11 @@ __attribute__((always_inline)) static void compute_gamma_weights(
          * normalization scalar and thus we take the inverse of
          * the computed inner product, w*v.
          */
-        gamma[sv] = sqrt(accum.re*accum.re + accum.im*accum.im);
-        if (ENDORSE(gamma[sv] > 0))
+        APPROX const float sqrtArg = accum.re*accum.re + accum.im*accum.im;
+        APPROX const float gammaVal = sqrtf(sqrtArg);
+        if (ENDORSE(gammaVal > 0))
         {
-            gamma[sv] = 1.0f / gamma[sv];
+            gamma[sv] = 1.0f / gammaVal;
         }
         else
         {
