@@ -124,11 +124,13 @@ hist (APPROX algPixel_t *streamA, APPROX int *h, int nRows, int nCols, int nBpp)
     if (ENDORSE(streamA[i] >= nBins))
     {
       //fprintf(stderr, "File %s, Line %d, Range Error in hist() -- using max val ---", __FILE__, __LINE__);
-      h[nBins-1]++;
+      h[nBins-1] += 1;
     }
     else
     {
-      h[(int)streamA[i]]++;
+      // Note: using ++ causes the add to not
+      // be flagged as an approximate instruction!
+      h[(int)streamA[i]] += 1;
     }
   }
 
