@@ -8,5 +8,5 @@ endif
 
 CLEANMETOO := $(TARGET).orig.ll *.bc inject_config.txt random_input.mat fft_output.mat out.mat *.out *.log *.pyc
 
-ACCEPT_DIR ?= ../../accept
+ACCEPT_DIR ?= ~/Codes/GitHub/accept
 include $(ACCEPT_DIR)/accept.mk
