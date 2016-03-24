@@ -77,7 +77,7 @@
 #if INPUT_SIZE == INPUT_SIZE_SMALL
 #define LOGN (8)
 #ifdef AUTOTUNER
-  #define FILENAME "orig.mat"
+   #define FILENAME "orig.mat"
 #else
   #define FILENAME "input_small.mat"
 #endif
@@ -99,8 +99,20 @@
 
 int main (int argc, char * argv[])
 {
-  APPROX float * a;
+  
+    
+  #ifdef FIXED_POINT_LENGTH
+    int * a;
+  #else
+    APPROX float * a;
+  #endif
   unsigned int i;
+
+  #ifdef FIXED_POINT_LENGTH
+    printf("********************\n");
+    printf("Hello!\n");
+    printf("********************\n");
+  #endif
 
   srand (time (NULL));
 
@@ -108,7 +120,11 @@ int main (int argc, char * argv[])
   PRINT_STAT_STRING ("kernel", "fft-1d");
   PRINT_STAT_INT ("length", N);
 
-  a = malloc (2 * N * sizeof(float));
+  #ifdef FIXED_POINT_LENGTH
+    a = malloc (2 * N * sizeof(int));
+  #else
+    a = malloc (2 * N * sizeof(float));
+  #endif
 
   if (!a) {
     fprintf(stderr, "ERROR: Allocation failed.\n");
@@ -118,7 +134,11 @@ int main (int argc, char * argv[])
   /* random initialization */
   #ifdef AUTOTUNER
     tic ();
-    read_array_from_octave (ENDORSE(a), N*2, FILENAME);
+    #ifdef FIXED_POINT_LENGTH
+        read_array_from_octave (a, N*2, FILENAME);
+    #else
+        read_array_from_octave (ENDORSE(a), N*2, FILENAME);
+    #endif
     PRINT_STAT_DOUBLE ("time_load_data", toc ());
   #else
     tic ();
@@ -129,10 +149,15 @@ int main (int argc, char * argv[])
     PRINT_STAT_DOUBLE ("time_generate_random_data", toc ());
 
     /* Write the generated input file to disk */
-    write_array_to_octave (ENDORSE(a), N, "random_input.mat", "input");
+    #ifdef FIXED_POINT_LENGTH
+        write_array_to_octave (a, N, "random_input.mat", "input");
+    #else
+        write_array_to_octave (ENDORSE(a), N, "random_input.mat", "input");
+    #endif
 
     PRINT_STAT_STRING ("input_file", "random_input.mat");
   #endif
+
 
   /* Perform the FFT */
   tic ();
@@ -143,7 +168,11 @@ int main (int argc, char * argv[])
 
   /* Write the results out to disk */
   #ifdef AUTOTUNER
-    write_array_to_octave (ENDORSE(a), N, "out.mat", "output");
+    #ifdef FIXED_POINT_LENGTH
+        write_array_to_octave (a, N, "out.mat", "output");
+    #else
+        write_array_to_octave (ENDORSE(a), N, "out.mat", "output");
+    #endif  
     PRINT_STAT_STRING ("output_file", "out.mat");
   #else
     write_array_to_octave (ENDORSE(a), N, "fft_output.mat", "output");

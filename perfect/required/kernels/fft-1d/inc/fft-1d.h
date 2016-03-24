@@ -75,8 +75,14 @@
 #include <limits.h>
 #include <enerc.h>
 
+#ifdef FIXED_POINT_LENGTH
+int write_array_to_octave (int * data, unsigned int len, char * filename, char * name);
+int read_array_from_octave (int * data, unsigned int len, char * filename);
+int fft (int * data, unsigned int N, unsigned int logn, int sign);
+#else
 int write_array_to_octave (float * data, unsigned int len, char * filename, char * name);
 int read_array_from_octave (float * data, unsigned int len, char * filename);
 int fft (APPROX float * data, unsigned int N, unsigned int logn, int sign);
+#endif
 
 #endif /* _TAV_1D_FFT_ */

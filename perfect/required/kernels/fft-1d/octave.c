@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef FIXED_POINT_LENGTH
+int write_array_to_octave (int * data, unsigned int len, char * filename, char * name)
+#else
 int write_array_to_octave (float * data, unsigned int len, char * filename, char * name)
+#endif
 {
   FILE *fp = fopen(filename, "w");
   int i;
@@ -13,7 +17,12 @@ int write_array_to_octave (float * data, unsigned int len, char * filename, char
   fprintf(fp, "# columns: %d\n", len);
 
   for (i = 0; i < len; i++) {
-    fprintf(fp, " (%.15g, %.15g)", data[2*i], data[2*i+1]);
+    #ifdef FIXED_POINT_LENGTH
+        //fprintf(fp, " (%.15g, %.15g)", ((float)(data[2*i]))/(pow(2,FIXED_POINT_LENGTH)), ((float)(data[2*i+1]))/(pow(2,FIXED_POINT_LENGTH));
+        fprintf(fp, " (%.15g, %.15g)", ((float)(data[2*i]))/(1<<FIXED_POINT_LENGTH), ((float)(data[2*i+1]))/(1<<FIXED_POINT_LENGTH));
+    #else
+        fprintf(fp, " (%.15g, %.15g)", data[2*i], data[2*i+1]);
+    #endif    
   }
   fprintf(fp, "\n");
 
@@ -22,7 +31,11 @@ int write_array_to_octave (float * data, unsigned int len, char * filename, char
   return 0;
 }
 
-int read_array_from_octave (float * data, unsigned int len, char * filename)
+#ifdef FIXED_POINT_LENGTH
+    int read_array_from_octave (int * data, unsigned int len, char * filename)
+#else
+    int read_array_from_octave (float * data, unsigned int len, char * filename)
+#endif
 {
   FILE *fp = fopen(filename, "r");
   int i;
@@ -41,11 +54,19 @@ int read_array_from_octave (float * data, unsigned int len, char * filename)
   }
 
   for (i = 0; i < len/2; i++) {
+
     float x1, x2;
     char c1, c2, c3;
     fscanf(fp, "%c %f %c %f %c", &c1, &x1, &c2, &x2, &c3);
-    data[i*2 + 0] = x1;
-    data[i*2 + 1] = x2;
+
+    #ifdef FIXED_POINT_LENGTH
+        data[i*2 + 0] = (int)((x1*(1<<FIXED_POINT_LENGTH))+0.5); //assuming inputs are in [0, 1]
+        data[i*2 + 1] = (int)((x2*(1<<FIXED_POINT_LENGTH))+0.5);
+        //printf("read int data: %d, %d, %d\n", data[i*2 + 0], data[i*2 + 1], 1<<FIXED_POINT_LENGTH); //debugging
+    #else
+        data[i*2 + 0] = x1;
+        data[i*2 + 1] = x2;
+    #endif    
     fscanf(fp, "\n");
   }
 
