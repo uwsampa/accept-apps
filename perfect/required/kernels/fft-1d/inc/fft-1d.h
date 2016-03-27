@@ -76,9 +76,9 @@
 #include <enerc.h>
 
 #ifdef FIXED_POINT_LENGTH
-int write_array_to_octave (int * data, unsigned int len, char * filename, char * name);
-int read_array_from_octave (int * data, unsigned int len, char * filename);
-int fft (int * data, unsigned int N, unsigned int logn, int sign);
+int write_array_to_octave (long long int * data, unsigned int len, char * filename, char * name, int output_shift);
+int read_array_from_octave (long long int * data, unsigned int len, char * filename);
+int fft (long long int * data, unsigned int N, unsigned int logn, int sign);
 #else
 int write_array_to_octave (float * data, unsigned int len, char * filename, char * name);
 int read_array_from_octave (float * data, unsigned int len, char * filename);

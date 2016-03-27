@@ -100,19 +100,14 @@
 int main (int argc, char * argv[])
 {
   
-    
+
   #ifdef FIXED_POINT_LENGTH
-    int * a;
+    long long int * a;
   #else
     APPROX float * a;
   #endif
   unsigned int i;
 
-  #ifdef FIXED_POINT_LENGTH
-    printf("********************\n");
-    printf("Hello!\n");
-    printf("********************\n");
-  #endif
 
   srand (time (NULL));
 
@@ -121,7 +116,7 @@ int main (int argc, char * argv[])
   PRINT_STAT_INT ("length", N);
 
   #ifdef FIXED_POINT_LENGTH
-    a = malloc (2 * N * sizeof(int));
+    a = malloc (2 * N * sizeof(long long int));
   #else
     a = malloc (2 * N * sizeof(float));
   #endif
@@ -150,7 +145,8 @@ int main (int argc, char * argv[])
 
     /* Write the generated input file to disk */
     #ifdef FIXED_POINT_LENGTH
-        write_array_to_octave (a, N, "random_input.mat", "input");
+        int output_shift = 2 * LOGN;
+        write_array_to_octave (a, N, "random_input.mat", "input", output_shift);
     #else
         write_array_to_octave (ENDORSE(a), N, "random_input.mat", "input");
     #endif
@@ -169,7 +165,8 @@ int main (int argc, char * argv[])
   /* Write the results out to disk */
   #ifdef AUTOTUNER
     #ifdef FIXED_POINT_LENGTH
-        write_array_to_octave (a, N, "out.mat", "output");
+        int output_shift =  2 * LOGN;
+        write_array_to_octave (a, N, "out.mat", "output", output_shift);
     #else
         write_array_to_octave (ENDORSE(a), N, "out.mat", "output");
     #endif  

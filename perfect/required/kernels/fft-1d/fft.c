@@ -96,8 +96,8 @@ _rev (unsigned int v)
 }
 
 #ifdef FIXED_POINT_LENGTH
-static int *
-bit_reverse (int * w, unsigned int N, unsigned int bits)
+static long long int *
+bit_reverse (long long int * w, unsigned int N, unsigned int bits)
 #else
 static APPROX __attribute__((always_inline)) float *
 bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
@@ -115,7 +115,7 @@ bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
   for (i = 0; i < N; i++) {
     #ifdef FIXED_POINT_LENGTH
         unsigned int r;
-        int t_real, t_imag;
+        long long int t_real, t_imag;
     #else
         APPROX unsigned int r;
         APPROX float t_real, t_imag;
@@ -142,7 +142,7 @@ bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
 
 
 #ifdef FIXED_POINT_LENGTH
-int  fft (int * data, unsigned int N, unsigned int logn, int sign)
+int  fft (long long int * data, unsigned int N, unsigned int logn, int sign)
 #else
 int __attribute__((always_inline))
     fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
@@ -154,8 +154,9 @@ int __attribute__((always_inline))
   unsigned int transform_length;
   unsigned int a, b, i, j, bit;
     #ifdef FIXED_POINT_LENGTH
-        float theta, s, t, s2, w_real, w_imag, w_real_temp, w_imag_temp;
-        int t_real, t_imag, z_real, z_imag;
+        //float theta, s, t, s2, w_real, w_imag, w_real_temp, w_imag_temp;
+        long long int theta, s, t, s2, w_real, w_imag, w_real_temp, w_imag_temp;
+        long long int t_real, t_imag, z_real, z_imag;
     #else
         APPROX float theta, t_real, t_imag, w_real, w_imag, s, t, s2, z_real, z_imag;
     #endif
@@ -163,8 +164,8 @@ int __attribute__((always_inline))
 
     #ifdef FIXED_POINT_LENGTH
       float approx_pi = M_PI;
-      float approx_05 = 0.5;
-      float approx_tl = (float) transform_length;
+      //float approx_05 = 0.5;
+      //float approx_tl = (float) transform_length;
     #else
       APPROX float approx_pi = M_PI;
       APPROX float approx_05 = 0.5;
@@ -178,41 +179,72 @@ int __attribute__((always_inline))
     w_real = 1.0;
     w_imag = 0.0;
 
-    theta = sign * approx_pi / approx_tl;
-    s = sin (theta);
-    t = sin (theta * approx_05);
-    s2 = 2.0 * t * t;
+    #ifdef FIXED_POINT_LENGTH
+        w_real = w_real << FIXED_POINT_LENGTH;
+        w_imag = w_imag << FIXED_POINT_LENGTH;
+    #endif
 
-    //printf("theta, s, t, s2 = %f, %f, %f, %f\n", theta, s, t, s2);
+    #ifdef FIXED_POINT_LENGTH
+        theta = sign * (((long long)((approx_pi*0.25) * (1 << FIXED_POINT_LENGTH) + 0.5)) / transform_length); //scale 0.25 to make it all fractional
+        s = (long long)((sin((((float)(theta))*4) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)); //for now we use the floating point sine function
+        t = (long long)((sin((((float)(theta))*4/2) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)); //for now we use the floating point sine function
+        //t = sin (theta * approx_05);
+        s2 = 2.0 * t * t;
+        s2 = (s2 >> (FIXED_POINT_LENGTH + 0)); //this shift is implicit in the multiplication; scale 0.5 to bring back to range
+
+        //printf("theta, s, t, s2 = %i, %d, %d, %d\n", theta, s, t, s2);
+    #else
+        theta = sign * approx_pi / approx_tl;
+        s = sin (theta);
+        t = sin (theta * approx_05);
+        s2 = 2.0 * t * t;
+        //printf("theta, s, t, s2 = %f, %f, %f, %f\n", theta, s, t, s2);
+    #endif
+
 
     for (a = 0; a < transform_length; a++) {
       for (b = 0; b < N; b += 2 * transform_length) {
         i = b + a;
         j = b + a + transform_length;
         
-        //printf("data[%d], data[%d] = %d, %d\n", 2*j, 2*j+1, data[2*j], data[2*j+1]);
-
+        
+        #ifdef FIXED_POINT_LENGTH
+            //printf("data[%d], data[%d] = %d, %d\n", 2*j, 2*j+1, data[2*j], data[2*j+1]);
+        #else
+            //printf("data[%d], data[%d] = %f, %f\n", 2*j, 2*j+1, data[2*j], data[2*j+1]);
+            //printf("data[%d], data[%d] = %d, %d\n", 2*j, 2*j+1, (int)(data[2*j]*256), (int)(data[2*j+1]*256));
+        #endif
         z_real = data[2*j  ];
         z_imag = data[2*j+1];
 
         t_real = w_real * z_real - w_imag * z_imag;
         t_imag = w_real * z_imag + w_imag * z_real;
+
+        #ifdef FIXED_POINT_LENGTH
+            t_real = t_real >> (FIXED_POINT_LENGTH + 1); //these shifts are implicit in the mult and add/sub
+            t_imag = t_imag >> (FIXED_POINT_LENGTH + 1); //these shifts are implicit in the mult and add/sub
+        #endif
         
         //printf("t_real, t_imag = %d, %d\n", t_real, t_imag);
 
         /* write the result */
-        data[2*j  ]  = data[2*i  ] - t_real;
-        data[2*j+1]  = data[2*i+1] - t_imag;
-        data[2*i  ] += t_real;
-        data[2*i+1] += t_imag;
+        #ifdef FIXED_POINT_LENGTH
+            data[2*j  ]  = ((data[2*i  ] >> 1) - t_real) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
+            data[2*j+1]  = ((data[2*i+1] >> 1) - t_imag) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
+            data[2*i  ]  = ((data[2*i  ] >> 1) + t_real) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
+            data[2*i+1]  = ((data[2*i+1] >> 1) + t_imag) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
+        #else
+            data[2*j  ]  = data[2*i  ] - t_real;
+            data[2*j+1]  = data[2*i+1] - t_imag;
+            data[2*i  ] += t_real;
+            data[2*i+1] += t_imag;
+        #endif
       }
 
       /* adjust w */
         #ifdef FIXED_POINT_LENGTH
-            //t_real = w_real - ((int)(s*pow(2,FIXED_POINT_LENGTH)) * w_imag + (int)(s2*pow(2,FIXED_POINT_LENGTH)) * w_real);
-            //t_imag = w_imag + ((int)(s*pow(2,FIXED_POINT_LENGTH)) * w_real - (int)(s2*pow(2,FIXED_POINT_LENGTH)) * w_imag);
-            w_real_temp = w_real - (s * w_imag + s2 * w_real);
-            w_imag_temp = w_imag + (s * w_real - s2 * w_imag);
+            w_real_temp = w_real - ((((s * w_imag)>>0) + (s2 << 0) * w_real) >> FIXED_POINT_LENGTH); //shift is implicit in mult; add/sub does not need shift
+            w_imag_temp = w_imag + ((((s * w_real)>>0) - (s2 << 0) * w_imag) >> FIXED_POINT_LENGTH); //shift is implicit in mult; add/sub does not need shift
             w_real = w_real_temp;
             w_imag = w_imag_temp;
             //printf("float(w_real), float(w_imag) = %f, %f, %d, %d\n", (float)w_real, (float)w_imag, w_real, w_imag);
@@ -223,12 +255,15 @@ int __attribute__((always_inline))
             t_imag = w_imag + (s * w_real - s2 * w_imag);
             w_real = t_real;
             w_imag = t_imag;
+            //printf("float(w_real), float(w_imag) = %f, %f\n", w_real, w_imag);
         #endif
 
     }
 
     transform_length *= 2;
-    approx_tl = transform_length;
+    #ifndef FIXED_POINT_LENGTH
+        approx_tl = transform_length;
+    #endif
   }
 
   return 0;
