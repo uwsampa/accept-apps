@@ -145,7 +145,7 @@ int main (int argc, char * argv[])
 
     /* Write the generated input file to disk */
     #ifdef FIXED_POINT_LENGTH
-        int output_shift = 2 * LOGN;
+        int output_shift = 1; //2 * LOGN;
         write_array_to_octave (a, N, "random_input.mat", "input", output_shift);
     #else
         write_array_to_octave (ENDORSE(a), N, "random_input.mat", "input");
@@ -165,7 +165,11 @@ int main (int argc, char * argv[])
   /* Write the results out to disk */
   #ifdef AUTOTUNER
     #ifdef FIXED_POINT_LENGTH
-        int output_shift =  2 * LOGN;
+        #if(SHIFT_OR_SATURATE == 1)
+            int output_shift =  2 * LOGN;
+        #else
+            int output_shift =  0;
+        #endif
         write_array_to_octave (a, N, "out.mat", "output", output_shift);
     #else
         write_array_to_octave (ENDORSE(a), N, "out.mat", "output");

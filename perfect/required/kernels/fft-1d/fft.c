@@ -139,7 +139,17 @@ bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
 
   return w;
 }
-
+            
+#if(SHIFT_OR_SATURATE == 1)
+long long int saturate(long long int data)
+{   
+    if(data > (1 << FIXED_POINT_LENGTH))
+        data = (1 << FIXED_POINT_LENGTH);
+    if(data < -(1 << FIXED_POINT_LENGTH))
+        data = -(1 << FIXED_POINT_LENGTH);
+    return data;
+}
+#endif
 
 #ifdef FIXED_POINT_LENGTH
 int  fft (long long int * data, unsigned int N, unsigned int logn, int sign)
@@ -186,8 +196,8 @@ int __attribute__((always_inline))
 
     #ifdef FIXED_POINT_LENGTH
         theta = sign * (((long long)((approx_pi*0.25) * (1 << FIXED_POINT_LENGTH) + 0.5)) / transform_length); //scale 0.25 to make it all fractional
-        s = (long long)((sin((((float)(theta))*4) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)); //for now we use the floating point sine function
-        t = (long long)((sin((((float)(theta))*4/2) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)); //for now we use the floating point sine function
+        s = (long long)(((sin((((float)(theta))*4) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)) + 0.5); //for now we use the floating point sine function
+        t = (long long)(((sin((((float)(theta))*4/2) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)) + 0.5); //for now we use the floating point sine function
         //t = sin (theta * approx_05);
         s2 = 2.0 * t * t;
         s2 = (s2 >> (FIXED_POINT_LENGTH + 0)); //this shift is implicit in the multiplication; 
@@ -212,17 +222,27 @@ int __attribute__((always_inline))
         t_imag = w_real * z_imag + w_imag * z_real;
 
         #ifdef FIXED_POINT_LENGTH
-            t_real = t_real >> (FIXED_POINT_LENGTH + 1); //these shifts are implicit in the mult and add/sub
-            t_imag = t_imag >> (FIXED_POINT_LENGTH + 1); //these shifts are implicit in the mult and add/sub
+            t_real = t_real >> (FIXED_POINT_LENGTH + SHIFT_OR_SATURATE); //these shifts are implicit in the mult and add/sub
+            t_imag = t_imag >> (FIXED_POINT_LENGTH + SHIFT_OR_SATURATE); //these shifts are implicit in the mult and add/sub
+            #if(SHIFT_OR_SATURATE == 1)
+                t_real = saturate(t_real);
+                t_imag = saturate(t_imag);
+            #endif
         #endif
         
 
         /* write the result */
         #ifdef FIXED_POINT_LENGTH
-            data[2*j  ]  = ((data[2*i  ] >> 1) - t_real) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
-            data[2*j+1]  = ((data[2*i+1] >> 1) - t_imag) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
-            data[2*i  ]  = ((data[2*i  ] >> 1) + t_real) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
-            data[2*i+1]  = ((data[2*i+1] >> 1) + t_imag) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
+            data[2*j  ]  = ((data[2*i  ] >> SHIFT_OR_SATURATE) - t_real) >> SHIFT_OR_SATURATE; //the inner shift is explicit; required to adjust the range; the other one is implicit
+            data[2*j+1]  = ((data[2*i+1] >> SHIFT_OR_SATURATE) - t_imag) >> SHIFT_OR_SATURATE; //the inner shift is explicit; required to adjust the range; the other one is implicit
+            data[2*i  ]  = ((data[2*i  ] >> SHIFT_OR_SATURATE) + t_real) >> SHIFT_OR_SATURATE; //the inner shift is explicit; required to adjust the range; the other one is implicit
+            data[2*i+1]  = ((data[2*i+1] >> SHIFT_OR_SATURATE) + t_imag) >> SHIFT_OR_SATURATE; //the inner shift is explicit; required to adjust the range; the other one is implicit
+            #if(SHIFT_OR_SATURATE == 1)
+                data[2*j  ] = saturate(data[2*j  ]);
+                data[2*j+1] = saturate(data[2*j+1]);
+                data[2*i  ] = saturate(data[2*i  ]);
+                data[2*i+1] = saturate(data[2*i+1]);
+            #endif
         #else
             data[2*j  ]  = data[2*i  ] - t_real;
             data[2*j+1]  = data[2*i+1] - t_imag;
