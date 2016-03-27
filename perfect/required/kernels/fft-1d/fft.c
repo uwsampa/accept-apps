@@ -194,8 +194,8 @@ int __attribute__((always_inline))
             w_real = w_real << FIXED_POINT_LENGTH;
             w_imag = w_imag << FIXED_POINT_LENGTH;
         #else
-            w_real = w_real << FIXED_POINT_LENGTH - INTEGER_PART;
-            w_imag = w_imag << FIXED_POINT_LENGTH - INTEGER_PART;
+            w_real = w_real << (FIXED_POINT_LENGTH - INTEGER_PART);
+            w_imag = w_imag << (FIXED_POINT_LENGTH - INTEGER_PART);
         #endif
     #endif
 
@@ -208,10 +208,10 @@ int __attribute__((always_inline))
             s2 = 2.0 * t * t;
             s2 = (s2 >> (FIXED_POINT_LENGTH + 0)); //this shift is implicit in the multiplication; 
         #else
-            theta = sign * (((long long)((approx_pi) * (1 << FIXED_POINT_LENGTH - INTEGER_PART) + 0.5)) / transform_length); //to make it all fractional
+            theta = sign * (((long long)((approx_pi) * (1 << (FIXED_POINT_LENGTH - INTEGER_PART)) + 0.5)) / transform_length); //to make it all fractional
             theta = saturate(theta);
-            s = (long long)(((sin((((float)(theta))) / (1 << FIXED_POINT_LENGTH - INTEGER_PART))) * (1 << FIXED_POINT_LENGTH - INTEGER_PART)) + 0.5); //for now we use the floating point sine function
-            t = (long long)(((sin((((float)(theta))/2) / (1 << FIXED_POINT_LENGTH - INTEGER_PART))) * (1 << FIXED_POINT_LENGTH - INTEGER_PART)) + 0.5); //for now we use the floating point sine function
+            s = (long long)(((sin((((float)(theta))) / (1 << (FIXED_POINT_LENGTH - INTEGER_PART)))) * (1 << (FIXED_POINT_LENGTH - INTEGER_PART))) + 0.5); //for now we use the floating point sine function
+            t = (long long)(((sin((((float)(theta))/2) / (1 << (FIXED_POINT_LENGTH - INTEGER_PART)))) * (1 << (FIXED_POINT_LENGTH - INTEGER_PART))) + 0.5); //for now we use the floating point sine function
             //t = sin (theta * approx_05);
             s2 = 2.0 * t * t;
             s2 = (s2 >> (FIXED_POINT_LENGTH - INTEGER_PART)); //this shift is implicit in the multiplication; 
@@ -284,8 +284,8 @@ int __attribute__((always_inline))
                 w_real = w_real_temp;
                 w_imag = w_imag_temp;
             #else
-                w_real_temp = w_real - ((((s * w_imag)) + (s2 ) * w_real) >> FIXED_POINT_LENGTH - INTEGER_PART); //shift is implicit in mult; add/sub does not need shift
-                w_imag_temp = w_imag + ((((s * w_real)) - (s2 ) * w_imag) >> FIXED_POINT_LENGTH - INTEGER_PART); //shift is implicit in mult; add/sub does not need shift
+                w_real_temp = w_real - ((((s * w_imag)) + (s2 ) * w_real) >> (FIXED_POINT_LENGTH - INTEGER_PART)); //shift is implicit in mult; add/sub does not need shift
+                w_imag_temp = w_imag + ((((s * w_real)) - (s2 ) * w_imag) >> (FIXED_POINT_LENGTH - INTEGER_PART)); //shift is implicit in mult; add/sub does not need shift
                 w_real = saturate(w_real_temp);
                 w_imag = saturate(w_imag_temp);
             #endif

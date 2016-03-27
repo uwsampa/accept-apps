@@ -21,7 +21,7 @@ int write_array_to_octave (float * data, unsigned int len, char * filename, char
         #ifndef INTEGER_PART 
              fprintf(fp, " (%.15g, %.15g)", (((float)(data[2*i])) * (1 << output_shift))/(1<<FIXED_POINT_LENGTH), (((float)(data[2*i+1])) * (1 << output_shift))/(1<<FIXED_POINT_LENGTH));
         #else
-             fprintf(fp, " (%.15g, %.15g)", (((float)(data[2*i])) * (1 << output_shift))/(1<<FIXED_POINT_LENGTH - INTEGER_PART), (((float)(data[2*i+1])) * (1 << output_shift))/(1<<FIXED_POINT_LENGTH - INTEGER_PART));
+             fprintf(fp, " (%.15g, %.15g)", (((float)(data[2*i])) * (1 << output_shift))/(1<<(FIXED_POINT_LENGTH - INTEGER_PART)), (((float)(data[2*i+1])) * (1 << output_shift))/(1<<(FIXED_POINT_LENGTH - INTEGER_PART)));
         #endif
     #else
         fprintf(fp, " (%.15g, %.15g)", data[2*i], data[2*i+1]);
@@ -67,8 +67,8 @@ int write_array_to_octave (float * data, unsigned int len, char * filename, char
             data[i*2 + 0] = (long long)((x1*(1<<FIXED_POINT_LENGTH))+0.5); //assuming inputs are in [0, 1]
             data[i*2 + 1] = (long long)((x2*(1<<FIXED_POINT_LENGTH))+0.5);
         #else
-            data[i*2 + 0] = (long long)((x1*(1<<FIXED_POINT_LENGTH - INTEGER_PART))+0.5); //assuming inputs are in [0, 1]
-            data[i*2 + 1] = (long long)((x2*(1<<FIXED_POINT_LENGTH - INTEGER_PART))+0.5);
+            data[i*2 + 0] = (long long)((x1*(1<<(FIXED_POINT_LENGTH - INTEGER_PART)))+0.5); //assuming inputs are in [0, 1]
+            data[i*2 + 1] = (long long)((x2*(1<<(FIXED_POINT_LENGTH - INTEGER_PART)))+0.5);
         #endif
     #else
         data[i*2 + 0] = x1;
