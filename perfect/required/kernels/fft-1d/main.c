@@ -165,10 +165,9 @@ int main (int argc, char * argv[])
   /* Write the results out to disk */
   #ifdef AUTOTUNER
     #ifdef FIXED_POINT_LENGTH
-        #if(SHIFT_OR_SATURATE == 1)
-            int output_shift =  2 * LOGN;
-        #else
-            int output_shift =  0;
+        int output_shift =  2 * LOGN;
+        #ifdef INTEGER_PART 
+            output_shift =  0;
         #endif
         write_array_to_octave (a, N, "out.mat", "output", output_shift);
     #else

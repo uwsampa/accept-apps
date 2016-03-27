@@ -140,13 +140,13 @@ bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
   return w;
 }
             
-#if(SHIFT_OR_SATURATE == 1)
+#ifdef INTEGER_PART 
 long long int saturate(long long int data)
 {   
-    if(data > (1 << FIXED_POINT_LENGTH))
-        data = (1 << FIXED_POINT_LENGTH);
-    if(data < -(1 << FIXED_POINT_LENGTH))
-        data = -(1 << FIXED_POINT_LENGTH);
+    if(data > (1 << (FIXED_POINT_LENGTH-1))-1)
+        data = (1 << (FIXED_POINT_LENGTH-1))-1;
+    if(data < -(1 << (FIXED_POINT_LENGTH-1)))
+        data = -(1 << (FIXED_POINT_LENGTH-1));
     return data;
 }
 #endif
@@ -190,18 +190,31 @@ int __attribute__((always_inline))
     w_imag = 0.0;
 
     #ifdef FIXED_POINT_LENGTH
-        w_real = w_real << FIXED_POINT_LENGTH;
-        w_imag = w_imag << FIXED_POINT_LENGTH;
+        #ifndef INTEGER_PART
+            w_real = w_real << FIXED_POINT_LENGTH;
+            w_imag = w_imag << FIXED_POINT_LENGTH;
+        #else
+            w_real = w_real << FIXED_POINT_LENGTH - INTEGER_PART;
+            w_imag = w_imag << FIXED_POINT_LENGTH - INTEGER_PART;
+        #endif
     #endif
 
     #ifdef FIXED_POINT_LENGTH
-        theta = sign * (((long long)((approx_pi*0.25) * (1 << FIXED_POINT_LENGTH) + 0.5)) / transform_length); //scale 0.25 to make it all fractional
-        s = (long long)(((sin((((float)(theta))*4) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)) + 0.5); //for now we use the floating point sine function
-        t = (long long)(((sin((((float)(theta))*4/2) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)) + 0.5); //for now we use the floating point sine function
-        //t = sin (theta * approx_05);
-        s2 = 2.0 * t * t;
-        s2 = (s2 >> (FIXED_POINT_LENGTH + 0)); //this shift is implicit in the multiplication; 
-        #if(SHIFT_OR_SATURATE == 1)
+        #ifndef INTEGER_PART
+            theta = sign * (((long long)((approx_pi*0.25) * (1 << FIXED_POINT_LENGTH) + 0.5)) / transform_length); //scale 0.25 to make it all fractional
+            s = (long long)(((sin((((float)(theta))*4) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)) + 0.5); //for now we use the floating point sine function
+            t = (long long)(((sin((((float)(theta))*4/2) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)) + 0.5); //for now we use the floating point sine function
+            //t = sin (theta * approx_05);
+            s2 = 2.0 * t * t;
+            s2 = (s2 >> (FIXED_POINT_LENGTH + 0)); //this shift is implicit in the multiplication; 
+        #else
+            theta = sign * (((long long)((approx_pi) * (1 << FIXED_POINT_LENGTH - INTEGER_PART) + 0.5)) / transform_length); //to make it all fractional
+            theta = saturate(theta);
+            s = (long long)(((sin((((float)(theta))) / (1 << FIXED_POINT_LENGTH - INTEGER_PART))) * (1 << FIXED_POINT_LENGTH - INTEGER_PART)) + 0.5); //for now we use the floating point sine function
+            t = (long long)(((sin((((float)(theta))/2) / (1 << FIXED_POINT_LENGTH - INTEGER_PART))) * (1 << FIXED_POINT_LENGTH - INTEGER_PART)) + 0.5); //for now we use the floating point sine function
+            //t = sin (theta * approx_05);
+            s2 = 2.0 * t * t;
+            s2 = (s2 >> (FIXED_POINT_LENGTH - INTEGER_PART)); //this shift is implicit in the multiplication; 
             s2 = saturate(s2);
         #endif
     #else
@@ -209,6 +222,7 @@ int __attribute__((always_inline))
         s = sin (theta);
         t = sin (theta * approx_05);
         s2 = 2.0 * t * t;
+        printf("\n%f\n", s2);
     #endif
 
 
@@ -225,9 +239,12 @@ int __attribute__((always_inline))
         t_imag = w_real * z_imag + w_imag * z_real;
 
         #ifdef FIXED_POINT_LENGTH
-            t_real = t_real >> (FIXED_POINT_LENGTH + SHIFT_OR_SATURATE); //these shifts are implicit in the mult and add/sub
-            t_imag = t_imag >> (FIXED_POINT_LENGTH + SHIFT_OR_SATURATE); //these shifts are implicit in the mult and add/sub
-            #if(SHIFT_OR_SATURATE == 1)
+            #ifndef INTEGER_PART
+                t_real = t_real >> (FIXED_POINT_LENGTH + 1); //these shifts are implicit in the mult and add/sub
+                t_imag = t_imag >> (FIXED_POINT_LENGTH + 1); //these shifts are implicit in the mult and add/sub
+            #else
+                t_real = t_real >> (FIXED_POINT_LENGTH - INTEGER_PART); //these shifts are implicit in the mult and add/sub
+                t_imag = t_imag >> (FIXED_POINT_LENGTH - INTEGER_PART); //these shifts are implicit in the mult and add/sub
                 t_real = saturate(t_real);
                 t_imag = saturate(t_imag);
             #endif
@@ -236,11 +253,16 @@ int __attribute__((always_inline))
 
         /* write the result */
         #ifdef FIXED_POINT_LENGTH
-            data[2*j  ]  = ((data[2*i  ] >> SHIFT_OR_SATURATE) - t_real) >> SHIFT_OR_SATURATE; //the inner shift is explicit; required to adjust the range; the other one is implicit
-            data[2*j+1]  = ((data[2*i+1] >> SHIFT_OR_SATURATE) - t_imag) >> SHIFT_OR_SATURATE; //the inner shift is explicit; required to adjust the range; the other one is implicit
-            data[2*i  ]  = ((data[2*i  ] >> SHIFT_OR_SATURATE) + t_real) >> SHIFT_OR_SATURATE; //the inner shift is explicit; required to adjust the range; the other one is implicit
-            data[2*i+1]  = ((data[2*i+1] >> SHIFT_OR_SATURATE) + t_imag) >> SHIFT_OR_SATURATE; //the inner shift is explicit; required to adjust the range; the other one is implicit
-            #if(SHIFT_OR_SATURATE == 1)
+            #ifndef INTEGER_PART
+                data[2*j  ]  = ((data[2*i  ] >> 1) - t_real) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
+                data[2*j+1]  = ((data[2*i+1] >> 1) - t_imag) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
+                data[2*i  ]  = ((data[2*i  ] >> 1) + t_real) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
+                data[2*i+1]  = ((data[2*i+1] >> 1) + t_imag) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
+            #else
+                data[2*j  ]  = data[2*i  ] - t_real;
+                data[2*j+1]  = data[2*i+1] - t_imag;
+                data[2*i  ] += t_real;
+                data[2*i+1] += t_imag;
                 data[2*j  ] = saturate(data[2*j  ]);
                 data[2*j+1] = saturate(data[2*j+1]);
                 data[2*i  ] = saturate(data[2*i  ]);
@@ -256,10 +278,17 @@ int __attribute__((always_inline))
 
       /* adjust w */
         #ifdef FIXED_POINT_LENGTH
-            w_real_temp = w_real - ((((s * w_imag)>>0) + (s2 << 0) * w_real) >> FIXED_POINT_LENGTH); //shift is implicit in mult; add/sub does not need shift
-            w_imag_temp = w_imag + ((((s * w_real)>>0) - (s2 << 0) * w_imag) >> FIXED_POINT_LENGTH); //shift is implicit in mult; add/sub does not need shift
-            w_real = w_real_temp;
-            w_imag = w_imag_temp;
+            #ifndef INTEGER_PART
+                w_real_temp = w_real - ((((s * w_imag)>>0) + (s2 << 0) * w_real) >> FIXED_POINT_LENGTH); //shift is implicit in mult; add/sub does not need shift
+                w_imag_temp = w_imag + ((((s * w_real)>>0) - (s2 << 0) * w_imag) >> FIXED_POINT_LENGTH); //shift is implicit in mult; add/sub does not need shift
+                w_real = w_real_temp;
+                w_imag = w_imag_temp;
+            #else
+                w_real_temp = w_real - ((((s * w_imag)) + (s2 ) * w_real) >> FIXED_POINT_LENGTH - INTEGER_PART); //shift is implicit in mult; add/sub does not need shift
+                w_imag_temp = w_imag + ((((s * w_real)) - (s2 ) * w_imag) >> FIXED_POINT_LENGTH - INTEGER_PART); //shift is implicit in mult; add/sub does not need shift
+                w_real = saturate(w_real_temp);
+                w_imag = saturate(w_imag_temp);
+            #endif
         #else
             t_real = w_real - (s * w_imag + s2 * w_real);
             t_imag = w_imag + (s * w_real - s2 * w_imag);
