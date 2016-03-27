@@ -18,8 +18,6 @@ int write_array_to_octave (float * data, unsigned int len, char * filename, char
 
   for (i = 0; i < len; i++) {
     #ifdef FIXED_POINT_LENGTH
-        //fprintf(fp, " (%.15g, %.15g)", ((float)(data[2*i]))/(pow(2,FIXED_POINT_LENGTH)), ((float)(data[2*i+1]))/(pow(2,FIXED_POINT_LENGTH));
-        //printf("%d, %d, %d, %d, %d, %d\n", data[2*i], data[2*i+1], data[2*i]  << output_shift, data[2*i+1]  << output_shift, 31 >> 2, output_shift);
         fprintf(fp, " (%.15g, %.15g)", (((float)(data[2*i])) * (1 << output_shift))/(1<<FIXED_POINT_LENGTH), (((float)(data[2*i+1])) * (1 << output_shift))/(1<<FIXED_POINT_LENGTH));
     #else
         fprintf(fp, " (%.15g, %.15g)", data[2*i], data[2*i+1]);
@@ -63,11 +61,9 @@ int write_array_to_octave (float * data, unsigned int len, char * filename, char
     #ifdef FIXED_POINT_LENGTH
         data[i*2 + 0] = (long long)((x1*(1<<FIXED_POINT_LENGTH))+0.5); //assuming inputs are in [0, 1]
         data[i*2 + 1] = (long long)((x2*(1<<FIXED_POINT_LENGTH))+0.5);
-        //printf("read int data: %d, %d, %d\n", data[i*2 + 0], data[i*2 + 1], 1<<FIXED_POINT_LENGTH); //debugging
     #else
         data[i*2 + 0] = x1;
         data[i*2 + 1] = x2;
-        //printf("read float data: %f, %f\n", data[i*2 + 0], data[i*2 + 1]); //debugging
     #endif    
     fscanf(fp, "\n");
   }

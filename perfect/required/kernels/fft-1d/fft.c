@@ -190,15 +190,12 @@ int __attribute__((always_inline))
         t = (long long)((sin((((float)(theta))*4/2) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)); //for now we use the floating point sine function
         //t = sin (theta * approx_05);
         s2 = 2.0 * t * t;
-        s2 = (s2 >> (FIXED_POINT_LENGTH + 0)); //this shift is implicit in the multiplication; scale 0.5 to bring back to range
-
-        //printf("theta, s, t, s2 = %i, %d, %d, %d\n", theta, s, t, s2);
+        s2 = (s2 >> (FIXED_POINT_LENGTH + 0)); //this shift is implicit in the multiplication; 
     #else
         theta = sign * approx_pi / approx_tl;
         s = sin (theta);
         t = sin (theta * approx_05);
         s2 = 2.0 * t * t;
-        //printf("theta, s, t, s2 = %f, %f, %f, %f\n", theta, s, t, s2);
     #endif
 
 
@@ -208,12 +205,6 @@ int __attribute__((always_inline))
         j = b + a + transform_length;
         
         
-        #ifdef FIXED_POINT_LENGTH
-            //printf("data[%d], data[%d] = %d, %d\n", 2*j, 2*j+1, data[2*j], data[2*j+1]);
-        #else
-            //printf("data[%d], data[%d] = %f, %f\n", 2*j, 2*j+1, data[2*j], data[2*j+1]);
-            //printf("data[%d], data[%d] = %d, %d\n", 2*j, 2*j+1, (int)(data[2*j]*256), (int)(data[2*j+1]*256));
-        #endif
         z_real = data[2*j  ];
         z_imag = data[2*j+1];
 
@@ -225,7 +216,6 @@ int __attribute__((always_inline))
             t_imag = t_imag >> (FIXED_POINT_LENGTH + 1); //these shifts are implicit in the mult and add/sub
         #endif
         
-        //printf("t_real, t_imag = %d, %d\n", t_real, t_imag);
 
         /* write the result */
         #ifdef FIXED_POINT_LENGTH
@@ -247,15 +237,11 @@ int __attribute__((always_inline))
             w_imag_temp = w_imag + ((((s * w_real)>>0) - (s2 << 0) * w_imag) >> FIXED_POINT_LENGTH); //shift is implicit in mult; add/sub does not need shift
             w_real = w_real_temp;
             w_imag = w_imag_temp;
-            //printf("float(w_real), float(w_imag) = %f, %f, %d, %d\n", (float)w_real, (float)w_imag, w_real, w_imag);
-            //printf("t_real, t_imag = %d, %d\n", t_real, t_imag);
-            //printf("w_real, w_imag, s, s2, t_real, t_image = %d, %d, %f, %f, %d, %d\n", w_real, w_imag, s, s2, t_real, t_imag);
         #else
             t_real = w_real - (s * w_imag + s2 * w_real);
             t_imag = w_imag + (s * w_real - s2 * w_imag);
             w_real = t_real;
             w_imag = t_imag;
-            //printf("float(w_real), float(w_imag) = %f, %f\n", w_real, w_imag);
         #endif
 
     }
