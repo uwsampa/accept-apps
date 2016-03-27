@@ -201,6 +201,9 @@ int __attribute__((always_inline))
         //t = sin (theta * approx_05);
         s2 = 2.0 * t * t;
         s2 = (s2 >> (FIXED_POINT_LENGTH + 0)); //this shift is implicit in the multiplication; 
+        #if(SHIFT_OR_SATURATE == 1)
+            s2 = saturate(s2);
+        #endif
     #else
         theta = sign * approx_pi / approx_tl;
         s = sin (theta);
