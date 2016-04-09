@@ -8,5 +8,5 @@ endif
 
 CLEANMETOO += $(TARGET).orig.ll 2dconv_output.0.mat out.mat *.out *.log *.pyc
 
-ACCEPT_DIR ?= ../../accept
+ACCEPT_DIR ?= ~/Codes/GitHub/accept 
 include $(ACCEPT_DIR)/accept.mk
