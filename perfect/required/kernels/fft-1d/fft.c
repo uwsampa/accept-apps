@@ -69,21 +69,12 @@
 #include <enerc.h>
 #include "fft-1d.h"
 
-#ifdef FIXED_POINT_LENGTH
-static unsigned int
-_rev (unsigned int v)
-#else
 APPROX static __attribute__((always_inline)) unsigned int
 _rev (unsigned int v)
-#endif
 {
-    #ifdef FIXED_POINT_LENGTH
-        unsigned int r = v;
-        int s = sizeof(v) * CHAR_BIT - 1;
-    #else 
-        APPROX unsigned int r = v;
-        APPROX int s = sizeof(v) * CHAR_BIT - 1;
-    #endif
+  APPROX unsigned int r = v;
+  APPROX int s = sizeof(v) * CHAR_BIT - 1;
+
   for (v >>= 1; v; v >>= 1)
   {
     r <<= 1;
@@ -95,39 +86,22 @@ _rev (unsigned int v)
   return r;
 }
 
-#ifdef FIXED_POINT_LENGTH
-static long long int *
-bit_reverse (long long int * w, unsigned int N, unsigned int bits)
-#else
+
 static APPROX __attribute__((always_inline)) float *
 bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
-#endif
 {
   unsigned int i;
-    #ifdef FIXED_POINT_LENGTH
-        unsigned int s, shift;
-    #else
-        APPROX unsigned int s, shift;
-    #endif
+  APPROX unsigned int s, shift;
   s = sizeof(i) * CHAR_BIT - 1;
   shift = s - bits + 1;
 
   for (i = 0; i < N; i++) {
-    #ifdef FIXED_POINT_LENGTH
-        unsigned int r;
-        long long int t_real, t_imag;
-    #else
-        APPROX unsigned int r;
-        APPROX float t_real, t_imag;
-    #endif
+    APPROX unsigned int r;
+    APPROX float t_real, t_imag;
     r = _rev (i);
     r >>= shift;
 
-    #ifdef FIXED_POINT_LENGTH
-    if (i < r) {
-    #else
     if (ENDORSE(i < r)) {
-    #endif
       t_real = w[2 * i];
       t_imag = w[2 * i + 1];
       w[2 * i] = w[2 * r];
@@ -139,48 +113,21 @@ bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
 
   return w;
 }
-            
-#ifdef INTEGER_PART 
-long long int saturate(long long int data)
-{   
-    if(data > (1 << (FIXED_POINT_LENGTH-1))-1)
-        data = (1 << (FIXED_POINT_LENGTH-1))-1;
-    if(data < -(1 << (FIXED_POINT_LENGTH-1)))
-        data = -(1 << (FIXED_POINT_LENGTH-1));
-    return data;
-}
-#endif
 
-#ifdef FIXED_POINT_LENGTH
-int  fft (long long int * data, unsigned int N, unsigned int logn, int sign)
-#else
+
 int __attribute__((always_inline))
-    fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
-#endif
+fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
 {
-
-
-
   unsigned int transform_length;
   unsigned int a, b, i, j, bit;
-    #ifdef FIXED_POINT_LENGTH
-        //float theta, s, t, s2, w_real, w_imag, w_real_temp, w_imag_temp;
-        long long int theta, s, t, s2, w_real, w_imag, w_real_temp, w_imag_temp;
-        long long int t_real, t_imag, z_real, z_imag;
-    #else
-        APPROX float theta, t_real, t_imag, w_real, w_imag, s, t, s2, z_real, z_imag;
-    #endif
+  APPROX float theta, t_real, t_imag, w_real, w_imag, s, t, s2, z_real, z_imag;
+
   transform_length = 1;
 
-    #ifdef FIXED_POINT_LENGTH
-      float approx_pi = M_PI;
-      //float approx_05 = 0.5;
-      //float approx_tl = (float) transform_length;
-    #else
-      APPROX float approx_pi = M_PI;
-      APPROX float approx_05 = 0.5;
-      APPROX float approx_tl = (float) transform_length;
-    #endif
+  APPROX float approx_pi = M_PI;
+  APPROX float approx_05 = 0.5;
+  APPROX float approx_tl = (float) transform_length;
+
   /* bit reversal */
   bit_reverse (data, N, logn);
 
@@ -189,119 +136,39 @@ int __attribute__((always_inline))
     w_real = 1.0;
     w_imag = 0.0;
 
-    #ifdef FIXED_POINT_LENGTH
-        #ifndef INTEGER_PART
-            w_real = w_real << FIXED_POINT_LENGTH;
-            w_imag = w_imag << FIXED_POINT_LENGTH;
-        #else
-            w_real = w_real << (FIXED_POINT_LENGTH - INTEGER_PART);
-            w_imag = w_imag << (FIXED_POINT_LENGTH - INTEGER_PART);
-        #endif
-    #endif
-
-    #ifdef FIXED_POINT_LENGTH
-        #ifndef INTEGER_PART
-            theta = sign * (((long long)((approx_pi*0.25) * (1 << FIXED_POINT_LENGTH) + 0.5)) / transform_length); //scale 0.25 to make it all fractional
-            s = (long long)(((sin((((float)(theta))*4) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)) + 0.5); //for now we use the floating point sine function
-            t = (long long)(((sin((((float)(theta))*4/2) / (1 << FIXED_POINT_LENGTH))) * (1 << FIXED_POINT_LENGTH)) + 0.5); //for now we use the floating point sine function
-            //t = sin (theta * approx_05);
-            s2 = 2.0 * t * t;
-            s2 = (s2 >> (FIXED_POINT_LENGTH + 0)); //this shift is implicit in the multiplication; 
-        #else
-            theta = sign * (((long long)((approx_pi) * (1 << (FIXED_POINT_LENGTH - INTEGER_PART)) + 0.5)) / transform_length); //to make it all fractional
-            theta = saturate(theta);
-            s = (long long)(((sin((((float)(theta))) / (1 << (FIXED_POINT_LENGTH - INTEGER_PART)))) * (1 << (FIXED_POINT_LENGTH - INTEGER_PART))) + 0.5); //for now we use the floating point sine function
-            t = (long long)(((sin((((float)(theta))/2) / (1 << (FIXED_POINT_LENGTH - INTEGER_PART)))) * (1 << (FIXED_POINT_LENGTH - INTEGER_PART))) + 0.5); //for now we use the floating point sine function
-            //t = sin (theta * approx_05);
-            s2 = 2.0 * t * t;
-            s2 = (s2 >> (FIXED_POINT_LENGTH - INTEGER_PART)); //this shift is implicit in the multiplication; 
-            s2 = saturate(s2);
-        #endif
-    #else
-        theta = sign * approx_pi / approx_tl;
-        s = sin (theta);
-        t = sin (theta * approx_05);
-        s2 = 2.0 * t * t;
-        printf("\n%f\n", s2);
-    #endif
-
+    theta = sign * approx_pi / approx_tl;
+    s = sin (theta);
+    t = sin (theta * approx_05);
+    s2 = 2.0 * t * t;
 
     for (a = 0; a < transform_length; a++) {
       for (b = 0; b < N; b += 2 * transform_length) {
         i = b + a;
         j = b + a + transform_length;
-        
-        
+
         z_real = data[2*j  ];
         z_imag = data[2*j+1];
 
         t_real = w_real * z_real - w_imag * z_imag;
         t_imag = w_real * z_imag + w_imag * z_real;
 
-        #ifdef FIXED_POINT_LENGTH
-            #ifndef INTEGER_PART
-                t_real = t_real >> (FIXED_POINT_LENGTH + 1); //these shifts are implicit in the mult and add/sub
-                t_imag = t_imag >> (FIXED_POINT_LENGTH + 1); //these shifts are implicit in the mult and add/sub
-            #else
-                t_real = t_real >> (FIXED_POINT_LENGTH - INTEGER_PART); //these shifts are implicit in the mult and add/sub
-                t_imag = t_imag >> (FIXED_POINT_LENGTH - INTEGER_PART); //these shifts are implicit in the mult and add/sub
-                t_real = saturate(t_real);
-                t_imag = saturate(t_imag);
-            #endif
-        #endif
-        
-
         /* write the result */
-        #ifdef FIXED_POINT_LENGTH
-            #ifndef INTEGER_PART
-                data[2*j  ]  = ((data[2*i  ] >> 1) - t_real) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
-                data[2*j+1]  = ((data[2*i+1] >> 1) - t_imag) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
-                data[2*i  ]  = ((data[2*i  ] >> 1) + t_real) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
-                data[2*i+1]  = ((data[2*i+1] >> 1) + t_imag) >> 1; //the inner shift is explicit; required to adjust the range; the other one is implicit
-            #else
-                data[2*j  ]  = data[2*i  ] - t_real;
-                data[2*j+1]  = data[2*i+1] - t_imag;
-                data[2*i  ] += t_real;
-                data[2*i+1] += t_imag;
-                data[2*j  ] = saturate(data[2*j  ]);
-                data[2*j+1] = saturate(data[2*j+1]);
-                data[2*i  ] = saturate(data[2*i  ]);
-                data[2*i+1] = saturate(data[2*i+1]);
-            #endif
-        #else
-            data[2*j  ]  = data[2*i  ] - t_real;
-            data[2*j+1]  = data[2*i+1] - t_imag;
-            data[2*i  ] += t_real;
-            data[2*i+1] += t_imag;
-        #endif
+        data[2*j  ]  = data[2*i  ] - t_real;
+        data[2*j+1]  = data[2*i+1] - t_imag;
+        data[2*i  ] += t_real;
+        data[2*i+1] += t_imag;
       }
 
       /* adjust w */
-        #ifdef FIXED_POINT_LENGTH
-            #ifndef INTEGER_PART
-                w_real_temp = w_real - ((((s * w_imag)>>0) + (s2 << 0) * w_real) >> FIXED_POINT_LENGTH); //shift is implicit in mult; add/sub does not need shift
-                w_imag_temp = w_imag + ((((s * w_real)>>0) - (s2 << 0) * w_imag) >> FIXED_POINT_LENGTH); //shift is implicit in mult; add/sub does not need shift
-                w_real = w_real_temp;
-                w_imag = w_imag_temp;
-            #else
-                w_real_temp = w_real - ((((s * w_imag)) + (s2 ) * w_real) >> (FIXED_POINT_LENGTH - INTEGER_PART)); //shift is implicit in mult; add/sub does not need shift
-                w_imag_temp = w_imag + ((((s * w_real)) - (s2 ) * w_imag) >> (FIXED_POINT_LENGTH - INTEGER_PART)); //shift is implicit in mult; add/sub does not need shift
-                w_real = saturate(w_real_temp);
-                w_imag = saturate(w_imag_temp);
-            #endif
-        #else
-            t_real = w_real - (s * w_imag + s2 * w_real);
-            t_imag = w_imag + (s * w_real - s2 * w_imag);
-            w_real = t_real;
-            w_imag = t_imag;
-        #endif
+      t_real = w_real - (s * w_imag + s2 * w_real);
+      t_imag = w_imag + (s * w_real - s2 * w_imag);
+      w_real = t_real;
+      w_imag = t_imag;
 
     }
 
     transform_length *= 2;
-    #ifndef FIXED_POINT_LENGTH
-        approx_tl = transform_length;
-    #endif
+    approx_tl = transform_length;
   }
 
   return 0;
