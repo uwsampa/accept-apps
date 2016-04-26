@@ -54,6 +54,11 @@ int loadRgbImage(const char* fileName, RgbImage* image) {
     APPROX RgbPixel** pixels;
     FILE *fp;
 
+    // Coefficients used to compute luminance
+    float rC = 0.30 / 256;
+    float gC = 0.59 / 256;
+    float bC = 0.11 / 256;
+
     printf("Loading %s ...\n", fileName);
 
     // the rgb file has to be loaded in this specific address in memory
@@ -111,6 +116,13 @@ int loadRgbImage(const char* fileName, RgbImage* image) {
 
             c = readCell(fp, w);
             pixels[i][j].b = atoi(w);
+
+            // Compute Luminance
+            pixels[i][j].lum =
+                rC * pixels[i][j].r +
+                gC * pixels[i][j].g +
+                bC * pixels[i][j].b;
+
         }
     }
     image->pixels = pixels;
@@ -152,9 +164,9 @@ int saveRgbImage(RgbImage* image, const char* fileName, float scale) {
 
     for(i = 0; i < image->h; i++) {
         for(j = 0; j < (image->w - 1); j++) {
-            fprintf(fp, "%d,%d,%d,", (int)(image->pixels[i][j].r * scale), (int)(image->pixels[i][j].g * scale), (int)(image->pixels[i][j].b * scale));
+            fprintf(fp, "%d,%d,%d,", (int)(image->pixels[i][j].lum * scale), (int)(image->pixels[i][j].lum * scale), (int)(image->pixels[i][j].lum * scale));
         }
-        fprintf(fp, "%d,%d,%d\n", (int)(image->pixels[i][j].r * scale), (int)(image->pixels[i][j].g * scale), (int)(image->pixels[i][j].b * scale));
+        fprintf(fp, "%d,%d,%d\n", (int)(image->pixels[i][j].lum * scale), (int)(image->pixels[i][j].lum * scale), (int)(image->pixels[i][j].lum * scale));
     }
 
     fprintf(fp, "%s", image->meta);

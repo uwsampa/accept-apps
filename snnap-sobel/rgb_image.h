@@ -7,6 +7,7 @@ typedef struct {
    APPROX float r;
    APPROX float g;
    APPROX float b;
+   APPROX float lum;
 } RgbPixel;
 
 typedef struct {

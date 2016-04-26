@@ -29,7 +29,7 @@ int main (int argc, const char* argv[]) {
     initRgbImage(&dstImage);
     loadRgbImage(argv[1], &srcImage);
     loadRgbImage(argv[1], &dstImage);
-    makeGrayscale(&srcImage);
+    // makeGrayscale(&srcImage);
 
     accept_roi_begin();
 
@@ -38,26 +38,27 @@ int main (int argc, const char* argv[]) {
 
       for (x = 0; x < srcImage.w; x++) {
         if (x==0 || x==srcImage.w-1 || y==0 || y==srcImage.h-1) {
-          s = 0;
+          dstImage.pixels[y][x].lum = 0;
         } else {
-          i0 = srcImage.pixels[y-1][x-1].r;
-          i1 = srcImage.pixels[y-1][x].r;
-          i2 = srcImage.pixels[y-1][x+1].r;
-          i3 = srcImage.pixels[y][x-1].r;
-          i4 = srcImage.pixels[y][x].r;
-          i5 = srcImage.pixels[y][x+1].r;
-          i6 = srcImage.pixels[y+1][x-1].r;
-          i7 = srcImage.pixels[y+1][x].r;
-          i8 = srcImage.pixels[y+1][x+1].r;
+          i0 = srcImage.pixels[y-1][x-1].lum;
+          i1 = srcImage.pixels[y-1][x].lum;
+          i2 = srcImage.pixels[y-1][x+1].lum;
+          i3 = srcImage.pixels[y][x-1].lum;
+          i4 = srcImage.pixels[y][x].lum;
+          i5 = srcImage.pixels[y][x+1].lum;
+          i6 = srcImage.pixels[y+1][x-1].lum;
+          i7 = srcImage.pixels[y+1][x].lum;
+          i8 = srcImage.pixels[y+1][x+1].lum;
 
-          s = sobel(i0, i1, i2, i3, i4, i5, i6, i7, i8);
+          sobel(&(dstImage.pixels[y][x].lum), i0, i1, i2, i3, i4, i5, i6, i7, i8);
         }
-
-        dstImage.pixels[y][x].r = ENDORSE(s);
-        dstImage.pixels[y][x].g = ENDORSE(s);
-        dstImage.pixels[y][x].b = ENDORSE(s);
       }
+    }
 
+    // Gray Scale
+    for (y = 0; y < srcImage.h; y++) {
+      for (x = 0; x < srcImage.w; x++) {
+      }
     }
 
     accept_roi_end();

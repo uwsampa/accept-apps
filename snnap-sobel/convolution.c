@@ -34,7 +34,7 @@ APPROX float convolve(APPROX float i0, APPROX float i1, APPROX float i2, APPROX 
     return r;
 }
 
-__attribute__((annotate("npu"))) float sobel(APPROX float i0, APPROX float i1, APPROX float i2, APPROX float i3, APPROX float i4, APPROX float i5, APPROX float i6, APPROX float i7, APPROX float i8) {
+void sobel(APPROX float *dst, APPROX float i0, APPROX float i1, APPROX float i2, APPROX float i3, APPROX float i4, APPROX float i5, APPROX float i6, APPROX float i7, APPROX float i8) {
     APPROX float sx;
     APPROX float sy;
     APPROX float s;
@@ -46,6 +46,6 @@ __attribute__((annotate("npu"))) float sobel(APPROX float i0, APPROX float i1, A
     if ENDORSE((s >= (256 / sqrt(256 * 256 + 256 * 256))))
         s = 255 / sqrt(256 * 256 + 256 * 256);
 
-    return ENDORSE(s);
+    *dst = s;
 }
 
