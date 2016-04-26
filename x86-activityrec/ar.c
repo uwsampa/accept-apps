@@ -13,6 +13,7 @@
 #define MODEL_SIZE 190
 #define MODEL_SIZE_PLUS_WARMUP (MODEL_SIZE+10)
 #define ACCEL_WINDOW_SIZE 4
+#define NPU_WINDOW_SIZE 4
 #undef FLASH_ON_BOOT
 
 // number of samples until experiment is "done" and "moving" light goes on
@@ -46,6 +47,9 @@ APPROX static int32_t stddev[3];
 static int16_t modelEntry = 0;
 static int32_t model[MODEL_SIZE_PLUS_WARMUP];
 #endif  // TRAINING
+
+// Dump training data
+FILE * trainfp;
 
 APPROX static int32_t meanmag;
 APPROX static int32_t stddevmag;
@@ -81,9 +85,17 @@ void getNextSample() {
 }
 
 void featurize() {
+  uint16_t i;
+  int8_t x, y, z;
+
   mean[0] = mean[1] = mean[2] = 0;
   stddev[0] = stddev[1] = stddev[2] = 0;
-  uint16_t i;
+
+  // Dump training data
+  // for (i = 0; i < NPU_WINDOW_SIZE; i++) {
+  //   fprintf(trainfp, "%f %f %f ", (float)aWin[i][0]/(128), (float)aWin[i][1]/(128), (float)aWin[i][2]/(128));
+  // }
+  // fprintf(trainfp, "\n");
 
   /* compute the average accel value in the window of accel values.  use right
    * shift by 2 instead of division by 4 because mspgcc is too dumb to convert
@@ -111,6 +123,10 @@ void featurize() {
   stddev[0] >>= 2;
   stddev[1] >>= 2;
   stddev[2] >>= 2;
+
+  fprintf(trainfp, "%f %f %f ", (float)mean[0]/(128), (float)mean[1]/(128), (float)mean[2]/(128));
+  fprintf(trainfp, "%f %f %f ", (float)stddev[0]/(128), (float)stddev[1]/(128), (float)stddev[2]/(128));
+  fprintf(trainfp, "\n");
 
   /* compute the magnitude of each feature vector. */
   APPROX float meanmag_f = (float)
@@ -164,8 +180,10 @@ APPROX int classify() {
   }
 
   if (ENDORSE(move_less_error > stat_less_error)) {
+    fprintf(trainfp, "1.0\n");
     return 1;
   } else {
+    fprintf(trainfp, "0.0\n");
     return 0;
   }
 }
@@ -192,6 +210,11 @@ void read_trace (FILE *infile) {
 }
 
 int main(int argc, char *argv[]) {
+
+  int i;
+
+  // Training data
+  trainfp = fopen ("ar.data", "w+");
 
   initializeNVData();
   // srand(getpid());
@@ -253,7 +276,17 @@ int main(int argc, char *argv[]) {
   fprintf(outf, "__NV_stationaryCount %d\n", __NV_stationaryCount);
   fprintf(outf, "__NV_totalCount %d\n", __NV_totalCount);
   fclose(outf);
+
+  fclose(trainfp);
   return 0;
 }
 
 /* vim: set ai et ts=2 sw=2: */
+
+// __NV_movingCount 967
+// __NV_stationaryCount 4034
+// __NV_totalCount 5001
+
+// __NV_movingCount 1209
+// __NV_stationaryCount 3792
+// __NV_totalCount 5001
