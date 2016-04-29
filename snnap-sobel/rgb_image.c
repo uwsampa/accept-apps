@@ -18,7 +18,7 @@ void initRgbImage(APPROX RgbImage* image) {
 }
 
 int readCell(FILE *fp, char* w) {
-    char c;
+    int c;
     int i;
 
     w[0] = 0;
