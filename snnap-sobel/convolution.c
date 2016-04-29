@@ -3,20 +3,20 @@
 #include <stdio.h>
 #include <enerc.h>
 
-static float kx[][3] =
+static int kx[][3] =
     { { -1, -2, -1},
       {  0, 0,  0},
       {  1, 2,  1}};
 
-static float ky[][3] =
+static int ky[][3] =
     { { -1, 0,  1},
       { -2, 0,  2},
       { -1, 0,  1}};
 
-APPROX float convolve(APPROX float i0, APPROX float i1, APPROX float i2, APPROX float i3, APPROX float i4, APPROX float i5, APPROX float i6, APPROX float i7, APPROX float i8, float k[][3]) {
+APPROX int convolve(APPROX uchar i0, APPROX uchar i1, APPROX uchar i2, APPROX uchar i3, APPROX uchar i4, APPROX uchar i5, APPROX uchar i6, APPROX uchar i7, APPROX uchar i8, int k[][3]) {
     int i;
     int j;
-    APPROX float r;
+    APPROX int r;
 
     r = i0*k[0][0];
     r += i1*k[0][1];
@@ -34,18 +34,18 @@ APPROX float convolve(APPROX float i0, APPROX float i1, APPROX float i2, APPROX 
     return r;
 }
 
-void sobel(APPROX float *dst, APPROX float i0, APPROX float i1, APPROX float i2, APPROX float i3, APPROX float i4, APPROX float i5, APPROX float i6, APPROX float i7, APPROX float i8) {
-    APPROX float sx;
-    APPROX float sy;
+void sobel(APPROX uchar *dst, APPROX uchar i0, APPROX uchar i1, APPROX uchar i2, APPROX uchar i3, APPROX uchar i4, APPROX uchar i5, APPROX uchar i6, APPROX uchar i7, APPROX uchar i8) {
+    APPROX int sx;
+    APPROX int sy;
     APPROX float s;
 
     sx = convolve(i0, i1, i2, i3, i4, i5, i6, i7, i8, ky);
     sy = convolve(i0, i1, i2, i3, i4, i5, i6, i7, i8, kx);
 
-    s = sqrt(sx * sx + sy * sy);
-    if ENDORSE((s >= (256 / sqrt(256 * 256 + 256 * 256))))
-        s = 255 / sqrt(256 * 256 + 256 * 256);
+    s = sqrt(sx * sx + sy * sy) * sqrt(2);
+    if ENDORSE(s >= 256)
+        s = 255;
 
-    *dst = s;
+    *dst = (uchar) s;
 }
 

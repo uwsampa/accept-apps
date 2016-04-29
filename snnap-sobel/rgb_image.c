@@ -55,9 +55,9 @@ int loadRgbImage(const char* fileName, RgbImage* image) {
     FILE *fp;
 
     // Coefficients used to compute luminance
-    float rC = 0.30 / 256;
-    float gC = 0.59 / 256;
-    float bC = 0.11 / 256;
+    float rC = 0.30;
+    float gC = 0.59;
+    float bC = 0.11;
 
     printf("Loading %s ...\n", fileName);
 
@@ -118,10 +118,12 @@ int loadRgbImage(const char* fileName, RgbImage* image) {
             pixels[i][j].b = atoi(w);
 
             // Compute Luminance
-            pixels[i][j].lum =
-                rC * pixels[i][j].r +
-                gC * pixels[i][j].g +
-                bC * pixels[i][j].b;
+            APPROX float lum = rC * (float)pixels[i][j].r +
+                                gC * (float)pixels[i][j].g +
+                                bC * (float)pixels[i][j].b + 0.5;
+            pixels[i][j].lum = (unsigned char) lum;
+
+            // printf("char %u\n", pixels[i][j].lum);
 
         }
     }
@@ -164,9 +166,9 @@ int saveRgbImage(RgbImage* image, const char* fileName, float scale) {
 
     for(i = 0; i < image->h; i++) {
         for(j = 0; j < (image->w - 1); j++) {
-            fprintf(fp, "%d,%d,%d,", (int)(image->pixels[i][j].lum * scale), (int)(image->pixels[i][j].lum * scale), (int)(image->pixels[i][j].lum * scale));
+            fprintf(fp, "%u,%u,%u,", (image->pixels[i][j].lum), (image->pixels[i][j].lum), (image->pixels[i][j].lum));
         }
-        fprintf(fp, "%d,%d,%d\n", (int)(image->pixels[i][j].lum * scale), (int)(image->pixels[i][j].lum * scale), (int)(image->pixels[i][j].lum * scale));
+        fprintf(fp, "%u,%u,%u\n", (image->pixels[i][j].lum), (image->pixels[i][j].lum), (image->pixels[i][j].lum));
     }
 
     fprintf(fp, "%s", image->meta);
@@ -191,27 +193,4 @@ void freeRgbImage(RgbImage* image) {
             free(image->pixels[i]);
 
     free(image->pixels);
-}
-
-void makeGrayscale(RgbImage* image) {
-    int i;
-    int j;
-    float luminance;
-
-    float rC = 0.30 / 256;
-    float gC = 0.59 / 256;
-    float bC = 0.11 / 256;
-
-    for(i = 0; i < image->h; i++) {
-        for(j = 0; j < image->w; j++) {
-            luminance =
-                rC * ENDORSE(image->pixels[i][j].r) +
-                gC * ENDORSE(image->pixels[i][j].g) +
-                bC * ENDORSE(image->pixels[i][j].b);
-
-            image->pixels[i][j].r = luminance;
-            image->pixels[i][j].g = luminance;
-            image->pixels[i][j].b = luminance;
-        }
-    }
 }

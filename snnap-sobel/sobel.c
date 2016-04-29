@@ -11,18 +11,17 @@ int main (int argc, const char* argv[]) {
     // Sobel variables
     int i;
     int x, y;
-    APPROX float s;
     APPROX RgbImage srcImage;
     APPROX RgbImage dstImage;
-    APPROX float i0;
-    APPROX float i1;
-    APPROX float i2;
-    APPROX float i3;
-    APPROX float i4;
-    APPROX float i5;
-    APPROX float i6;
-    APPROX float i7;
-    APPROX float i8;
+    APPROX uchar i0;
+    APPROX uchar i1;
+    APPROX uchar i2;
+    APPROX uchar i3;
+    APPROX uchar i4;
+    APPROX uchar i5;
+    APPROX uchar i6;
+    APPROX uchar i7;
+    APPROX uchar i8;
 
     // Init the rgb images
     initRgbImage(&srcImage);
@@ -55,16 +54,10 @@ int main (int argc, const char* argv[]) {
       }
     }
 
-    // Gray Scale
-    for (y = 0; y < srcImage.h; y++) {
-      for (x = 0; x < srcImage.w; x++) {
-      }
-    }
-
     accept_roi_end();
 
     // Save the file now
-    saveRgbImage(ENDORSE(&dstImage), "out.rgb", sqrt(256 * 256 + 256 * 256));
+    saveRgbImage(ENDORSE(&dstImage), "out.rgb", 1);
 
     ///////////////////////////////
     // 6 - Free memory

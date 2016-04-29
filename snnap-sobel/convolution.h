@@ -14,6 +14,6 @@
 
 #include "rgb_image.h"
 
-void sobel(APPROX float *dst, APPROX float i0, APPROX float i1, APPROX float i2, APPROX float i3, APPROX float i4, APPROX float i5, APPROX float i6, APPROX float i7, APPROX float i8);
+void sobel(APPROX uchar *dst, APPROX uchar i0, APPROX uchar i1, APPROX uchar i2, APPROX uchar i3, APPROX uchar i4, APPROX uchar i5, APPROX uchar i6, APPROX uchar i7, APPROX uchar i);
 
 #endif /* CONVOLUTION_H_ */
