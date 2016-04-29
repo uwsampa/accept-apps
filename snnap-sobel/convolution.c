@@ -34,7 +34,7 @@ APPROX int convolve(APPROX uchar i0, APPROX uchar i1, APPROX uchar i2, APPROX uc
     return r;
 }
 
-void sobel(APPROX uchar *dst, APPROX uchar i0, APPROX uchar i1, APPROX uchar i2, APPROX uchar i3, APPROX uchar i4, APPROX uchar i5, APPROX uchar i6, APPROX uchar i7, APPROX uchar i8) {
+__attribute__((annotate("npu"))) void sobel(APPROX uchar *dst, APPROX uchar i0, APPROX uchar i1, APPROX uchar i2, APPROX uchar i3, APPROX uchar i4, APPROX uchar i5, APPROX uchar i6, APPROX uchar i7, APPROX uchar i8) {
     APPROX int sx;
     APPROX int sy;
     APPROX float s;

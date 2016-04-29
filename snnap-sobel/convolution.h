@@ -14,6 +14,6 @@
 
 #include "rgb_image.h"
 
-void sobel(APPROX uchar *dst, APPROX uchar i0, APPROX uchar i1, APPROX uchar i2, APPROX uchar i3, APPROX uchar i4, APPROX uchar i5, APPROX uchar i6, APPROX uchar i7, APPROX uchar i);
+__attribute__((annotate("npu"))) void sobel(APPROX uchar *dst, APPROX uchar i0, APPROX uchar i1, APPROX uchar i2, APPROX uchar i3, APPROX uchar i4, APPROX uchar i5, APPROX uchar i6, APPROX uchar i7, APPROX uchar i);
 
 #endif /* CONVOLUTION_H_ */
