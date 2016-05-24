@@ -70,6 +70,10 @@
 #include <stdlib.h>
 #include "octave.h"
 
+#define SATURATE
+#define INTMAX 255
+#define INTMIN 0
+
 int
 write_array_to_octave (int * data, int nrows, int ncols, char * filename, char * name)
 {
@@ -86,7 +90,12 @@ write_array_to_octave (int * data, int nrows, int ncols, char * filename, char *
 
   for (i = 0; i < n; i++) {
     for (j = 0; j < m; j++) {
-      fprintf(fp, " %d", data[i*m+j]);
+      int pix = data[i*m+j];
+#ifdef SATURATE
+      pix = pix > INTMAX ? INTMAX : pix;
+      pix = pix < INTMIN ? INTMIN : pix;
+#endif //SATURATE
+      fprintf(fp, " %d", pix);
     }
     fprintf(fp, "\n");
   }
