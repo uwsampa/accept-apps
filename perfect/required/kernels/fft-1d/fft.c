@@ -101,7 +101,7 @@ bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
     r = _rev (i);
     r >>= shift;
 
-    if (ENDORSE(i < r)) {
+    if (i < r) {
       t_real = w[2 * i];
       t_imag = w[2 * i + 1];
       w[2 * i] = w[2 * r];
