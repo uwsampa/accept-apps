@@ -69,11 +69,11 @@
 #include <enerc.h>
 #include "fft-1d.h"
 
-APPROX static __attribute__((always_inline)) unsigned int
+static __attribute__((always_inline)) unsigned int
 _rev (unsigned int v)
 {
-  APPROX unsigned int r = v;
-  APPROX int s = sizeof(v) * CHAR_BIT - 1;
+  unsigned int r = v;
+  int s = sizeof(v) * CHAR_BIT - 1;
 
   for (v >>= 1; v; v >>= 1)
   {
@@ -91,12 +91,12 @@ static APPROX __attribute__((always_inline)) float *
 bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
 {
   unsigned int i;
-  APPROX unsigned int s, shift;
+  unsigned int s, shift;
   s = sizeof(i) * CHAR_BIT - 1;
   shift = s - bits + 1;
 
   for (i = 0; i < N; i++) {
-    APPROX unsigned int r;
+    unsigned int r;
     APPROX float t_real, t_imag;
     r = _rev (i);
     r >>= shift;
