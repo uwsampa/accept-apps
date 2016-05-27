@@ -73,7 +73,7 @@
 
 #include "sar_interp1.h"
 
-static __attribute__((always_inline)) APPROX int find_nearest_range_coord(
+static __attribute__((always_inline)) int find_nearest_range_coord(
     APPROX double target_coord,
     APPROX double input_coord_start,
     APPROX double input_coord_spacing,
@@ -130,9 +130,9 @@ void sar_interp1(
         for (r = 0; r < PFA_NOUT_RANGE; ++r)
         {
             const APPROX double out_coord = output_coords[r];
-            APPROX int nearest = find_nearest_range_coord(
+            int nearest = find_nearest_range_coord(
                 output_coords[r], input_start, input_spacing, input_spacing_inv);
-            if (ENDORSE(nearest < 0))
+            if (nearest < 0)
             {
                 resampled[p][r].re = 0.0f;
                 resampled[p][r].im = 0.0f;
@@ -140,7 +140,10 @@ void sar_interp1(
             }
 
             /* find_nearest_range_coord should never return a value >= N_RANGE */
-            assert(nearest < N_RANGE); // ACCEPT_PERMIT
+            // assert(nearest < N_RANGE); // ACCEPT_PERMIT
+            if (nearest > N_RANGE) {
+                nearest = N_RANGE;
+            }
 
             /*
              * out_coord is bounded in [nearest, nearest+1], so we check
@@ -190,7 +193,7 @@ static __attribute__((always_inline)) int naive_round(APPROX double x)
     return (int) ENDORSE(x + 0.5);
 }
 
-__attribute__((always_inline)) APPROX int find_nearest_range_coord(
+__attribute__((always_inline)) int find_nearest_range_coord(
     APPROX double target_coord,
     APPROX double input_coord_start,
     APPROX double input_coord_spacing,

@@ -87,27 +87,27 @@ static const APPROX float BACKGROUND_THRESH = 0.9f;
 #define ONE_OVER_SQRT_TWO_PI (1.0f / sqrt(2.0f * M_PI))
 
 void wami_gmm(
-    APPROX u8 *foreground,
+    u8 *foreground,
     APPROX float *mu,
     APPROX float *sigma,
     APPROX float *weight,
     APPROX u16 *frame)
 {
     const size_t num_pixels = WAMI_GMM_IMG_NUM_ROWS * WAMI_GMM_IMG_NUM_COLS;
-    APPROX int row, col, k, num_foreground = 0;
+    int row, col, k, num_foreground = 0;
 
     memset(foreground, 0, sizeof(u8) * num_pixels);
 
-    for (row = 0; ENDORSE(row < WAMI_GMM_IMG_NUM_ROWS); ++row)
+    for (row = 0; row < WAMI_GMM_IMG_NUM_ROWS; ++row)
     {
-        for (col = 0; ENDORSE(col < WAMI_GMM_IMG_NUM_COLS); ++col)
+        for (col = 0; col < WAMI_GMM_IMG_NUM_COLS; ++col)
         {
             APPROX u16 pixel = frame[row*WAMI_GMM_IMG_NUM_COLS+col];
-            APPROX int match = -1;
+            int match = -1;
             APPROX float sum = 0.0f, norm = 0.0f;
-            APPROX int sorted_position = 0;
+            int sorted_position = 0;
 
-            for (k = 0; ENDORSE(k < WAMI_GMM_NUM_MODELS); ++k)
+            for (k = 0; k < WAMI_GMM_NUM_MODELS; ++k)
             {
                 /*
                  * C89 does not include fabsf(), so using the double-precision
@@ -122,9 +122,9 @@ void wami_gmm(
             }
 
             /* Update the weights for all models */
-            for (k = 0; ENDORSE(k < WAMI_GMM_NUM_MODELS); ++k)
+            for (k = 0; k < WAMI_GMM_NUM_MODELS; ++k)
             {
-                if (ENDORSE(k == match))
+                if (k == match)
                 {
                     /* A model matched, so update its corresponding weight. */
                     weight[row*ROW_C+col*COL_C+match] += alpha *
@@ -137,7 +137,7 @@ void wami_gmm(
                 }
             }
 
-            if (ENDORSE(match < 0))
+            if (match < 0)
             {
                 /*
                  * No distribution matched; replace the least likely distribution.
@@ -168,7 +168,7 @@ void wami_gmm(
             }
 
             /* Update mu and sigma for the matched distribution, if any */
-            if (ENDORSE(match >= 0))
+            if (match >= 0)
             {
                 APPROX const float mu_k = mu[row*ROW_C+col*COL_C+match];
                 APPROX const float sigma_k = sigma[row*ROW_C+col*COL_C+match];
@@ -196,13 +196,13 @@ void wami_gmm(
              * higher weight and lower sigma, so we only need to sort "higher".
              */
             sorted_position = 0;
-            if (ENDORSE(match != 0))
+            if (match != 0)
             {
-                APPROX const int sort_from = (match >= 0) ? match : WAMI_GMM_NUM_MODELS-1;
+                const int sort_from = (match >= 0) ? match : WAMI_GMM_NUM_MODELS-1;
                 APPROX const float new_significance = weight[row*ROW_C+col*COL_C+sort_from] /
                     sigma[row*ROW_C+col*COL_C+sort_from];
                 APPROX float other_significance, new_mu, new_sigma, new_weight;
-                for (k = sort_from-1; ENDORSE(k >= 0); --k)
+                for (k = sort_from-1; k >= 0; --k)
                 {
                     other_significance = weight[row*ROW_C+col*COL_C+k] /
                         sigma[row*ROW_C+col*COL_C+k];
@@ -211,7 +211,7 @@ void wami_gmm(
                         break;
                     }
                 }
-                if (ENDORSE(k == 0))
+                if (k == 0)
                 {
                     if (ENDORSE(other_significance >= new_significance))
                     {
@@ -230,7 +230,7 @@ void wami_gmm(
                 new_mu = mu[row*ROW_C+col*COL_C+sort_from];
                 new_sigma = sigma[row*ROW_C+col*COL_C+sort_from];
                 new_weight = weight[row*ROW_C+col*COL_C+sort_from];
-                for (k = sort_from; ENDORSE(k > sorted_position); --k)
+                for (k = sort_from; k > sorted_position; --k)
                 {
                     mu[row*ROW_C+col*COL_C+k] = mu[row*ROW_C+col*COL_C+k-1];
                     sigma[row*ROW_C+col*COL_C+k] = sigma[row*ROW_C+col*COL_C+k-1];
@@ -249,7 +249,7 @@ void wami_gmm(
                 {
                     cumsum += weight[row*ROW_C+col*COL_C+(++B)];
                 }
-                foreground[row*WAMI_GMM_IMG_NUM_ROWS+col] = ENDORSE(sorted_position > B);
+                foreground[row*WAMI_GMM_IMG_NUM_ROWS+col] = sorted_position > B;
                 num_foreground += foreground[row*WAMI_GMM_IMG_NUM_ROWS+col];
             }
         }

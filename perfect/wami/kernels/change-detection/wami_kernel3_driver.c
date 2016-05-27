@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     APPROX float *mu = NULL;
     APPROX float *sigma = NULL;
     APPROX float *weights = NULL;
-    APPROX u8 *foreground = NULL;
+    u8 *foreground = NULL;
 #ifdef ENABLE_CORRECTNESS_CHECKING
     u8 (*golden_foreground)[WAMI_GMM_IMG_NUM_ROWS][WAMI_GMM_IMG_NUM_COLS] = NULL;
     u8 (*golden_eroded)[WAMI_GMM_IMG_NUM_COLS] = NULL;
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 
     for (i = 0; i < WAMI_GMM_NUM_FRAMES; ++i)
     {
-        APPROX u8 *fg = &foreground[i*num_pixels];
+        u8 *fg = &foreground[i*num_pixels];
         wami_gmm(
             fg,
             mu,
@@ -257,7 +257,7 @@ int main(int argc, char **argv)
     {
         FILE *fp = fopen(output_filename, "wb");
         assert(fp != NULL);
-        assert(fwrite(ENDORSE(foreground), sizeof(u8), num_pixels * WAMI_GMM_NUM_FRAMES, fp) ==
+        assert(fwrite(foreground, sizeof(u8), num_pixels * WAMI_GMM_NUM_FRAMES, fp) ==
             num_pixels * WAMI_GMM_NUM_FRAMES);
         fclose(fp);
     }

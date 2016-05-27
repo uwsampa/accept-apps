@@ -121,8 +121,8 @@ APPROX static __attribute__((always_inline)) u16 compute_and_clamp_pixel_fractio
 
 APPROX static __attribute__((always_inline)) u16 interp_G_at_RRR_or_G_at_BBB(
     APPROX u16 *bayer,
-    APPROX u32 row,
-    APPROX u32 col)
+    u32 row,
+    u32 col)
 {
     /*
      * The mask to interpolate G at R or B is:
@@ -150,8 +150,8 @@ APPROX static __attribute__((always_inline)) u16 interp_G_at_RRR_or_G_at_BBB(
 
 APPROX static __attribute__((always_inline)) u16 interp_R_at_GRB_or_B_at_GBR(
     APPROX u16 *bayer,
-    APPROX u32 row,
-    APPROX u32 col)
+    u32 row,
+    u32 col)
 {
     /*
      * [0  0 0.5 0  0
@@ -178,8 +178,8 @@ APPROX static __attribute__((always_inline)) u16 interp_R_at_GRB_or_B_at_GBR(
 
 APPROX static __attribute__((always_inline)) u16 interp_R_at_GBR_or_B_at_GRB(
     APPROX u16 *bayer,
-    APPROX u32 row,
-    APPROX u32 col)
+    u32 row,
+    u32 col)
 {
     /*
      * [0  0 -1  0  0
@@ -206,8 +206,8 @@ APPROX static __attribute__((always_inline)) u16 interp_R_at_GBR_or_B_at_GRB(
 
 APPROX static __attribute__((always_inline)) u16 interp_R_at_BBB_or_B_at_RRR(
     APPROX u16 *bayer,
-    APPROX u32 row,
-    APPROX u32 col)
+    u32 row,
+    u32 col)
 {
     /*
      * [0  0 -1.5 0  0
@@ -235,7 +235,7 @@ void wami_debayer(
     rgb_pixel debayered[WAMI_DEBAYER_IMG_NUM_ROWS-2*PAD][WAMI_DEBAYER_IMG_NUM_COLS-2*PAD],
     APPROX u16 *bayer)
 {
-    APPROX u32 row, col;
+    u32 row, col;
 
     /*
      * Demosaic the following Bayer pattern:

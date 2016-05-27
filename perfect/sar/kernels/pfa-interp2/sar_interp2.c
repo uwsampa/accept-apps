@@ -71,7 +71,7 @@
 #include <math.h>
 #include <assert.h>
 
-static APPROX int find_nearest_azimuth_coord(
+static int find_nearest_azimuth_coord(
     APPROX double target_coord,
     APPROX const double *input_coords);
 
@@ -129,8 +129,8 @@ void sar_interp2(
         for (p = 0; p < PFA_NOUT_AZIMUTH; ++p)
         {
             APPROX const double out_coord = output_coords[p];
-            APPROX int nearest = find_nearest_azimuth_coord(output_coords[p], &input_coords[r*PFA_NOUT_RANGE]);
-            if (ENDORSE(nearest) < 0)
+            int nearest = find_nearest_azimuth_coord(output_coords[p], &input_coords[r*PFA_NOUT_RANGE]);
+            if (nearest < 0)
             {
                 resampled[p][r].re = 0.0f;
                 resampled[p][r].im = 0.0f;
@@ -138,7 +138,10 @@ void sar_interp2(
             }
 
             /* find_nearest_azimuth_coord should never return a value >= N_PULSES */
-            assert(nearest < N_PULSES); // ACCEPT_PERMIT
+            // assert(nearest < N_PULSES); // ACCEPT_PERMIT
+            if (nearest > N_PULSES) {
+                nearest = N_PULSES;
+            }
 
             /*
              * out_coord is bounded in [nearest, nearest+1], so we check
@@ -151,15 +154,15 @@ void sar_interp2(
                 nearest = nearest + 1;
             }
 
-            pmin = ENDORSE(nearest) - PFA_N_TSINC_POINTS_PER_SIDE;
+            pmin = nearest - PFA_N_TSINC_POINTS_PER_SIDE;
             if (pmin < 0) { pmin = 0; }
-            pmax = ENDORSE(nearest) + PFA_N_TSINC_POINTS_PER_SIDE;
+            pmax = nearest + PFA_N_TSINC_POINTS_PER_SIDE;
             if (pmax >= N_PULSES) { pmax = N_PULSES-1; }
 
             window_offset = 0;
-            if (ENDORSE(nearest) - PFA_N_TSINC_POINTS_PER_SIDE < 0)
+            if (nearest - PFA_N_TSINC_POINTS_PER_SIDE < 0)
             {
-                window_offset = PFA_N_TSINC_POINTS_PER_SIDE - ENDORSE(nearest);
+                window_offset = PFA_N_TSINC_POINTS_PER_SIDE - nearest;
             }
 
             accum.re = accum.im = 0.0f;
@@ -176,7 +179,7 @@ void sar_interp2(
     }
 }
 
-__attribute__((always_inline)) APPROX int find_nearest_azimuth_coord(
+__attribute__((always_inline)) int find_nearest_azimuth_coord(
     APPROX double target_coord,
     APPROX const double *input_coords)
 {
