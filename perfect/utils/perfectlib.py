@@ -6,12 +6,11 @@ import argparse
 import struct
 import numpy as np
 from numpy import linalg as la
-from matplotlib import cm, pyplot as plt
 
 # Arbitrarily large SNR to indicate identical values
 SNR_MAX = 200.0
 # Arbitrarily small SNR to indicate different values
-SNR_MIN = 1.0
+SNR_MIN = 0.0
 
 # WAMI params (for INPUT_SIZE_SMALL)
 # Taken from wami/kernels/ser/change-detection/lib/wami_params.h
@@ -45,7 +44,7 @@ def wami_morpho_erode(frame):
                 eroded[row][col] = 1
     return eroded
 
-def load_mat(filename):
+def load_mat(filename, minVal=None, maxVal=None):
     mat = []
     with open(filename) as f:
         for line in f:
@@ -53,10 +52,14 @@ def load_mat(filename):
                 line = line.strip().split(" ")
                 if line[0]!='%':
                     line = [float(x) for x in line]
+                    if minVal is not None:
+                        line = [minVal if x<minVal else x for x in line]
+                    if maxVal is not None:
+                        line = [maxVal if x>maxVal else x for x in line]
                     mat.append(line)
     return np.array(mat)
 
-def load_fft(filename):
+def load_fft(filename, minVal=None, maxVal=None):
     mat = []
     with open(filename) as f:
         for line in f:
@@ -64,10 +67,14 @@ def load_fft(filename):
                 line = line.strip()[1:-1].split(") (")
                 line = [x.split(', ') for x in line]
                 line = [float(x[0])+1j*float(x[1]) for x in line]
+                if minVal is not None:
+                    line = [minVal if x<minVal else x for x in line]
+                if maxVal is not None:
+                    line = [maxVal if x>maxVal else x for x in line]
                 mat.append(line)
     return np.array(mat)
 
-def load_fp_bin(filename):
+def load_fp_bin(filename, minVal=None, maxVal=None):
     data = []
     f = open(filename, "rb")
     try:
@@ -78,6 +85,10 @@ def load_fp_bin(filename):
             (re,) = struct.unpack('f', word[0])
             (im,) = struct.unpack('f', word[1])
             elem = re + 1j * im
+            if minVal is not None:
+                elem = minVal if elem < minVal else elem
+            if maxVal is not None:
+                elem = maxVal if elem > maxVal else elem
             data.append(elem)
             word[0] = f.read(4)
             word[1] = f.read(4)
@@ -86,7 +97,7 @@ def load_fp_bin(filename):
 
     return np.array(data)
 
-def load_wami_img(filename):
+def load_wami_img(filename, minVal=None, maxVal=None):
     data = []
     f = open(filename, "rb")
     try:
@@ -104,9 +115,16 @@ def load_wami_img(filename):
         for row in range(WAMI_GMM_IMG_NUM_ROWS):
             frameBuf.append(data[frame*numPixels+row*WAMI_GMM_IMG_NUM_COLS:frame*numPixels+(row+1)*WAMI_GMM_IMG_NUM_COLS])
         imgs.append(frameBuf)
+    for f in range(len(imgs)):
+        for y in range(len(imgs[f])):
+            for x in range(len(imgs[f][y])):
+                if minVal is not None:
+                    imgs[f][y][x] = minVal if imgs[f][y][x]<minVal else imgs[f][y][x]
+                if maxVal is not None:
+                    imgs[f][y][x] = maxVal if imgs[f][y][x]>maxVal else imgs[f][y][x]
     return np.array(imgs)
 
-def load_img_bin(filename, normalize=False, luma=False, metadata=False):
+def load_img_bin(filename, minVal=None, maxVal=None, luma=False, metadata=False):
     pixels = []
     params = []
     f = open(filename, "rb")
@@ -134,10 +152,16 @@ def load_img_bin(filename, normalize=False, luma=False, metadata=False):
     height = params[1]
     channels = params[2]
 
-    if normalize:
-        # Normalize
+    # Apply thresholding function
+    if minVal is not None:
+        pixels = [minVal if x<minVal else x for x in pixels]
+    if maxVal is not None:
+        pixels = [maxVal if x>maxVal else x for x in pixels]
+
+    # Normalize
+    if maxVal is None:
         maxVal = max(pixels)
-        pixels = [float(x)/maxVal*255 for x in pixels]
+    pixels = [float(x)/maxVal*255 for x in pixels]
 
     if luma:
         rgbArray = np.zeros((height,width), 'uint8')
@@ -156,13 +180,16 @@ def load_img_bin(filename, normalize=False, luma=False, metadata=False):
                 for c in range(channels):
                     rgbArray[y][x][c] = pixels[y*width*channels+x*channels+c]
 
-    return rgbArray
+    return rgbArray, maxVal
 
-def computeSNR(golden, relaxed, mode):
+def computeSNR(golden, relaxed, mode, clip=True):
     if (os.path.isfile(relaxed)):
         if mode=="stap" or mode=="sar":
             goldenData = load_fp_bin(golden)
-            relaxedData = load_fp_bin(relaxed)
+            if clip:
+                relaxedData = load_fp_bin(relaxed, minVal=np.min(goldenData), maxVal=np.max(goldenData))
+            else:
+                relaxedData = load_fp_bin(relaxed)
             if (goldenData==relaxedData).all():
                 return SNR_MAX
             else:
@@ -185,7 +212,10 @@ def computeSNR(golden, relaxed, mode):
             numMisclassified = 0
             numForeground = 0
             goldenData = load_wami_img(golden)
-            relaxedData = load_wami_img(relaxed)
+            if clip:
+                relaxedData = load_wami_img(relaxed, minVal=np.min(goldenData), maxVal=np.max(goldenData))
+            else:
+                relaxedData = load_wami_img(relaxed)
             for goldenFrame, relaxedFrame in zip(goldenData, relaxedData):
                 goldenEroded = wami_morpho_erode(goldenFrame)
                 relaxedEroded = wami_morpho_erode(relaxedFrame)
@@ -205,13 +235,15 @@ def computeSNR(golden, relaxed, mode):
                 return snr
         elif mode=="fft":
             # Here we recompute a golden FFT from input data
-            relaxedData = load_fft(relaxed)
             inputData = load_fft(golden)
             if inputData.shape[0] == 1:
                 goldenData = np.fft.fft(inputData)
             else:
                 goldenData = np.fft.fft2(inputData)
-            relaxedData = load_fft(relaxed)
+            if clip:
+                relaxedData = load_fft(relaxed, minVal=np.min(goldenData), maxVal=np.max(goldenData))
+            else:
+                relaxedData = load_fft(relaxed)
             if (goldenData==relaxedData).all():
                 return SNR_MAX
             else:
@@ -235,7 +267,10 @@ def computeSNR(golden, relaxed, mode):
                 return snr
         elif mode=="mat":
             goldenData = load_mat(golden)
-            relaxedData = load_mat(relaxed)
+            if clip:
+                relaxedData = load_mat(relaxed, minVal=np.min(goldenData), maxVal=np.max(goldenData))
+            else:
+                relaxedData = load_mat(relaxed)
             if (goldenData==relaxedData).all():
                 return SNR_MAX
             else:
@@ -245,8 +280,8 @@ def computeSNR(golden, relaxed, mode):
                 snr = 10 * np.log10( num/den )
                 return snr
         elif mode=="bin":
-            goldenData = load_img_bin(golden)
-            relaxedData = load_img_bin(relaxed)
+            goldenData, maxVal = load_img_bin(golden)
+            relaxedData, _ = load_img_bin(relaxed, minVal=0, maxVal=maxVal)
             if (goldenData==relaxedData).all():
                 return SNR_MAX
             else:
@@ -260,37 +295,20 @@ def computeSNR(golden, relaxed, mode):
     else:
         return SNR_MIN
 
-def computePSNR(golden, relaxed, mode):
-    if (os.path.isfile(relaxed)):
-        if mode=="RGBbin":
-            goldenData = load_img_bin(golden, luma=True)
-            relaxedData = load_img_bin(relaxed, luma=True)
-            if (goldenData==relaxedData).all():
-                return SNR_MAX
-            else:
-                # For details on how to compute PSNR in multimedia applications
-                # https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
-                mseVal = ((goldenData - relaxedData) ** 2).mean(axis=None)
-                maxVal = np.amax(goldenData)
-                psnr = 20 * np.log10(maxVal) - 10 * np.log10(mseVal)
-                return psnr
-        else:
-            return SNR_MIN
-    else:
-        return SNR_MIN
-
 def display(fn, o_fn=None, fft=None):
+    from matplotlib import cm, pyplot as plt
     if fft:
         data = np.array(load_fft(fn))[0]
         plt.plot(data)
     else:
         if fn.endswith('.mat'):
-            img_array = load_mat(fn)
+            golden_array = load_mat('orig.mat')
+            img_array = load_mat(fn, minVal=np.min(golden_array), maxVal=np.max(golden_array))
             plt.imshow(img_array, interpolation='nearest', cmap = cm.Greys_r)
         elif fn.endswith('.bin'):
             try:
-                img_array = load_img_bin(fn, normalize=True)
-                print img_array[0]
+                golden_array, maxVal = load_img_bin('orig.bin')
+                img_array, _ = load_img_bin(fn, minVal=0, maxVal=maxVal)
                 channels = 1 if len(img_array.shape)==2 else img_array.shape[2]
                 if channels==1:
                     plt.imshow(img_array, cmap = cm.Greys_r)
