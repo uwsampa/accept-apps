@@ -4,3 +4,6 @@
 [submodule "plat/msp430/mspdebug-wrapper"]
 	path = plat/msp430/mspdebug-wrapper
 	url = https://ransford/mspdebug-wrapper.git
+[submodule "axbench"]
+	path = axbench
+	url = git@bitbucket.org:sampa/axbench.git
