@@ -1,8 +1,6 @@
 import os
 import sys
 import numpy as np
-from matplotlib import mpl,pyplot
-
 
 EXT = '.dat'
 
@@ -34,9 +32,6 @@ def score(orig, relaxed):
 
         goldenData = _read(orig)
         relaxedData = _read(relaxed)
-
-        # pyplot.imshow(relaxedData, cmap='Greys_r')
-        # pyplot.show()
 
         if len(goldenData) != len(relaxedData):
             # Length mismatch; output is broken.
