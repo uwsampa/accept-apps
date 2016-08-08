@@ -118,8 +118,7 @@ bit_reverse (APPROX float * w, unsigned int N, unsigned int bits)
 }
 
 
-int __attribute__((always_inline))
-fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
+int fft (APPROX float * data, unsigned int N, unsigned int logn, int sign)
 {
   unsigned int transform_length;
   unsigned int a, b, i, j, bit;
