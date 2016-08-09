@@ -168,18 +168,20 @@ int main (int argc, char * argv[])
 
   accept_roi_begin();
 
-  warp_image (gradX, M, N, W_xp, gradX_warped);
-  warp_image (gradY, M, N, W_xp, gradY_warped);
-  PRINT_STAT_DOUBLE ("time_warp", toc ());
+  // warp_image (gradX, M, N, W_xp, gradX_warped);
+  // warp_image (gradY, M, N, W_xp, gradY_warped);
+  // PRINT_STAT_DOUBLE ("time_warp", toc ());
 
-  /* Compute the steepest descent images Gradient * Jacobian */
-  tic ();
-  steepest_descent (gradX_warped, gradY_warped, M, N, I_steepest);
-  PRINT_STAT_DOUBLE ("time_steepest_descent", toc ());
+  // /* Compute the steepest descent images Gradient * Jacobian */
+  // tic ();
+  // steepest_descent (gradX_warped, gradY_warped, M, N, I_steepest);
+  // PRINT_STAT_DOUBLE ("time_steepest_descent", toc ());
 
-  /* Compute the Hessian matrix */
-  tic ();
-  hessian (I_steepest, M, N, 6, H);
+  // /* Compute the Hessian matrix */
+  // tic ();
+  // hessian (I_steepest, M, N, 6, H);
+
+  lucas_kanade(gradX, gradY, M, N, W_xp, gradX_warped, gradY_warped, I_steepest, 6, H);
 
   accept_roi_end();
 

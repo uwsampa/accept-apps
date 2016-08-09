@@ -73,8 +73,18 @@
 
 #include "wami_lucas_kanade.h"
 
+void lucas_kanade(APPROX fltPixel_t *gradX, APPROX fltPixel_t *gradY, int M, int N, APPROX float *W_xp, APPROX fltPixel_t *gradX_warped, APPROX fltPixel_t *gradY_warped, APPROX fltPixel_t *I_steepest, int np, APPROX float *H) {
 
-void
+  warp_image (gradX, M, N, W_xp, gradX_warped);
+  warp_image (gradY, M, N, W_xp, gradY_warped);
+
+  steepest_descent (gradX_warped, gradY_warped, M, N, I_steepest);
+
+  hessian (I_steepest, M, N, np, H);
+
+}
+
+__attribute__((always_inline)) void
 warp_image (APPROX fltPixel_t *Iin, int nCols, int nRows, APPROX float *W_xp, APPROX fltPixel_t *Iout)
 {
   int x, y;
@@ -100,7 +110,7 @@ warp_image (APPROX fltPixel_t *Iin, int nCols, int nRows, APPROX float *W_xp, AP
 
 }
 
-void
+__attribute__((always_inline)) void
 steepest_descent (APPROX fltPixel_t *gradX_warped, APPROX fltPixel_t *gradY_warped, int nCols, int nRows, APPROX fltPixel_t *I_steepest)
 {
   int k;
@@ -134,7 +144,7 @@ steepest_descent (APPROX fltPixel_t *gradX_warped, APPROX fltPixel_t *gradY_warp
   }
 }
 
-void
+__attribute__((always_inline)) void
 hessian (APPROX fltPixel_t *I_steepest, int nCols, int nRows, int np, APPROX float *H)
 {
   int i, j;
