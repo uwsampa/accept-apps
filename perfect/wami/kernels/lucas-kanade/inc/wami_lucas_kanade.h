@@ -77,6 +77,8 @@
 typedef float fltPixel_t;
 typedef int algPixel_t;
 
+void lucas_kanade (APPROX fltPixel_t *gradX, APPROX fltPixel_t *gradY, int M, int N, APPROX float *W_xp, APPROX fltPixel_t *gradX_warped, APPROX fltPixel_t *gradY_warped, APPROX fltPixel_t *I_steepest, int np, APPROX float *H);
+
 APPROX float
 interpolate (APPROX float Tlocalx, APPROX float Tlocaly, int nCols, int nRows, APPROX fltPixel_t *Iin);
 

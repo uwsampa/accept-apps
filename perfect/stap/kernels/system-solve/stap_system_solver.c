@@ -106,7 +106,7 @@ void stap_system_solver(
         steering_vectors);
 }
 
-static void cholesky_factorization(
+__attribute__((always_inline)) static void cholesky_factorization(
     complex cholesky_factors[N_DOP][N_BLOCKS][N_CHAN*TDOF][N_CHAN*TDOF],
     complex (* const covariance)[N_BLOCKS][N_CHAN*TDOF][N_CHAN*TDOF])
 {
@@ -183,7 +183,7 @@ static void cholesky_factorization(
     }
 }
 
-static void forward_and_back_substitution(
+__attribute__((always_inline)) static void forward_and_back_substitution(
     complex adaptive_weights[N_DOP][N_BLOCKS][N_STEERING][N_CHAN*TDOF],
     complex (* const cholesky_factors)[N_BLOCKS][N_CHAN*TDOF][N_CHAN*TDOF],
     complex (* const steering_vectors)[N_CHAN*TDOF])
