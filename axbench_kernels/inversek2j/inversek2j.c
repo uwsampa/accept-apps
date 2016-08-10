@@ -70,7 +70,7 @@ int main(int argc, const char* argv[])
 
     for( i = 0 ; i < n; i ++)
     {
-        inversek2j(t1t2xy[i].x, t1t2xy[i].y, &(t1t2xy[i].t1), &(t1t2xy[i].t2));
+        inversek2j(&(t1t2xy[i].x), &(t1t2xy[i].y), &(t1t2xy[i].t1), &(t1t2xy[i].t2));
     }
 
     file = fopen(outputFile, "w");

@@ -20,14 +20,16 @@ void forwardk2j(APPROX float theta1, APPROX float theta2, APPROX float* x, APPRO
 	*y = l1 * sin(theta1) + l2 * sin(theta1 + theta2) ;
 }
 
-void inversek2j(APPROX float x, APPROX float y, APPROX float* theta1, APPROX float* theta2) {
-    APPROX static float num;
-    APPROX static float denom;
-    APPROX static float t2;
+void inversek2j(APPROX float* x, APPROX float* y, APPROX float* theta1, APPROX float* theta2) {
+    APPROX float num;
+    APPROX float denom;
+    APPROX float t2;
+    APPROX float x_val = *(x);
+    APPROX float y_val = *(y);
 
-    denom = x * x + y * y;
+    denom = x_val * x_val + y_val * y_val;
     t2 = acos((denom + CST_0)*2);
-    num = y * (l1 + l2 * cos(t2)) - x * l2 * sin(t2);
+    num = y_val * (l1 + l2 * cos(t2)) - x_val * l2 * sin(t2);
     *theta1 = asin( num / denom );
     *theta2 = t2;
 }

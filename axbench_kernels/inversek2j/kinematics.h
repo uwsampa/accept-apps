@@ -12,5 +12,5 @@
  #include <enerc.h>
 
 void forwardk2j(APPROX float theta1, APPROX float theta2, APPROX float* x, APPROX float* y);
-void inversek2j(APPROX float x, APPROX float y, APPROX float* theta1, APPROX float* theta2);
+void inversek2j(APPROX float* x, APPROX float* y, APPROX float* theta1, APPROX float* theta2);
  #endif
