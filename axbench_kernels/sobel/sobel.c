@@ -12,7 +12,6 @@
 
 int main (int argc, const char* argv[]) {
     int x, y;
-    float scale = sqrt(256 * 256 + 256 * 256);
     APPROX RgbImage srcImage;
     APPROX RgbImage dstImage;
     char *inputFile = argv[1];
@@ -30,7 +29,7 @@ int main (int argc, const char* argv[]) {
         }
     }
 
-    saveRgbImage(ENDORSE(&dstImage), outputFile, scale);
+    saveRgbImage(ENDORSE(&dstImage), outputFile, sqrt(256 * 256 + 256 * 256));
 
     return 0;
 }

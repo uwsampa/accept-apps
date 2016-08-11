@@ -33,6 +33,11 @@ def score(orig, relaxed):
         goldenData = _read(orig)
         relaxedData = _read(relaxed)
 
+        # import matplotlib.pyplot as plt
+        # plt.imshow(relaxedData)
+        # plt.gray()
+        # plt.show()
+
         if len(goldenData) != len(relaxedData):
             # Length mismatch; output is broken.
             return 1.0

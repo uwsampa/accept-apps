@@ -120,6 +120,7 @@ int saveRgbImage(RgbImage* image, const char* fileName, APPROX float scale) {
     int i;
     int j;
     int idx;
+    int pixel;
     FILE *fp;
 
     fp = fopen(fileName, "w");
@@ -133,10 +134,18 @@ int saveRgbImage(RgbImage* image, const char* fileName, APPROX float scale) {
     idx = 0;
     for(i = 0; i < image->h; i++) {
         for(j = 0; j < (image->w - 1); j++, idx++) {
-            fprintf(fp, "%d,%d,%d,", (int)(image->pixels[idx] * scale), (int)(image->pixels[idx] * scale), (int)(image->pixels[idx] * scale));
+            pixel = ENDORSE(image->pixels[idx] * scale);
+            if (pixel > 255) {
+                pixel = 255;
+            }
+            fprintf(fp, "%d,%d,%d,", pixel, pixel, pixel);
         }
         idx++;
-        fprintf(fp, "%d,%d,%d\n", (int)(image->pixels[idx] * scale), (int)(image->pixels[idx] * scale), (int)(image->pixels[idx] * scale));
+        pixel = ENDORSE(image->pixels[idx] * scale);
+        if (pixel > 255) {
+            pixel = 255;
+        }
+        fprintf(fp, "%d,%d,%d\n", pixel, pixel, pixel);
     }
 
     fprintf(fp, "%s", image->meta);
