@@ -26,12 +26,12 @@ void radix2DitCooleyTykeyFft(int K, int* indices, Complex* x, Complex* f)
     calcFftIndices(K, indices) ;
 
     int step ;
-    float arg ;
+    APPROX float arg ;
     int eI ;
     int oI ;
 
-    float fftSin;
-    float fftCos;
+    APPROX float fftSin;
+    APPROX float fftCos;
 
     Complex t;
     int i ;
@@ -53,15 +53,15 @@ void radix2DitCooleyTykeyFft(int K, int* indices, Complex* x, Complex* f)
                 eI = j + k ;
                 oI = j + step + k ;
 
-                fftSinCos(arg, &fftSin, &fftCos);
+                fftSinCos(&arg, &fftSin, &fftCos);
 
                 // Non-approximate
                 t =  x[indices[eI]] ;
-                x[indices[eI]].real = t.real + (x[indices[oI]].real * fftCos - x[indices[oI]].imag * fftSin);
-                x[indices[eI]].imag = t.imag + (x[indices[oI]].imag * fftCos + x[indices[oI]].real * fftSin);
+                x[indices[eI]].real = t.real + (x[indices[oI]].real * ENDORSE(fftCos) - x[indices[oI]].imag * ENDORSE(fftSin));
+                x[indices[eI]].imag = t.imag + (x[indices[oI]].imag * ENDORSE(fftCos) + x[indices[oI]].real * ENDORSE(fftSin));
 
-                x[indices[oI]].real = t.real - (x[indices[oI]].real * fftCos - x[indices[oI]].imag * fftSin);
-                x[indices[oI]].imag = t.imag - (x[indices[oI]].imag * fftCos + x[indices[oI]].real * fftSin);
+                x[indices[oI]].real = t.real - (x[indices[oI]].real * ENDORSE(fftCos) - x[indices[oI]].imag * ENDORSE(fftSin));
+                x[indices[oI]].imag = t.imag - (x[indices[oI]].imag * ENDORSE(fftCos) + x[indices[oI]].real * ENDORSE(fftSin));
             }
         }
     }

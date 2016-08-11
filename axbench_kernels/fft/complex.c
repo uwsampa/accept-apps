@@ -3,9 +3,9 @@
 #include <math.h>
 
 
-void fftSinCos(float x, APPROX float* s, APPROX float* c) {
+void fftSinCos(APPROX float* x, APPROX float* s, APPROX float* c) {
     APPROX static float COEFF = -2.0 * PI;
-    APPROX float arg = COEFF * x;
+    APPROX float arg = COEFF * (*x);
     *s = sinf(arg);
     *c = cosf(arg);
 }

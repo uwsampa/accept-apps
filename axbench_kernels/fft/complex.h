@@ -11,7 +11,7 @@ typedef struct {
    float imag;
 } Complex;
 
-void fftSinCos(float x, float* s, float* c);
+void fftSinCos(APPROX float* x, APPROX float* s, APPROX float* c);
 // float abs(const Complex* x);
 // float arg(const Complex* x);
 
