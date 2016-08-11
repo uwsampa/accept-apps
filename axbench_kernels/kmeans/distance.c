@@ -12,7 +12,7 @@
 int count = 0;
 #define MAX_COUNT 1200000
 
-float euclideanDistance(RgbPixel* p, Centroid* c1) {
+void euclideanDistance(APPROX float* dist, RgbPixel* p, Centroid* c1) {
     APPROX float r;
 
     r = 0;
@@ -23,15 +23,15 @@ float euclideanDistance(RgbPixel* p, Centroid* c1) {
 
     r = sqrtf(r);
 
-    return ENDORSE(r);
+    *dist = r;
 }
 
 int pickCluster(RgbPixel* p, Centroid* c1) {
-    float d1;
+    APPROX float d1;
 
-    d1 = euclideanDistance(p, c1);
+    euclideanDistance(&d1, p, c1);
 
-    if (p->distance <= d1)
+    if (p->distance <= ENDORSE(d1))
         return 0;
 
     return 1;
@@ -40,15 +40,15 @@ int pickCluster(RgbPixel* p, Centroid* c1) {
 void assignCluster(RgbPixel* p, Clusters* clusters) {
     int i = 0;
 
-    float d;
-    d = euclideanDistance(p, &clusters->centroids[i]);
-    p->distance = d;
+    APPROX float d;
+    euclideanDistance(&d, p, &clusters->centroids[i]);
+    p->distance = ENDORSE(d);
 
     for(i = 1; i < clusters->k; ++i) {
-        d = euclideanDistance(p, &clusters->centroids[i]);
-        if (d < p->distance) {
+        euclideanDistance(&d, p, &clusters->centroids[i]);
+        if (ENDORSE(d) < p->distance) {
             p->cluster = i;
-            p->distance = d;
+            p->distance = ENDORSE(d);
         }
     }
 }
