@@ -54,33 +54,24 @@ void ACCEPTRegion(unsigned char* image, int image_size) {
 ////////////////////////////////////////////////////////////////////////////////
 // Cumulative Normal Distribution Function
 // See Hull, Section 11.8, P.243-244
-static APPROX fptype inv_sqrt_2xPI = 0.39894228040143270286;
-// Define the constants
-static APPROX fptype ONE = 1.0;
-static APPROX fptype C0 = -0.5f;
-static APPROX fptype C1 = 0.2316419;
-static APPROX fptype C2 = 0.319381530;
-static APPROX fptype C3 = -0.356563782;
-static APPROX fptype C4 = 1.781477937;
-static APPROX fptype C5 = -1.821255978;
-static APPROX fptype C6 = 1.330274429;
+static fptype inv_sqrt_2xPI = 0.39894228040143270286;
 
-__attribute__((always_inline)) APPROX fptype CNDF ( APPROX fptype InputX )
+fptype CNDF ( fptype InputX )
 {
     int sign;
 
-    APPROX fptype OutputX;
-    APPROX fptype xInput;
-    APPROX fptype xNPrimeofX;
-    APPROX fptype expValues;
-    APPROX fptype xK2;
-    APPROX fptype xK2_2, xK2_3;
-    APPROX fptype xK2_4, xK2_5;
-    APPROX fptype xLocal, xLocal_1;
-    APPROX fptype xLocal_2, xLocal_3;
+    fptype OutputX;
+    fptype xInput;
+    fptype xNPrimeofX;
+    fptype expValues;
+    fptype xK2;
+    fptype xK2_2, xK2_3;
+    fptype xK2_4, xK2_5;
+    fptype xLocal, xLocal_1;
+    fptype xLocal_2, xLocal_3;
 
     // Check for negative value of InputX
-    if (ENDORSE(InputX < 0.0)) {
+    if (InputX < 0.0) {
         InputX = -InputX;
         sign = 1;
     } else
@@ -89,35 +80,35 @@ __attribute__((always_inline)) APPROX fptype CNDF ( APPROX fptype InputX )
     xInput = InputX;
 
     // Compute NPrimeX term common to both four & six decimal accuracy calcs
-    expValues = exp(C0 * InputX * InputX);
+    expValues = exp(-0.5f * InputX * InputX);
     xNPrimeofX = expValues;
     xNPrimeofX = xNPrimeofX * inv_sqrt_2xPI;
 
-    xK2 = C1 * xInput;
-    xK2 = ONE + xK2;
-    xK2 = ONE / xK2;
+    xK2 = 0.2316419 * xInput;
+    xK2 = 1.0 + xK2;
+    xK2 = 1.0 / xK2;
     xK2_2 = xK2 * xK2;
     xK2_3 = xK2_2 * xK2;
     xK2_4 = xK2_3 * xK2;
     xK2_5 = xK2_4 * xK2;
 
-    xLocal_1 = xK2 * C2;
-    xLocal_2 = xK2_2 * C3;
-    xLocal_3 = xK2_3 * C4;
+    xLocal_1 = xK2 * 0.319381530;
+    xLocal_2 = xK2_2 * -0.356563782;
+    xLocal_3 = xK2_3 * 1.781477937;
     xLocal_2 = xLocal_2 + xLocal_3;
-    xLocal_3 = xK2_4 * C5;
+    xLocal_3 = xK2_4 * -1.821255978;
     xLocal_2 = xLocal_2 + xLocal_3;
-    xLocal_3 = xK2_5 * C6;
+    xLocal_3 = xK2_5 * 1.330274429;
     xLocal_2 = xLocal_2 + xLocal_3;
 
     xLocal_1 = xLocal_2 + xLocal_1;
     xLocal   = xLocal_1 * xNPrimeofX;
-    xLocal   = ONE - xLocal;
+    xLocal   = 1.0 - xLocal;
 
     OutputX  = xLocal;
 
     if (sign) {
-        OutputX = ONE - OutputX;
+        OutputX = 1.0 - OutputX;
     }
 
     return OutputX;
@@ -144,6 +135,8 @@ APPROX fptype BlkSchlsEqEuroNoDiv( APPROX OptionData* option,
     APPROX fptype volatility = option->v;
     APPROX fptype time = option->t;
 
+    // Define the constants
+    static APPROX fptype ONE = 1.0;
     static APPROX fptype C0 = 0.5;
 
     APPROX fptype OptionPrice;
