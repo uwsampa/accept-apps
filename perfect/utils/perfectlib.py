@@ -4,6 +4,7 @@ import os
 import math
 import argparse
 import struct
+import scipy.stats
 import numpy as np
 from numpy import linalg as la
 
@@ -181,6 +182,37 @@ def load_img_bin(filename, minVal=None, maxVal=None, luma=False, metadata=False)
                     rgbArray[y][x][c] = pixels[y*width*channels+x*channels+c]
 
     return rgbArray, maxVal
+
+def clopperPearson(golden, relaxed, mode, delta=0.1, confidence=0.9, alpha=0.01):
+    #golden is the correct output, relaxed is the approximate output
+    #delta is the absolute error bound, and confidence is the probability of having the errors withing bound
+    #the function returns 1 is the confidence holds true
+    #alpha is a confidence for the test itself. always set it to 0.01, to get 99% confidence
+
+    if mode=="mat":
+        goldenData = load_mat(golden)
+        relaxedData = load_mat(relaxed)
+        err = np.absolute(goldenData - relaxedData)
+        n_violation = np.divide(err, goldenData) > delta
+        n_violation = n_violation.sum(axis=None)
+
+        n = err.size
+
+        b = scipy.stats.beta.ppf
+        hi = b(1 - alpha / 2, n_violation + 1, n - n_violation)
+
+        print ("violations = {}, n = {}, hi = {}".format(n_violation, n, hi))
+
+        if math.isnan(hi):
+            return 0
+        if (1-hi) > confidence:
+            return 1
+        else:
+            return 0
+
+    else:
+        # Add missing modes (see computeSNR)
+        return 0
 
 def computeSNR(golden, relaxed, mode, clip=True):
     if (os.path.isfile(relaxed)):
