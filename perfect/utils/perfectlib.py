@@ -183,7 +183,33 @@ def load_img_bin(filename, minVal=None, maxVal=None, luma=False, metadata=False)
 
     return rgbArray, maxVal
 
-def clopperPearson(golden, relaxed, mode, delta=0.1, confidence=0.9, alpha=0.01):
+def averageError(golden, relaxed, mode, error):
+    SNR_target = 20*np.log10(1/error)
+    SNR = computeSNR(golden, relaxed, mode)
+    if SNR > SNR_target:
+        return 1
+    else:
+        return 0
+
+def worstError(golden, relaxed, mode, error):
+    if mode=="mat":
+        goldenData = load_mat(golden)
+        relaxedData = load_mat(relaxed)
+        err = np.absolute(goldenData - relaxedData)
+        relativeErr = np.divide(err, np.max(goldenData))
+        maxErr = np.max(relativeErr)
+
+        print maxErr
+
+        if math.isnan(maxErr):
+            return 0
+        elif maxErr <= error:
+            return 1
+        else:
+            return 0
+
+
+def clopperPearson(golden, relaxed, mode, delta, confidence, alpha=0.01):
     #golden is the correct output, relaxed is the approximate output
     #delta is the absolute error bound, and confidence is the probability of having the errors withing bound
     #the function returns 1 is the confidence holds true
@@ -201,11 +227,9 @@ def clopperPearson(golden, relaxed, mode, delta=0.1, confidence=0.9, alpha=0.01)
         b = scipy.stats.beta.ppf
         hi = b(1 - alpha / 2, n_violation + 1, n - n_violation)
 
-        print ("violations = {}, n = {}, hi = {}".format(n_violation, n, hi))
-
         if math.isnan(hi):
             return 0
-        if (1-hi) > confidence:
+        elif (1-hi) > confidence:
             return 1
         else:
             return 0
