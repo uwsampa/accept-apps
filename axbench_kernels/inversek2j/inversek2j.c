@@ -13,10 +13,10 @@
 #define PI 3.141592653589
 
 typedef struct kinematicsData_ {
-    APPROX float t1;
-    APPROX float t2;
-    APPROX float x;
-    APPROX float y;
+    float t1;
+    float t2;
+    float x;
+    float y;
 } kinematicsData;
 
 int main(int argc, const char* argv[])
@@ -28,7 +28,6 @@ int main(int argc, const char* argv[])
     char *inputFile = argv[1];
     char *outputFile = argv[2];
 
-    APPROX float theta1, theta2;
     kinematicsData* t1t2xy;
 
     //Read input data from file
@@ -70,7 +69,7 @@ int main(int argc, const char* argv[])
 
     for( i = 0 ; i < n; i ++)
     {
-        inversek2j(&(t1t2xy[i].x), &(t1t2xy[i].y), &(t1t2xy[i].t1), &(t1t2xy[i].t2));
+        inversek2j(DEDORSE(&(t1t2xy[i].x)), DEDORSE(&(t1t2xy[i].y)), DEDORSE(&(t1t2xy[i].t1)), DEDORSE(&(t1t2xy[i].t2)));
     }
 
     file = fopen(outputFile, "w");

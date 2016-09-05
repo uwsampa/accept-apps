@@ -8,14 +8,14 @@
 #include <math.h>
 #include "kinematics.h"
 
-APPROX static float l1 = 0.5 ;
-APPROX static float l2 = 0.5 ;
+static float l1 = 0.5 ;
+static float l2 = 0.5 ;
 
 // ACCEPT FIXME: constant propagation does not work with appox
 APPROX static float CST_0 = -0.5; // - (l1 * l1) - (l2 * l2)
 APPROX static float CST_1 = 2; // 1.0 / (2 * l1 * l2)
 
-void forwardk2j(APPROX float theta1, APPROX float theta2, APPROX float* x, APPROX float* y) {
+void forwardk2j(float theta1, float theta2, float* x, float* y) {
 	*x = l1 * cos(theta1) + l2 * cos(theta1 + theta2) ;
 	*y = l1 * sin(theta1) + l2 * sin(theta1 + theta2) ;
 }
