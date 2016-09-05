@@ -11,9 +11,16 @@ def score(orig, relaxed):
     else:
         return 1.0
 
-def clopperPearsonTest(orig, relaxed, delta=0.1, confidence=0.9):
+def qorTest(orig, relaxed, qor_mode, delta, confidence):
     if (os.path.isfile(relaxed)):
-        return perfectlib.clopperPearson(orig, relaxed, "mat", delta, confidence)
+        if qor_mode=="stat":
+            return perfectlib.clopperPearson(orig, relaxed, "mat", delta, confidence)
+        elif qor_mode=="worst":
+            return perfectlib.worstError(orig, relaxed, "mat", delta)
+        elif qor_mode=="avg":
+            return perfectlib.averageError(orig, relaxed, "mat", delta)
+        else:
+            return 0
     else:
         return 0
 
