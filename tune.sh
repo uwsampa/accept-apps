@@ -1,7 +1,7 @@
 # Added for safety
 git pull
 
-# 2d-conv benchmark
+#2d-conv benchmark
 (cd perfect/pa1/kernels/2d_convolution/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 6 -target conv2d")
 mv perfect/pa1/kernels/2d_convolution/outputs runs/pa1_2d_convolution
 #DWT53 benchmark
@@ -47,41 +47,40 @@ mv perfect/required/kernels/fft-1d/outputs runs/required_fft-1d
 #FFT-2D benchmark
 (cd perfect/required/kernels/fft-2d/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 43 -target fft")
 mv perfect/required/kernels/fft-2d/outputs runs/required_fft-2d
-
+q
 # Blackscholes
-(cd axbench/applications_clean/blackscholes/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 77 -target BlkSchlsEqEuroNoDiv")
-mv axbench/applications_clean/blackscholes/ runs/axbench_blackscholes
+(cd axbench_kernels/blackscholes/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 31 -target BlkSchlsEqEuroNoDiv")
+mv axbench_kernels/blackscholes/outputs runs/axbench_blackscholes
 # FFT
-(cd axbench/applications_clean/fft/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 5 -target fftSinCos")
-mv axbench/applications_clean/fft/ runs/axbench_fft
+(cd axbench_kernels/fft/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 6 -target fftSinCos")
+mv axbench_kernels/fft/outputs runs/axbench_fft
 # Inverse kinematics
-(cd axbench/applications_clean/inversek2j/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 22 -target inversek2j")
-mv axbench/applications_clean/inversek2j/ runs/axbench_inversek2j
+(cd axbench_kernels/inversek2j/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 20 -target inversek2j")
+mv axbench_kernels/inversek2j/outputs runs/axbench_inversek2j
 # Jmeint
-(cd axbench/applications_clean/jmeint/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 200 -target tri_tri_intersect")
-mv axbench/applications_clean/jmeint/ runs/axbench_jmeint
+(cd axbench_kernels/jmeint/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 200 -target tri_tri_intersect")
+mv axbench_kernels/jmeint/outputs runs/axbench_jmeint
 # JPEG
-(cd axbench/applications_clean/jpeg/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 107 -target target")
-mv axbench/applications_clean/jpeg/ runs/axbench_jpeg
+(cd axbench_kernels/jpeg/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 107 -target target")
+mv axbench_kernels/jpeg/outputs runs/axbench_jpeg
 # K-means
-(cd axbench/applications_clean/kmeans/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 16 -target euclideanDistance")
-mv axbench/applications_clean/kmeans/ runs/axbench_kmeans
+(cd axbench_kernels/kmeans/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 17 -target euclideanDistance")
+mv axbench_kernels/kmeans/ runs/axbench_kmeans
 # Sobel
-(cd axbench/applications_clean/sobel/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 33 -target sobel")
-mv axbench/applications_clean/sobel/ runs/axbench_sobel
-
+(cd axbench_kernels/sobel/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 46 -target sobel")
+mv axbench_kernels/sobel/ runs/axbench_sobel
 
 # Copy everything
 mkdir runs/error_logs
 cp runs/pa1_2d_convolution/error.log runs/error_logs/pa1_2d_convolution.log
 cp runs/pa1_dwt53/error.log runs/error_logs/pa1_dwt53.log
 cp runs/pa1_histogram_equalization/error.log runs/error_logs/pa1_histogram_equalization.log
-cp runs/sar_pfa-interp1/error.log runs/error_logs/sar_pfa-interp1.log
-cp runs/sar_pfa-interp2/error.log runs/error_logs/sar_pfa-interp2.log
-cp runs/sar_bp/error.log runs/error_logs/sar_bp.log
 cp runs/stap_outer-product/error.log runs/error_logs/stap_outer-product.log
 cp runs/stap_system-solve/error.log runs/error_logs/stap_system-solve.log
 cp runs/stap_inner-product/error.log runs/error_logs/stap_inner-product.log
+cp runs/sar_pfa-interp1/error.log runs/error_logs/sar_pfa-interp1.log
+cp runs/sar_pfa-interp2/error.log runs/error_logs/sar_pfa-interp2.log
+cp runs/sar_bp/error.log runs/error_logs/sar_bp.log
 cp runs/wami_debayer/error.log runs/error_logs/wami_debayer.log
 cp runs/wami_lucas-kanade/error.log runs/error_logs/wami_lucas-kanade.log
 cp runs/wami_change-detection/error.log runs/error_logs/wami_change-detection.log
@@ -97,11 +96,11 @@ cp runs/axbench_sobel/error.log runs/error_logs/axbench_sobel.log
 
 # Cleanup
 rm -rf perfect/pa1/kernels/*outputs
-rm -rf perfect/wami/kernels/*outputs
 rm -rf perfect/stap/kernels/*outputs
-rm -rf perfect/required/kernels/*outputs
 rm -rf perfect/sar/kernels/*outputs
-rm -rf axbench/applications_clean/*outputs
+rm -rf perfect/wami/kernels/*outputs
+rm -rf perfect/required/kernels/*outputs
+rm -rf axbench_kernels/*outputs
 (cd perfect/pa1/kernels/2d_convolution/; make clean)
 (cd perfect/pa1/kernels/dwt53/; make clean)
 (cd perfect/pa1/kernels/histogram_equalization/; make clean)
@@ -116,11 +115,11 @@ rm -rf axbench/applications_clean/*outputs
 (cd perfect/sar/kernels/pfa-interp1/; make clean)
 (cd perfect/sar/kernels/pfa-interp2/; make clean)
 (cd perfect/sar/kernels/bp/; make clean)
-(cd axbench/applications_clean/blackscholes/; make clean)
-(cd axbench/applications_clean/fft/; make clean)
-(cd axbench/applications_clean/inversek2j/; make clean)
-(cd axbench/applications_clean/jmeint/; make clean)
-(cd axbench/applications_clean/jpeg/; make clean)
-(cd axbench/applications_clean/kmeans/; make clean)
-(cd axbench/applications_clean/sobel/; make clean)
+(cd axbench_kernels/blackscholes/; make clean)
+(cd axbench_kernels/fft/; make clean)
+(cd axbench_kernels/inversek2j/; make clean)
+(cd axbench_kernels/jmeint/; make clean)
+(cd axbench_kernels/jpeg/; make clean)
+(cd axbench_kernels/kmeans/; make clean)
+(cd axbench_kernels/sobel/; make clean)
 
