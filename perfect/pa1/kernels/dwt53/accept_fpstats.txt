@@ -1,1 +1,0 @@
-id	min	max	sign
