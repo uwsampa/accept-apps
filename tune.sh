@@ -47,7 +47,7 @@ mv perfect/required/kernels/fft-1d/outputs runs/required_fft-1d
 #FFT-2D benchmark
 (cd perfect/required/kernels/fft-2d/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 43 -target fft")
 mv perfect/required/kernels/fft-2d/outputs runs/required_fft-2d
-q
+
 # Blackscholes
 (cd axbench_kernels/blackscholes/; make tune TUNER_ARGS="-d -snr 10.0 -fixed -c 31 -target BlkSchlsEqEuroNoDiv")
 mv axbench_kernels/blackscholes/outputs runs/axbench_blackscholes
