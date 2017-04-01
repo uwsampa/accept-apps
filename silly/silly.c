@@ -7,6 +7,9 @@ int main(int argc, const char** argv) {
   APPROX int x = atoi(argv[1]);
   APPROX int y = x * 42;
   accept_roi_end();
-  printf("%i\n", y);
+
+  FILE *f = fopen("output.txt", "w");
+  fprintf(f, "%i\n", y);
+  fclose(f);
   return 0;
 }
