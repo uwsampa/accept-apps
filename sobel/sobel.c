@@ -12,12 +12,12 @@ void sobel_filtering( )
 {
   /* Definition of Sobel filter in horizontal direction */
   int weight[3][3] = {{ -1,  0,  1 },
-		      { -2,  0,  2 },
-		      { -1,  0,  1 }};
+              { -2,  0,  2 },
+              { -1,  0,  1 }};
   double pixel_value;
   double min, max;
   int x, y, i, j;  /* Loop variable */
-  
+
   /* Maximum values calculation after filtering*/
   printf("Now, filtering of input image is performed\n\n");
   min = DBL_MAX;
@@ -26,9 +26,9 @@ void sobel_filtering( )
     for (x = 1; x < x_size1 - 1; x++) {
       pixel_value = 0.0;
       for (j = -1; j <= 1; j++) {
-	    for (i = -1; i <= 1; i++) {
-	      pixel_value += weight[j + 1][i + 1] * ENDORSE(image1[y + j][x + i]);
-	    }
+        for (i = -1; i <= 1; i++) {
+          pixel_value += weight[j + 1][i + 1] * ENDORSE(image1[y + j][x + i]);
+        }
       }
       if (pixel_value < min) min = pixel_value;
       if (pixel_value > max) max = pixel_value;
@@ -57,9 +57,9 @@ void sobel_filtering( )
     for (xa = 1; ENDORSE(xa < x_size1 - 1); xa++) {
       pixel_value_app = 0.0;
       for (j = -1; j <= 1; j++) {
-	    for (i = -1; i <= 1; i++) {
-	      pixel_value_app += weight[j + 1][i + 1] * image1[ya + j][xa + i];
-	    }
+        for (i = -1; i <= 1; i++) {
+          pixel_value_app += weight[j + 1][i + 1] * image1[ya + j][xa + i];
+        }
       }
       pixel_value_app = MAX_BRIGHTNESS * (pixel_value_app - min) / (max - min);
       image2[ya][xa] = (unsigned char)pixel_value_app;
@@ -69,7 +69,7 @@ void sobel_filtering( )
 
 int main(int argc, const char** argv)
 {
-  load_image_data(argv[1]);   /* Input of image1 */ 
+  load_image_data(argv[1]);   /* Input of image1 */
   accept_roi_begin();
   sobel_filtering( );   /* Sobel filter is applied to image1 */
   accept_roi_end();
